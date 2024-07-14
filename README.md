@@ -57,16 +57,4 @@ This PowerShell script checks if it is running with administrator privileges. If
 
 ### Description
 
-This PowerShell script copies a file from `starship/test.toml` to the user's Starship configuration directory (`~/.config/starship.toml`). It ensures the destination directory exists before copying the file, and provides informative messages throughout the process.
-
-### Features
-
-- **Source File Check:** Verifies the source file exists before attempting to copy.
-- **Directory Creation:** Creates the destination directory if it does not already exist.
-- **File Copy:** Copies the source file to the specified destination, overwriting any existing file.
-
-### Usage
-
-1. Ensure the source file `starship/test.toml` exists.
-2. Run the script.
-3. The script will create the necessary directories and copy the file to `~/.config/starship.toml`.
+This PowerShell script allows you to select a file from the `starship/` directory and copy it to `$HOME/.config/starship.toml`. It lists all files in the `starship/` folder, presents them in a numbered menu, and prompts you to choose which file to copy. After selecting a file, it creates the destination directory if it doesn't exist and copies the chosen file to `$HOME/.config/starship.toml`. This script ensures you copy the correct file interactively, enhancing file management efficiency.

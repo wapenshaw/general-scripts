@@ -1,3 +1,7 @@
 {
-  "recommendations": ["DotJoshJohnson.xml", "ms-vscode.powershell"]
+  "recommendations": [
+    "DotJoshJohnson.xml",
+    "naumovs.color-highlight",
+    "ms-vscode.powershell"
+  ]
 }
