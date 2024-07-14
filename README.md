@@ -4,7 +4,26 @@
 
 ---
 
-## 1. [Windows Package Upgrader Script](winget-upgrade-all-except.ps1)
+# 1. [PowerShell Script to Install Starship, Update Profile, and Install Fonts](./install-profile.ps1)
+
+This PowerShell script automates the following tasks:
+
+1. **Check for Winget Installation**: The script checks if Winget is installed on the system. If Winget is not installed, it prompts the user to install it.
+2. **Install Starship Prompt**: Using Winget, the script installs the Starship prompt.
+3. **Update PowerShell Profile**: The script overwrites the current PowerShell profile with the contents of a specified `myprofile.ps1` file.
+4. **Install Fonts**: The script installs all fonts located in the `fonts/nerd-fonts` and `fonts/coding-fonts` directories, ensuring that already installed fonts are skipped.
+
+## Usage
+
+1. Ensure that the `myprofile.ps1` file is present in the same directory as the script.
+2. Place your font files in the `fonts/nerd-fonts` and `fonts/coding-fonts` directories.
+3. Run the script in a PowerShell session.
+
+This script simplifies setting up a development environment by automating the installation of essential tools and configurations.
+
+---
+
+## 2. [Windows Package Upgrader Script](winget-upgrade-all-except.ps1)
 
 ### Description
 
@@ -33,3 +52,21 @@ This PowerShell script checks if it is running with administrator privileges. If
 - For safety, always review the list of upgrades and confirm before proceeding with the upgrade process.
 
 ---
+
+## 3. [Copy Starship Configuration Script](./starship.ps1)
+
+### Description
+
+This PowerShell script copies a file from `starship/test.toml` to the user's Starship configuration directory (`~/.config/starship.toml`). It ensures the destination directory exists before copying the file, and provides informative messages throughout the process.
+
+### Features
+
+- **Source File Check:** Verifies the source file exists before attempting to copy.
+- **Directory Creation:** Creates the destination directory if it does not already exist.
+- **File Copy:** Copies the source file to the specified destination, overwriting any existing file.
+
+### Usage
+
+1. Ensure the source file `starship/test.toml` exists.
+2. Run the script.
+3. The script will create the necessary directories and copy the file to `~/.config/starship.toml`.
