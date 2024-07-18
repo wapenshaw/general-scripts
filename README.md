@@ -4,7 +4,7 @@
 
 ---
 
-# 1. [PowerShell Script to Install Starship, Update Profile, and Install Fonts](./install-profile.ps1)
+## 1. [PowerShell Script to Install Starship, Update Profile, and Install Fonts](./scripts/install-profile.ps1)
 
 This PowerShell script automates the following tasks:
 
@@ -13,7 +13,7 @@ This PowerShell script automates the following tasks:
 3. **Update PowerShell Profile**: The script overwrites the current PowerShell profile with the contents of a specified `myprofile.ps1` file.
 4. **Install Fonts**: The script installs all fonts located in the `fonts/nerd-fonts` and `fonts/coding-fonts` directories, ensuring that already installed fonts are skipped.
 
-## Usage
+### Usage
 
 1. Ensure that the `myprofile.ps1` file is present in the same directory as the script.
 2. Place your font files in the `fonts/nerd-fonts` and `fonts/coding-fonts` directories.
@@ -23,7 +23,7 @@ This script simplifies setting up a development environment by automating the in
 
 ---
 
-## 2. [Windows Package Upgrader Script](winget-upgrade-all-except.ps1)
+## 2. [Windows Package Upgrader Script](./scripts/winget-upgrade-all-except.ps1)
 
 ### Description
 
@@ -53,7 +53,7 @@ This PowerShell script checks if it is running with administrator privileges. If
 
 ---
 
-## 3. [Copy Starship Configuration Script](./starship.ps1)
+## 3. [Copy Starship Configuration Script](./scripts/starship.ps1)
 
 ### Description
 
