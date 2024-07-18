@@ -1,5 +1,5 @@
 # Define the source directory
-$sourceDirectory = "starship"
+$sourceDirectory = "../starship"
 
 # Get all files in the source directory
 $files = Get-ChildItem -Path $sourceDirectory -File
