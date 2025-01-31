@@ -13,7 +13,7 @@ if (-not $isAdmin) {
 }
 
 # List of package names to exclude
-$excludePackages = @("Discord", "Filebot")
+$excludePackages = @("Youtube", "Filebot")
 
 # Get the list of upgradable packages
 $wingetOutput = winget upgrade
@@ -23,36 +23,29 @@ $startIndex = ($wingetOutput | Select-String -Pattern "^Name").LineNumber
 
 # Parse the upgradable packages
 $upgradablePackages = $wingetOutput[$startIndex..($wingetOutput.Length - 1)] | ForEach-Object {
-    if ($_ -match '^(.*?)\s{2,}(\S+)\s{2,}(\S+)\s{2,}(\S+)\s{2,}(\S+)$') {
+    if ($_ -match '^(.*?)\s{2,}(\S+)\s{2,}(\S+)\s{2,}(\S+)(?:\s{2,}(\S+))?$') {
         [PSCustomObject]@{
             Name             = $matches[1].Trim()
             Id               = $matches[2]
             Version          = $matches[3]
             AvailableVersion = $matches[4]
-            Source           = $matches[5]
+            Source           = if ($matches[5]) { $matches[5] } else { "Unknown" }
         }
     }
 } | Where-Object { $_.Name -ne "Name" -and $_.Id -ne "Id" }  # Exclude the header row
 
 # Separate packages into available and excluded
-$availableUpgrades, $excludedUpgrades = $upgradablePackages | ForEach-Object {
-    if ($excludePackages -contains $_.Name -or $excludePackages -contains $_.Id) {
-        [PSCustomObject]@{
-            Package = $_
-            Type    = 'Excluded'
-        }
-    }
-    else {
-        [PSCustomObject]@{
-            Package = $_
-            Type    = 'Available'
-        }
-    }
-} | Group-Object Type
-
-# Separate packages into available and excluded
 $availableUpgrades = @()
 $excludedUpgrades = @()
+
+foreach ($package in $upgradablePackages) {
+    if ($excludePackages -contains $package.Name -or $excludePackages -contains $package.Id) {
+        $excludedUpgrades += $package
+    }
+    else {
+        $availableUpgrades += $package
+    }
+}
 
 # Print the list of available upgrades
 Write-Host "The following packages are available for upgrade:"  -ForegroundColor Green
@@ -83,7 +76,7 @@ if ($availableUpgrades.Count -gt 0) {
         # Run upgrades
         foreach ($package in $availableUpgrades) {
             Write-Host "Upgrading $($package.Name)..." -ForegroundColor Magenta
-            winget upgrade --id $package.Id
+            winget upgrade --id $package.Id --silent
         }
     }
     else {
