@@ -1,17 +1,21 @@
 function Remove-StaleLocalBranches {
     git fetch --all --prune
-    $remoteBranches = git branch -r | ForEach-Object { $_.Trim() }
-    $localBranches = git branch | ForEach-Object { $_.Trim() }
+
+    $remoteBranchesCount = (git branch -r).Count
+    Write-Host "Fetched remote branches ($remoteBranchesCount)"
+
+    $localBranches = git branch --merged | ForEach-Object { $_.Trim() } | Where-Object { $_ -ne 'master' -and $_ -ne 'main' -and $_ -notlike '*HEAD' }
+    $localBranchesCount = $localBranches.Count
+    Write-Host "Local branches ($localBranchesCount):"
+    Write-Host ($localBranches -Join ", ")
 
     foreach ($branch in $localBranches) {
-        if ($branch -ne "master" -and $branch -ne "main" -and $branch -ne "* $(git symbolic-ref --short HEAD)") {
-            $remoteBranchExists = $remoteBranches -contains ("origin/" + $branch)
-            if (-not $remoteBranchExists) {
-                Write-Host "Deleting local branch: $branch"
-                git branch -d $branch
-            }
+        $branchName = $branch.Replace("* ", "").Trim()
+        if (-not (git branch -r | Where-Object { $_ -match "origin/$branchName" }).Count) {
+            Write-Host "Deleting local branch: $branchName"
+            git branch -d $branchName
         }
     }
 }
 
-Set-Alias -Name git-remote-del -Value Remove-StaleLocalBranches
+Set-Alias -Name git-stale-prune -Value Remove-StaleLocalBranches
