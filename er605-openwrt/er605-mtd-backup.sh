@@ -1,7 +1,16 @@
 #!/bin/sh
 
-# script to do mtd backup for er605 v2.1.2 from usb
+# script to do mtd backup for er605 v2.1.2 to usb
+# NTFS Formatted USB Disk for default operation
+# mkdir -p /mnt/usb
+# Find usb disk name using `fdisk -l`
+# Mine was sda5
+# mount using `mount /dev/sda5 /mnt/usb`
 
+
+# change back to 192.168.1.1/24
+
+## Adjust UBI Layout
 set -e
 
 OUTPUT_FILE="mtd_backup.tgz"
