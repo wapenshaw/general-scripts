@@ -3,5 +3,13 @@
   "editor.fontSize": 22,
   "editor.fontLigatures": true,
   "editor.codeLensFontFamily": "FiraCode Nerd Font",
-  "terminal.integrated.fontFamily": "FiraCode Nerd Font"
+  "terminal.integrated.fontFamily": "FiraCode Nerd Font",
+  "powershell.codeFolding.enable": true,
+  "powershell.codeFormatting.whitespaceInsideBrace": true,
+  "[powershell]": {
+    "debug.saveBeforeStart": "nonUntitledEditorsInActiveGroup",
+    "editor.semanticHighlighting.enabled": false,
+    "editor.wordSeparators": "`~!@#$%^&*()=+[{]}\\|;:'\",.<>/?",
+    "editor.defaultFormatter": "ms-vscode.powershell"
+  }
 }
