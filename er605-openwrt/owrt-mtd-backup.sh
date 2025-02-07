@@ -1,4 +1,7 @@
 #!/bin/bash
+## Donot use use this
+## Added just for reference
+## from https://openwrt.org/docs/guide-user/installation/generic.backup?do=#create_full_mtd_backup
 
 set -e
 

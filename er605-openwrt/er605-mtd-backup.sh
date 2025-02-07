@@ -11,6 +11,8 @@
 # change back to 192.168.1.1/24
 
 ## Adjust UBI Layout
+# flash 
+
 set -e
 
 OUTPUT_FILE="mtd_backup.tgz"
