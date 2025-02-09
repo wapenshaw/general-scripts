@@ -1,6 +1,7 @@
 # Download smartmontools from https://www.smartmontools.org/
 # Requires SmartMontools 7.4 or later https://sourceforge.net/projects/smartmontools/files/smartmontools/7.4/
 # IMPORTANT - Must be run from an ADMINISTRATOR PowerShell session
+# Usage example: .\test-farm-device.ps1 G:\ H:\
 
 # Set smartctl path
 $smartctlPath = "C:\Program Files\smartmontools\bin\smartctl.exe"
