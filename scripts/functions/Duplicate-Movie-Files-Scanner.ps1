@@ -67,4 +67,4 @@ function Find-DuplicateMovieFiles {
 # Example usage (optional, can be removed if you source this file):
 # Find-DuplicateMovieFiles -RootFolder "Path\To\Your\Movies" -SizeMB 700
 
-Set-Alias -Name dupedelete -Value Find-DuplicateMovieFiles
+Set-Alias dupedelete Find-DuplicateMovieFiles
