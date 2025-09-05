@@ -28,6 +28,7 @@ $dohUrlGoogle = "https://dns.google/dns-query"
 # --------------------------------------------------------------------------
 # --- SCRIPT EXECUTION ---
 # --------------------------------------------------------------------------
+$scriptSuccess = $false # Initialize success flag
 
 try {
     # --- Get the target network adapter first ---
@@ -88,7 +89,51 @@ try {
     Invoke-CimMethod -InputObject $wmiConfig -MethodName "SetTcpipNetbios" -Arguments @{TcpipNetbiosOptions = 1 } | Out-Null
 
     Write-Host "--- Network Configuration Applied Successfully ---" -ForegroundColor Green
+    $scriptSuccess = $true # Set flag to true on success
 }
 catch {
     Write-Host "An error occurred: $($_.Exception.Message)" -ForegroundColor Red
+}
+
+# --------------------------------------------------------------------------
+# --- FINAL VERIFICATION AND RE-INITIALIZATION ---
+# --------------------------------------------------------------------------
+# This section runs after the configuration attempt to ensure settings are active.
+
+if ($scriptSuccess) {
+    Write-Host " "
+    Write-Host "--- Verifying Configuration and Restarting Adapter ---" -ForegroundColor Cyan
+
+    # 1. Clear the DNS cache to force new, encrypted lookups
+    Write-Host "Clearing the DNS client cache..."
+    Clear-DnsClientCache
+
+    # 2. Restart the network adapter to activate all settings
+    Write-Host "Restarting the network adapter '$interfaceAlias'..." -ForegroundColor Yellow
+    Write-Host "Your network connection will be lost for a few moments." -ForegroundColor Yellow
+    Restart-NetAdapter -Name $interfaceAlias
+
+    # 3. Pause for adapter re-initialization
+    Write-Host "Waiting 10 seconds for adapter to fully initialize..."
+    Start-Sleep -Seconds 10
+
+    # 4. Display a clean, simple summary of the final IP configuration
+    Write-Host " "
+    Write-Host "--- Final IP Configuration for '$interfaceAlias' ---" -ForegroundColor Green
+    $ipConfig = Get-NetIPConfiguration -InterfaceAlias $interfaceAlias
+    $ipv4Info = Get-NetIPAddress -InterfaceIndex $ipConfig.InterfaceIndex -AddressFamily IPv4
+    
+    Write-Host "   IPv4 Address. . . . . . . . . . . : $($ipv4Info.IPAddress)"
+    Write-Host "   Subnet Mask . . . . . . . . . . . : $($ipv4Info.SubnetMask)"
+    Write-Host "   Default Gateway . . . . . . . . . : $($ipConfig.IPv4DefaultGateway.NextHop)"
+    # Display all IPv6 addresses found
+    foreach ($ipv6 in $ipConfig.IPv6Address) {
+        Write-Host "   IPv6 Address. . . . . . . . . . . : $($ipv6.IPAddress)"
+    }
+    Write-Host "   DNS Servers . . . . . . . . . . . : $($ipConfig.DNSServer.ServerAddresses -join "`n                                      ")"
+
+}
+else {
+    Write-Host " "
+    Write-Host "Skipping final verification and adapter restart due to configuration errors." -ForegroundColor Yellow
 }
