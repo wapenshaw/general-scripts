@@ -5,11 +5,13 @@
 # --------------------------------------------------------------------------
 
 # --- General Settings ---
-$interfaceAlias = "Ethernet" # <-- IMPORTANT: Replace with your network adapter name (e.g., "Ethernet", "Wi-Fi")
+$interfaceAlias = "Intel" # <-- IMPORTANT: Replace with your network adapter name (e.g., "Ethernet", "Wi-Fi")
 
 # --- IPv4 Configuration ---
-$ipv4Address = "10.10.1.10"
-$ipv4Gateway = "10.10.1.1"
+# $ipv4Address = "10.10.1.10"
+# $ipv4Gateway = "10.10.1.1"
+$ipv4Address = "192.168.1.10"
+$ipv4Gateway = "192.168.1.1"
 $subnetPrefixLength = 23 # This corresponds to a subnet mask of 255.255.254.0
 
 # --- DNS Configuration ---
