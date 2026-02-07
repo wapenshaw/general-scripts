@@ -1,46 +1,91 @@
-# Define the source and destination paths
-$sourceProfilePath = "./my-profile.ps1"
-$functionsFolder = "./functions"
-$destinationProfilePath = "$PROFILE"
-$starshipScriptPath = "./starship.ps1"
+$ErrorActionPreference = "Stop"
 
-# Check if the source profile file exists
-if (-Not (Test-Path -Path $sourceProfilePath)) {
-    Write-Host "Source profile file not found: $sourceProfilePath" -ForegroundColor Red
-    exit 1
+# --- Configuration ---
+$SourceRoot      = $PSScriptRoot
+$SourceProfile   = Join-Path $SourceRoot "my-profile.ps1"
+$SourceFunctions = Join-Path $SourceRoot "functions"
+$SourceStarship  = Join-Path $SourceRoot "starship.ps1"
+
+# Destination config directory (Using XDG-like structure)
+$InstallDir      = Join-Path $HOME ".config\powershell"
+$DestFunctions   = Join-Path $InstallDir "functions"
+$DestProfile     = Join-Path $InstallDir "user_profile.ps1"
+
+# --- 1. Validate Source ---
+if (-not (Test-Path $SourceProfile)) {
+    Write-Error "Source profile not found: $SourceProfile"
 }
 
-# Ensure the directory for the destination profile exists
-$destinationProfileDirectory = [System.IO.Path]::GetDirectoryName($destinationProfilePath)
-if (-Not (Test-Path -Path $destinationProfileDirectory)) {
-    Write-Host "Creating directory for the destination profile: $destinationProfileDirectory"
-    New-Item -ItemType Directory -Path $destinationProfileDirectory -Force
+# --- 2. Prepare Destination ---
+if (-not (Test-Path $InstallDir)) {
+    New-Item -ItemType Directory -Path $InstallDir -Force | Out-Null
+    Write-Host "[+] Created config dir: $InstallDir" -ForegroundColor Cyan
 }
 
-# Read the content of the source profile file
-$sourceProfileContent = Get-Content -Path $sourceProfilePath
-
-# Get all .ps1 files in the functions folder
-$functionFiles = Get-ChildItem -Path $functionsFolder -Filter *.ps1
-Write-Host("Found " + $functionFiles.Count + " function files")
-# Read the content of all function files and merge them into one array
-$mergedContent = @($sourceProfileContent)
-foreach ($file in $functionFiles) {
-    $mergedContent += Get-Content -Path $file.FullName
-    Write-Host("Merged " + $file.Name)
+if (-not (Test-Path $DestFunctions)) {
+    New-Item -ItemType Directory -Path $DestFunctions -Force | Out-Null
+    Write-Host "[+] Created functions dir: $DestFunctions" -ForegroundColor Cyan
 }
 
-# Write the merged content to the destination profile file
-$mergedContent | Set-Content -Path $destinationProfilePath
+# --- 3. Install Files ---
+Write-Host "[*] Installing profile scripts..." -ForegroundColor Yellow
 
-# Execute starship.ps1
-Write-Host "Executing starship.ps1 script..."
-try {
-    & $starshipScriptPath
-    Write-Host "starship.ps1 executed successfully."
-}
-catch {
-    Write-Host "Error executing starship.ps1: $_" -ForegroundColor Yellow
+# Copy main profile
+Copy-Item -Path $SourceProfile -Destination $DestProfile -Force
+Write-Host "    - Copied user_profile.ps1" -ForegroundColor Gray
+
+# Copy functions
+$FunctionFiles = Get-ChildItem -Path $SourceFunctions -Filter "*.ps1"
+foreach ($File in $FunctionFiles) {
+    Copy-Item -Path $File.FullName -Destination $DestFunctions -Force
+    Write-Host "    - Copied function: $($File.Name)" -ForegroundColor Gray
 }
 
-Write-Host "Profile script updated successfully: $destinationProfilePath"
+# --- 4. Update PowerShell $PROFILE ---
+# Ensure parent dir of $PROFILE exists
+$ProfileDir = Split-Path -Parent $PROFILE
+if (-not (Test-Path $ProfileDir)) {
+    New-Item -ItemType Directory -Path $ProfileDir -Force | Out-Null
+}
+
+# Create the loader script content
+$LoaderScript = @"
+# --- Generated Loader by install-profile.ps1 ---
+`$ConfigDir = "$InstallDir"
+`$UserProfile = Join-Path `$ConfigDir "user_profile.ps1"
+
+# 1. Load Main Profile
+if (Test-Path `$UserProfile) {
+    . `$UserProfile
+}
+
+# 2. Load Functions
+if (Test-Path (Join-Path `$ConfigDir "functions")) {
+    Get-ChildItem -Path (Join-Path `$ConfigDir "functions") -Filter "*.ps1" | ForEach-Object {
+        . `$_.FullName
+    }
+}
+"@
+
+# Write to $PROFILE
+Set-Content -Path $PROFILE -Value $LoaderScript -Force
+Write-Host "[+] Updated `$PROFILE at: $PROFILE" -ForegroundColor Green
+
+# --- 5. Run Starship Setup ---
+if (Test-Path $SourceStarship) {
+    Write-Host "`n[*] Running Starship setup..." -ForegroundColor Yellow
+    try {
+        & $SourceStarship
+    }
+    catch {
+        Write-Warning "Starship setup failed: $_"
+    }
+}
+else {
+    Write-Warning "Starship script not found at $SourceStarship"
+}
+
+Write-Host "`n==========================================" -ForegroundColor Cyan
+Write-Host "   PROFILE INSTALLATION COMPLETE" -ForegroundColor Green
+Write-Host "   Restart PowerShell to apply changes." -ForegroundColor Gray
+Write-Host "==========================================" -ForegroundColor Cyan
