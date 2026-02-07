@@ -9,10 +9,10 @@ $action = Read-Host "Do you want to apply or undo the registry tweaks? (Enter 'a
 
 # Set the path based on the user's choice
 if ($action -eq 'apply') {
-    $regFilesPath = ".\registry-tweaks\dos\"
+    $regFilesPath = Join-Path $PSScriptRoot "registry-tweaks\dos"
 }
 elseif ($action -eq 'undo') {
-    $regFilesPath = ".\registry-tweaks\undos\"
+    $regFilesPath = Join-Path $PSScriptRoot "registry-tweaks\undos"
 }
 else {
     Write-Output "Invalid input. Please enter 'apply' or 'undo'."
@@ -20,11 +20,17 @@ else {
 }
 
 # Get all .reg files in the specified folder
-$regFiles = Get-ChildItem -Path $regFilesPath -Filter *.reg
+if (Test-Path $regFilesPath) {
+    $regFiles = Get-ChildItem -Path $regFilesPath -Filter *.reg
 
-foreach ($regFile in $regFiles) {
-    # Import the .reg file into the system registry
-    Start-Process -FilePath "reg.exe" -ArgumentList "import", "`"$($regFile.FullName)`"" -Wait -NoNewWindow
+    foreach ($regFile in $regFiles) {
+        # Import the .reg file into the system registry
+        Write-Host "Importing $($regFile.Name)..." -ForegroundColor Cyan
+        Start-Process -FilePath "reg.exe" -ArgumentList "import", "`"$($regFile.FullName)`"" -Wait -NoNewWindow
+    }
+
+    Write-Output "All .reg files have been processed."
 }
-
-Write-Output "All .reg files have been merged into the system registry."
+else {
+    Write-Error "Registry tweaks directory not found: $regFilesPath"
+}
