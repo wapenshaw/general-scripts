@@ -1,0 +1,1 @@
+https://raw.githubusercontent.com/gijsdev/ublock-hide-yt-shorts/master/list.txt
