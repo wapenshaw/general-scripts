@@ -33,7 +33,7 @@ function gverify {
         Write-Host "Unknown or incorrect remote ❌" -ForegroundColor Red
     }
 
-    # After remote check
+    # After Remote check, add raw URL warning
     $rawRemote = git remote get-url origin
     if ($rawRemote -match "git@github\.com:" -or $rawRemote -match "https://") {
         Write-Host "Remote uses raw URL — VS Code fetch will fail ⚠" -ForegroundColor Yellow
