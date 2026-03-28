@@ -40,6 +40,26 @@ function gverify {
         Write-Host "  → Run: git remote set-url origin <aliased-url>" -ForegroundColor Yellow
     }
 
+    # After the raw URL warning block
+    if ($rawRemote -match "git@github\.com:AIZ-GT/") {
+        $fixedUrl = $rawRemote -replace "git@github\.com:AIZ-GT/", "git@github-assurant:AIZ-GT/"
+        Write-Host "  → Auto-fixing remote..." -ForegroundColor Yellow
+        git remote set-url origin $fixedUrl
+        Write-Host "  Fixed: $fixedUrl" -ForegroundColor Green
+    }
+    elseif ($rawRemote -match "git@github\.com:AIZ-Testing/") {
+        $fixedUrl = $rawRemote -replace "git@github\.com:AIZ-Testing/", "git@github-assurant:AIZ-Testing/"
+        Write-Host "  → Auto-fixing remote..." -ForegroundColor Yellow
+        git remote set-url origin $fixedUrl
+        Write-Host "  Fixed: $fixedUrl" -ForegroundColor Green
+    }
+    elseif ($rawRemote -match "git@github\.com:wapenshaw/") {
+        $fixedUrl = $rawRemote -replace "git@github\.com:wapenshaw/", "git@github-personal:wapenshaw/"
+        Write-Host "  → Auto-fixing remote..." -ForegroundColor Yellow
+        git remote set-url origin $fixedUrl
+        Write-Host "  Fixed: $fixedUrl" -ForegroundColor Green
+    }
+
     # 4. Signing config
     $sign = git config commit.gpgsign
     $key = git config user.signingkey
