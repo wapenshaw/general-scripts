@@ -33,6 +33,13 @@ function gverify {
         Write-Host "Unknown or incorrect remote ❌" -ForegroundColor Red
     }
 
+    # After remote check
+    $rawRemote = git remote get-url origin
+    if ($rawRemote -match "git@github\.com:" -or $rawRemote -match "https://") {
+        Write-Host "Remote uses raw URL — VS Code fetch will fail ⚠" -ForegroundColor Yellow
+        Write-Host "  → Run: git remote set-url origin <aliased-url>" -ForegroundColor Yellow
+    }
+
     # 4. Signing config
     $sign = git config commit.gpgsign
     $key = git config user.signingkey
