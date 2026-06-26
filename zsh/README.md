@@ -1,8 +1,8 @@
 # zsh config
 
-Personal zsh setup for WSL Ubuntu. Modular — each concern lives in its own file.
+Modular personal zsh setup. The repo **is** the config — no symlinks, no copy step.
 
-**Stack:** starship · eza · bat · fd · ripgrep · fzf · zoxide · mise · direnv · nvim · lf · nvm (lazy) · uv
+**Stack:** starship · eza · bat · fd · ripgrep · fzf · zoxide · mise · direnv · nvim · lf · nvm (lazy) · uv · keychain (work)
 
 See [CHEATSHEET.md](./CHEATSHEET.md) for the full alias and keybinding reference.
 
@@ -11,30 +11,49 @@ See [CHEATSHEET.md](./CHEATSHEET.md) for the full alias and keybinding reference
 ## Install
 
 ```bash
-bash ~/wapenshaw/zsh/install.sh
-```
-
-Or after cloning fresh:
-
-```bash
-git clone <your-repo-url> ~/wapenshaw
-bash ~/wapenshaw/zsh/install.sh
+cd /path/to/general-scripts
+./zsh/install.sh           # base
+./zsh/install.sh --work    # base + work modules (Astra / Kubernetes / Azure / SSH agent)
 ```
 
 Open a new terminal — plugins auto-install on first launch.
 
+To remove: `./zsh/install.sh --uninstall`.
+
 ---
 
-## How it works
+## How it works — XDG without symlinks
 
-`install.sh` symlinks everything into place:
+`install.sh` writes a single small file, `~/.zshenv`, that points zsh directly at the repo. That's the entire install footprint.
 
-| Source | Symlinked to |
-|--------|-------------|
-| `zshenv` | `~/.zshenv` |
-| `zsh/*` | `~/.zsh/*` |
+```bash
+# ~/.zshenv (auto-generated)
+export ZDOTDIR="/path/to/general-scripts/zsh"
+# export ZSH_WORK=1   # uncomment (or re-run install --work) to enable work modules
+```
 
-`~/.zshenv` sets `ZDOTDIR="$HOME/.zsh"`, which tells zsh to load `.zshrc`, `.zprofile` etc. from `~/.zsh/` instead of `$HOME`. Editing any file in `zsh/` edits the live config immediately — no sync step needed.
+Three XDG env vars do the rest:
+
+| Var | Set by | Tells zsh/tools to look in |
+|-----|--------|------------------------------|
+| `ZDOTDIR` | `~/.zshenv` | `zsh/` (for `.zshrc`, `.zprofile`, `.zshenv`) |
+| `STARSHIP_CONFIG` | `zsh/zsh/.zshenv` | `zsh/starship.toml` |
+| `XDG_*_HOME` | `zsh/zsh/.zshenv` | `~/.config`, `~/.cache`, `~/.local/share`, `~/.local/state` |
+
+**Why no symlinks:**
+- One source of truth. Edits in the repo are live, with no re-running `install.sh`.
+- No `~/.zsh/` directory to keep in sync. The repo *is* `~/.zsh/`.
+- `~/.zshrc` left over from an old install is silently ignored — zsh reads from `$ZDOTDIR` instead.
+- Work modules toggle on/off via `$ZSH_WORK=1` in `~/.zshenv`. No separate `work/` symlink to manage.
+
+### Sourcing order
+
+zsh reads, in this order:
+1. `/etc/zshenv` (system-wide, immutable)
+2. `~/.zshenv` — sets `ZDOTDIR` (and optionally `ZSH_WORK`)
+3. `$ZDOTDIR/.zshenv` — sets `XDG_*_HOME`, `STARSHIP_CONFIG`, sources work env
+4. `$ZDOTDIR/.zprofile` (login shells) — sets up shared SSH agent
+5. `$ZDOTDIR/.zshrc` — sources every module in order, then starship
 
 ---
 
@@ -42,24 +61,23 @@ Open a new terminal — plugins auto-install on first launch.
 
 | File | Owns |
 |------|------|
+| `.zshenv` | XDG dirs, Starship path, Cargo, work env |
+| `.zprofile` | Login-shell SSH agent (work only) |
 | `.zshrc` | Orchestrator — sources all modules in order |
-| `.zprofile` | Login-shell SSH agent socket setup |
-| `aliases.zsh` | All aliases + dirstack shortcuts |
+| `aliases.zsh` | Aliases + dirstack shortcuts |
 | `bindings.zsh` | Keybindings + ZLE widgets |
 | `completion.zsh` | compinit, zstyles, fuzzy matching |
 | `exports.zsh` | PATH, env vars, shell options |
 | `fzf.zsh` | fzf UI, fd backend, bat preview |
-| `functions.zsh` | WSL, Azure, k8s, git helpers |
+| `functions.zsh` | WSL, git, navigation helpers (general) |
 | `history.zsh` | History options + XDG state path |
 | `nvm.zsh` | Lazy-loaded NVM |
 | `plugins.zsh` | Plugin manager + auto-install |
 | `prompt.zsh` | Starship init |
-| `ssh-agent.zsh` | Stable agent socket |
-| `starship.toml` | Prompt config (Nerd Font required) |
-| `tools.zsh` | mise, keychain, direnv, zoxide |
+| `tools.zsh` | mise, direnv, zoxide |
 | `uv.zsh` | uvdev / uvci / uvtst helpers |
-
-Add `~/.zsh/local.zsh` for machine-specific overrides — it's gitignored.
+| `starship.toml` | Prompt config (Nerd Font required) |
+| `work/` | Work-only modules (aliases, functions, exports, ssh-agent, az.env template) |
 
 ---
 
@@ -75,7 +93,21 @@ Auto-cloned on first shell start via `_zplugin_load`. Update all with `zplugin-u
 
 ---
 
-## Tool install (Ubuntu / WSL)
+## Tool install
+
+### Fedora
+
+```bash
+sudo dnf install -y zsh eza bat fd-find ripgrep fzf direnv neovim keychain
+
+curl -sS https://starship.rs/install.sh | sh
+curl https://mise.run | sh
+curl -LsSf https://astral.sh/uv/install.sh | sh
+```
+
+`fd-find` provides the `fd` binary on Fedora; `eza`, `bat`, `fzf`, `direnv`, `neovim`, `keychain` are all directly available.
+
+### Ubuntu / WSL
 
 ```bash
 sudo apt install zsh eza bat fd-find ripgrep fzf keychain direnv neovim
@@ -87,6 +119,8 @@ ln -sf "$(which fdfind)" ~/.local/bin/fd
 curl -sSfL https://raw.githubusercontent.com/ajeetdsouza/zoxide/main/install.sh | sh
 curl -sS https://starship.rs/install.sh | sh
 curl https://mise.run | sh
-
-# lf: https://github.com/gokcehan/lf/releases
 ```
+
+### lf (terminal file manager)
+
+Either install from your package manager or grab a prebuilt binary from <https://github.com/gokcehan/lf/releases>.
