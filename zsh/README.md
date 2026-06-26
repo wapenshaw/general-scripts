@@ -172,11 +172,92 @@ Add `export PATH="$HOME/.local/bin:$HOME/go/bin:$PATH"` to your environment so t
 - **Avoid `curl ... | sh` from `main` branches.** If you want reproducibility, pin to a tag (e.g. `https://github.com/ajeetdsouza/zoxide/releases/latest/download/install.sh`). The commands above use the official installer scripts which are stable enough for personal use.
 - **`fd-find` vs `fdfind` on Ubuntu** — the package is `fd-find`, the binary is `fdfind`. Fedora's package is `fd-find` but the binary is `fd`. Different naming, same problem solved differently.
 - **Snap installs of `bat` on Ubuntu 22.04+** are sandboxed and don't put `batcat` on PATH for WSL. Use `apt install bat` instead.
+- **WSL interop pollutes PATH with Windows tools.** When interop is on, the Windows PATH (containing `C:\Program Files\...`, etc.) gets prepended. `which python` may return a Windows binary. Workaround if you hit this: add `interop.enabled=false` to `/etc/wsl.conf` and run `wsl --shutdown` from PowerShell, then reopen.
+- **`mise` and `nvm` can fight each other for Node.** This config has both. `mise` is preferred; `nvm.zsh` lazy-loads NVM only when `node`/`npm` is first called. If you don't use NVM at all, `~/.config/zsh/nvm.zsh` is harmless — you can just delete it.
+- **Plugin auto-clone on first launch needs network.** Behind a corporate proxy, set `https_proxy` before `exec zsh -l` so the `_zplugin_load` git clones work.
+
+### After install — required one-time steps
+
+These are NOT done by the install scripts and the config will not work right without them:
+
+#### 1. Set zsh as your default shell (both Linux and WSL)
+
+Without this, opening a new terminal still runs bash. Pick the right command for your setup:
+
+```bash
+# WSL (most common) — works inside any WSL distro
+chsh -s $(which zsh)
+
+# Pure Linux (Fedora / Ubuntu) — same command, same effect
+sudo chsh -s $(which zsh) $USER
+```
+
+Log out and back in (or `exec zsh -l` and reopen the terminal) for the change to take effect.
+
+#### 2. Install a Nerd Font in Windows Terminal (WSL only)
+
+The starship prompt uses Nerd Font glyphs (icons for git, language versions, etc.). Without a Nerd Font you'll see ⬜ boxes in the prompt.
+
+- **Quickest:** install [Cascadia Code Nerd Font](https://github.com/ryanoasis/nerd-fonts/releases) (the version you already have is `Hack Nerd Font`).
+- In Windows Terminal: Settings → Profiles → Defaults → Appearance → Font face → `Hack Nerd Font` (or whichever you installed).
+- In `~/.config/starship.toml` the `os` and similar sections already use the right glyphs.
+
+#### 3. Set Windows Terminal's default profile to WSL
+
+If you installed the `windows-terminal/` config from this repo, it already has the SSH and PowerShell profiles. To make a new tab open your WSL distro by default:
+
+- Windows Terminal → Settings → Startup → Default profile → choose your WSL distro (or the `santa` SSH profile you saved).
+- Or edit `windows-terminal/settings.json` and set `"defaultProfile"` to the WSL profile's `guid`.
+
+#### 4. (Optional) Pin curl|sh scripts to specific releases
+
+The install commands use latest-stable. If you want reproducibility:
+
+```bash
+# Starship — pin to a version
+curl -sS https://github.com/starship/starship/releases/latest/download/install.sh | sh -s -- -y
+
+# zoxide — pin
+curl -sSfL https://raw.githubusercontent.com/ajeetdsouza/zoxide/main/install.sh | sh  # main branch, but stable
+# Or: download a release binary directly
+```
+
+#### 5. (Optional) WSL interop — turn off if you want pure Linux
+
+If Windows tools leaking into WSL's PATH bothers you (e.g. `python` resolves to `C:\Python\python.exe`):
+
+```ini
+# /etc/wsl.conf
+[interop]
+enabled=false
+```
+
+Then from PowerShell: `wsl --shutdown`, reopen. Note: this also disables `explorer.exe .` and `clip.exe` from inside WSL.
 
 ### Verify after install
+
+Run this in a fresh `zsh -l` to confirm everything is wired up:
 
 ```bash
 for cmd in zsh eza bat fd rg fzf zoxide starship mise direnv nvim lf uv bun; do
   command -v "$cmd" >/dev/null 2>&1 && echo "  ✓ $cmd" || echo "  ✗ $cmd"
 done
+
+echo ""
+echo "=== Config ==="
+echo "ZDOTDIR=$ZDOTDIR"
+echo "STARSHIP_CONFIG=$STARSHIP_CONFIG"
+echo "XDG_STATE_HOME=$XDG_STATE_HOME"
+[[ "$ZDOTDIR" == "$HOME/.config/zsh" ]] && echo "  ✓ ZDOTDIR points to XDG location" || echo "  ✗ ZDOTDIR wrong: $ZDOTDIR"
+[[ "$STARSHIP_CONFIG" == "$ZDOTDIR/starship.toml" ]] && echo "  ✓ starship config wired" || echo "  ✗ starship config wrong"
+
+echo ""
+echo "=== Widgets ==="
+for w in history-substring-search-up _zsh_highlight; do
+  type "$w" >/dev/null 2>&1 && echo "  ✓ $w" || echo "  ✗ $w"
+done
+
+echo ""
+echo "=== Functions ==="
+type rsb up open 2>/dev/null | grep "is a shell" | sed 's/^/  /'
 ```
