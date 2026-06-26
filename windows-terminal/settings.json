@@ -96,7 +96,8 @@
     },
     "rendering.graphicsAPI": "direct3d11",
     "showTabsInTitlebar": true,
-    "tabWidthMode": "titleLength",
+    "tabWidthMode": "equal",
     "theme": "system",
+    "schemes": [],
     "useAcrylicInTabRow": true
 }
