@@ -71,12 +71,25 @@ bold()   { printf '\033[1m%s\033[0m\n' "$1"; }
 detect_sys_zshenv
 
 # ---- sudo helper ---------------------------------------------------------
+# Decide whether we can use sudo. We can use it if:
+#   - we're root, OR
+#   - we have passwordless sudo, OR
+#   - we're in an interactive terminal (sudo can prompt for a password).
+# In the non-interactive case without passwordless sudo, we print the
+# block to add manually instead of failing partway.
 SUDO=""
 SUDO_OK=0
+INTERACTIVE=0
+[[ -t 0 && -t 1 ]] && INTERACTIVE=1
+
 if [[ "$EUID" -eq 0 ]]; then
   SUDO_OK=1
 elif command -v sudo >/dev/null 2>&1; then
   if sudo -n true 2>/dev/null; then
+    SUDO="sudo"
+    SUDO_OK=1
+  elif [[ "$INTERACTIVE" -eq 1 ]]; then
+    # Interactive: let sudo prompt for the password at write time.
     SUDO="sudo"
     SUDO_OK=1
   fi
