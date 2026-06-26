@@ -55,7 +55,19 @@ This PowerShell script checks if it is running with administrator privileges. If
 
 ---
 
-## 3. [Copy Starship Configuration Script](./scripts/starship.ps1)
+## 3. [WSL Zsh Configuration](./zsh/)
+
+A modular zsh setup for WSL Ubuntu built around starship, eza, bat, fzf, zoxide, mise, and uv. Config is split into focused files (aliases, bindings, completion, exports, etc.) all living under `~/.zsh/` via ZDOTDIR. Symlink-based install — editing the repo file edits the live config.
+
+```bash
+bash ~/wapenshaw/zsh/install.sh
+```
+
+See [zsh/README.md](./zsh/README.md) for the full setup guide and [zsh/CHEATSHEET.md](./zsh/CHEATSHEET.md) for all aliases and keybindings.
+
+---
+
+## 4. [Copy Starship Configuration Script](./scripts/starship.ps1)
 
 ### Description
 
