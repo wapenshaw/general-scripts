@@ -1,7 +1,5 @@
 # Login-shell setup — runs once per session, before .zshrc.
-# Work-specific SSH agent setup lives in work/ssh-agent.zsh (only sourced
-# when ZSH_WORK=1 in ~/.zshenv).
+# Sets up a stable SSH agent socket at ~/.ssh/agent.sock so zsh, VS Code,
+# git, and keychain all share the same agent.
 
-if [[ "${ZSH_WORK:-0}" == "1" && -f "$ZDOTDIR/work/ssh-agent.zsh" ]]; then
-  source "$ZDOTDIR/work/ssh-agent.zsh"
-fi
+source "$ZDOTDIR/ssh-agent.zsh"

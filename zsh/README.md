@@ -104,7 +104,7 @@ XDG Base Directory spec. See the [How it works](#how-it-works--copy--system-zshe
 | File | Owns |
 |------|------|
 | `.zshenv` | XDG dirs, Starship path, Cargo, work env |
-| `.zprofile` | Login-shell SSH agent (work only) |
+| `.zprofile` | Login-shell SSH agent (fixed socket at `~/.ssh/agent.sock`) |
 | `.zshrc` | Orchestrator — sources all modules in order |
 | `aliases.zsh` | Aliases + dirstack shortcuts |
 | `bindings.zsh` | Keybindings + ZLE widgets |
