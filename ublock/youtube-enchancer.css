@@ -1,0 +1,42 @@
+/* FORCE larger YouTube comments everywhere */
+
+html body ytd-comment-view-model,
+html body ytd-comment-view-model * {
+    font-size: inherit !important;
+}
+
+/* Main comment text */
+html body ytd-comment-view-model #content-text .ytAttributedStringHost {
+    font-size: 2rem !important;
+    line-height: 2.8rem !important;
+}
+
+/* Username */
+html body ytd-comment-view-model #author-text,
+html body ytd-comment-view-model #author-text * {
+    font-size: 1.6rem !important;
+}
+
+/* Timestamp */
+html body ytd-comment-view-model #published-time-text,
+html body ytd-comment-view-model #published-time-text * {
+    font-size: 1.3rem !important;
+}
+
+/* Like/dislike count */
+html body ytd-comment-engagement-bar #vote-count-middle {
+    font-size: 1.6rem !important;
+    line-height: 1.6rem !important;
+}
+
+/* Reply button */
+html body ytd-comment-engagement-bar #reply-button-end,
+html body ytd-comment-engagement-bar #reply-button-end * {
+    font-size: 1.5rem !important;
+}
+
+/* Expand/collapse buttons */
+html body ytd-expander #more,
+html body ytd-expander #less {
+    font-size: 1.5rem !important;
+}
