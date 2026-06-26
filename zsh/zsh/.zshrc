@@ -10,6 +10,7 @@ source "$ZDOTDIR/fzf.zsh"
 source "$ZDOTDIR/tools.zsh"
 source "$ZDOTDIR/nvm.zsh"
 source "$ZDOTDIR/aliases.zsh"
+source "$ZDOTDIR/functions.zsh"
 source "$ZDOTDIR/uv.zsh"
 source "$ZDOTDIR/bindings.zsh"
 source "$ZDOTDIR/plugins.zsh"   # fast-syntax-highlighting must stay last plugin

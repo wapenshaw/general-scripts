@@ -1,0 +1,102 @@
+{
+    "$help": "https://aka.ms/terminal-documentation",
+    "$schema": "https://aka.ms/terminal-profiles-schema",
+    "actions":
+    [
+        {
+            "command":
+            {
+                "action": "sendInput",
+                "input": "\u001b[13;2u"
+            },
+            "id": "User.sendInput.ShiftEnterCustom"
+        },
+        {
+            "command": "toggleFocusMode",
+            "id": "User.toggleFocusMode"
+        }
+    ],
+    "alwaysShowTabs": true,
+    "copyFormatting": "none",
+    "copyOnSelect": false,
+    "defaultProfile": "{574e775e-4f2a-5b96-ac1e-a2962a402336}",
+    "disabledProfileSources": [],
+    "keybindings":
+    [
+        {
+            "id": "Terminal.DuplicatePaneAuto",
+            "keys": "alt+shift+d"
+        },
+        {
+            "id": "User.sendInput.ShiftEnterCustom",
+            "keys": "shift+enter"
+        },
+        {
+            "id": "Terminal.CopyToClipboard",
+            "keys": "ctrl+c"
+        },
+        {
+            "id": "Terminal.PasteFromClipboard",
+            "keys": "ctrl+v"
+        },
+        {
+            "id": "Terminal.ToggleCommandPalette",
+            "keys": "f1"
+        },
+        {
+            "id": "Terminal.ToggleFullscreen",
+            "keys": "ctrl+shift+f11"
+        },
+        {
+            "id": "User.toggleFocusMode",
+            "keys": "f11"
+        }
+    ],
+    "newTabMenu":
+    [
+        {
+            "type": "remainingProfiles"
+        }
+    ],
+    "newTabPosition": "afterCurrentTab",
+    "profiles":
+    {
+        "defaults":
+        {
+            "colorScheme": "One Half Dark"
+        },
+        "list":
+        [
+            {
+                "colorScheme": "Dark+",
+                "font":
+                {
+                    "face": "Hack Nerd Font"
+                },
+                "guid": "{574e775e-4f2a-5b96-ac1e-a2962a402336}",
+                "hidden": false,
+                "name": "PowerShell",
+                "source": "Windows.Terminal.PowershellCore",
+                "startingDirectory": "z:\\"
+            },
+            {
+                "commandline": "ssh santa",
+                "font":
+                {
+                    "face": "Hack Nerd Font"
+                },
+                "guid": "{02d9a296-b49e-4d90-bff9-7707d3378e66}",
+                "hidden": false,
+                "icon": "E:\\Downloads\\pngegg (1).png",
+                "name": "santa",
+                "suppressApplicationTitle": false,
+                "tabTitle": "santa"
+            }
+        ]
+    },
+    "rendering.graphicsAPI": "direct3d11",
+    "showTabsInTitlebar": true,
+    "tabWidthMode": "titleLength",
+    "theme": "system",
+    "useAcrylicInTabRow": true
+}
