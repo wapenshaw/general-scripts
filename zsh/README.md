@@ -98,32 +98,85 @@ Auto-cloned on first shell start via `_zplugin_load`. Update all with `zplugin-u
 
 ## Tool install
 
+This config uses: `zsh` `eza` `bat` `fd` `ripgrep` `fzf` `zoxide` `starship` `mise` `direnv` `neovim` `lf` `uv` `bun` (+ `keychain` for work mode).
+
 ### Fedora
 
 ```bash
+# System packages — Fedora names fd as 'fd-find' (binary is `fd`), so no symlink needed
 sudo dnf install -y zsh eza bat fd-find ripgrep fzf direnv neovim keychain
 
+# Ensure ~/.local/bin exists and is in PATH (needed for curl-installed tools)
+mkdir -p ~/.local/bin
+case ":$PATH:" in
+  *":$HOME/.local/bin:"*) ;;
+  *) export PATH="$HOME/.local/bin:$PATH" ;;
+esac
+
+# Starship, mise, uv install to ~/.local/bin by default — no sudo
 curl -sS https://starship.rs/install.sh | sh
 curl https://mise.run | sh
 curl -LsSf https://astral.sh/uv/install.sh | sh
+
+# lf — Fedora doesn't ship it; use the Go install (one-time, needs Go)
+sudo dnf install -y golang && go install github.com/gokcehan/lf@latest
+# Or grab a prebuilt binary: https://github.com/gokcehan/lf/releases
+
+# bun (used for some completions)
+curl -fsSL https://bun.sh/install | bash
 ```
 
-`fd-find` provides the `fd` binary on Fedora; `eza`, `bat`, `fzf`, `direnv`, `neovim`, `keychain` are all directly available.
+Add `export PATH="$HOME/.local/bin:$HOME/go/bin:$PATH"` to your environment (in `/etc/zshenv` or `~/.zshenv`) so the Go-installed `lf` and curl-installed tools are found on every shell start.
 
 ### Ubuntu / WSL
 
 ```bash
-sudo apt install zsh eza bat fd-find ripgrep fzf keychain direnv neovim
+# System packages. NOTE: Ubuntu's `bat` package installs `batcat`; `fd-find` installs `fdfind`.
+sudo apt install -y zsh eza bat fd-find ripgrep fzf direnv neovim keychain
 
-# Ubuntu renames bat and fd — symlink them
-ln -sf "$(which batcat)" ~/.local/bin/bat
-ln -sf "$(which fdfind)" ~/.local/bin/fd
+# Make ~/.local/bin exist before symlinking into it (CRITICAL on fresh WSL)
+mkdir -p ~/.local/bin
+case ":$PATH:" in
+  *":$HOME/.local/bin:"*) ;;
+  *) export PATH="$HOME/.local/bin:$PATH" ;;
+esac
 
-curl -sSfL https://raw.githubusercontent.com/ajeetdsouza/zoxide/main/install.sh | sh
+# Symlink Ubuntu's renamed binaries so the config's `bat` and `fd` calls work
+ln -sf "$(command -v batcat)" ~/.local/bin/bat
+ln -sf "$(command -v fdfind)" ~/.local/bin/fd
+
+# Starship, mise, uv install to ~/.local/bin
 curl -sS https://starship.rs/install.sh | sh
 curl https://mise.run | sh
+curl -LsSf https://astral.sh/uv/install.sh | sh
+
+# zoxide
+curl -sSfL https://raw.githubusercontent.com/ajeetdsouza/zoxide/main/install.sh | sh
+
+# lf — Ubuntu doesn't ship it
+sudo apt install -y golang-go && go install github.com/gokcehan/lf@latest
+# Or grab a prebuilt binary: https://github.com/gokcehan/lf/releases
+
+# bun (used for some completions)
+curl -fsSL https://bun.sh/install | bash
 ```
 
-### lf (terminal file manager)
+Add `export PATH="$HOME/.local/bin:$HOME/go/bin:$PATH"` to your environment so the Go-installed `lf` and curl-installed tools are found on every shell start.
 
-Either install from your package manager or grab a prebuilt binary from <https://github.com/gokcehan/lf/releases>.
+### WSL-specific gotchas
+
+- **`~/.local/bin` does not exist on a fresh WSL install.** The rad-zsh README's `ln -s $(which batcat) ~/.local/bin/bat` fails silently if you skip the `mkdir -p`. The commands above always create it first.
+- **`~/.local/bin` is not always in `$PATH`** on fresh WSL. The `case` block above adds it for the current session; the export at the end of each section makes it persistent.
+- **starship/mise install to `~/.local/bin`**, which won't be on PATH until you put it there. New shells will work after that one-time export.
+- **Network access in WSL** — these installers all use `curl` over HTTPS. Works through WSL's NAT; no special config needed.
+- **Avoid `curl ... | sh` from `main` branches.** If you want reproducibility, pin to a tag (e.g. `https://github.com/ajeetdsouza/zoxide/releases/latest/download/install.sh`). The commands above use the official installer scripts which are stable enough for personal use.
+- **`fd-find` vs `fdfind` on Ubuntu** — the package is `fd-find`, the binary is `fdfind`. Fedora's package is `fd-find` but the binary is `fd`. Different naming, same problem solved differently.
+- **Snap installs of `bat` on Ubuntu 22.04+** are sandboxed and don't put `batcat` on PATH for WSL. Use `apt install bat` instead.
+
+### Verify after install
+
+```bash
+for cmd in zsh eza bat fd rg fzf zoxide starship mise direnv nvim lf uv bun; do
+  command -v "$cmd" >/dev/null 2>&1 && echo "  ✓ $cmd" || echo "  ✗ $cmd"
+done
+```
