@@ -1,6 +1,6 @@
 # zsh config
 
-Modular personal zsh setup. The repo **is** the config — no per-file symlinks, no per-user `~/.zshenv` shim.
+Modular personal zsh setup. The repo is copied into `~/.config/zsh/` on install — no symlinks, no per-user shim.
 
 **Stack:** starship · eza · bat · fd · ripgrep · fzf · zoxide · mise · direnv · nvim · lf · nvm (lazy) · uv · keychain (work)
 
@@ -16,15 +16,19 @@ cd /path/to/general-scripts
 ./zsh/install.sh --work    # base + work modules (Astra / Kubernetes / Azure / SSH agent)
 ```
 
-You'll be prompted for your sudo password once — it appends a small block to `/etc/zshenv` (or `/etc/zsh/zshenv` on Arch) so zsh finds the config.
+You'll be prompted for your sudo password once — install.sh appends a small block to `/etc/zshenv` (or `/etc/zsh/zshenv` on Arch) so zsh finds the config.
 
 To remove: `./zsh/install.sh --uninstall`.
 
+To sync changes from the repo: re-run `./install.sh [--work]`.
+
 ---
 
-## How it works — XDG, no per-user shim
+## How it works — copy + system zshenv
 
-The repo's zsh config lives at `~/.config/zsh/` (the standard XDG location). The bridge between `$XDG_CONFIG_HOME` and zsh is one small block in the system zshenv file:
+The install has two parts:
+
+**1. A small block in the system zshenv** (one-time, requires sudo):
 
 ```sh
 # /etc/zshenv (or /etc/zsh/zshenv on Arch) — managed by install.sh
@@ -36,13 +40,16 @@ if [[ -d "$XDG_CONFIG_HOME/zsh" ]]; then
 fi
 ```
 
-zsh reads `/etc/zshenv` on every invocation (always, cannot be skipped), so this sets `ZDOTDIR` before any user config is loaded. Every subsequent file (`.zshenv`, `.zshrc`, `.zprofile`) is then read from `$XDG_CONFIG_HOME/zsh/`.
+zsh reads this on every invocation (always, cannot be skipped), so it sets `ZDOTDIR` before any user config is loaded.
 
-**Why this is the right design:**
-- No `~/.zshenv` to manage per user. Nothing in your home directory points at the config.
-- The repo lives at the XDG path. `~/.config/zsh/.zshrc` is just the repo's `.zshrc`. Edits in the repo are live.
-- A single directory symlink (`~/.config/zsh` → repo location) bridges the dotfiles repo to the XDG path. No per-file symlinks.
-- Work modules toggle on/off via `$ZSH_WORK=1` in `~/.config/zsh/.zshenv`. Re-run `install.sh --work` to flip the bit in the right place.
+**2. A copy of the repo's `zsh/` files** at `~/.config/zsh/`. Every subsequent zsh file (`.zshenv`, `.zshrc`, `.zprofile`) is read from there.
+
+**Why this design:**
+- `~/.config/zsh/` is the standard XDG location. Nothing in `$HOME` references the repo path.
+- No symlinks at all — repo and config dir are independent.
+- Re-running `install.sh` re-syncs the copy from the repo. The repo is the source of truth; `~/.config/zsh/` is the installed snapshot.
+- Plugins still auto-clone on first launch into `~/.config/zsh/plugins/`. They survive re-runs of install.sh (the copy step skips `plugins/`).
+- Work modules toggle via `$ZSH_WORK=1` in the installed `.zshenv` — install.sh adds or removes that line based on the `--work` flag.
 
 ### Sourcing order
 

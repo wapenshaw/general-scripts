@@ -1,32 +1,42 @@
 #!/usr/bin/env bash
-# install.sh — point zsh at this repo via XDG_CONFIG_HOME
+# install.sh — copy this repo's zsh config into ~/.config/zsh/
 #
-# The repo lives at the standard XDG location: ~/.config/zsh/
-# ZDOTDIR is set in /etc/zsh/zshenv (one-time, requires sudo) so no
-# per-user ~/.zshenv bootstrap file is needed.
+# No symlinks, no per-user shim. The repo's zsh/ is copied into
+# ~/.config/zsh/ (the XDG location), and ZDOTDIR is set in the system
+# zshenv (/etc/zshenv or /etc/zsh/zshenv) so zsh finds it.
 #
 # Usage:
 #   ./install.sh          # base install
 #   ./install.sh --work   # also enable work modules
 #   ./install.sh --uninstall
 #
-# Safe to re-run; existing files are backed up.
+# Safe to re-run; managed block in /etc/zshenv is replaced in place.
 set -euo pipefail
 
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-SOURCE_DIR="$REPO/zsh"         # the dir that becomes ~/.config/zsh
+SOURCE_DIR="$REPO/zsh"         # the dir copied into ~/.config/zsh
 TARGET_DIR="$HOME/.config/zsh"
 # System zshenv locations to try, in order. First match wins.
 SYS_ZSHENV_CANDIDATES=(
   "/etc/zshenv"          # Fedora, Debian, upstream default
   "/etc/zsh/zshenv"      # Arch
-  "/etc/zshenv.d/zsh"    # some other distros
 )
 MARKER_BEGIN="# >>> zsh/install.sh managed block >>>"
 MARKER_END="# <<< zsh/install.sh managed block <<<"
 TS="$(date +%Y%m%d%H%M%S)"
 
-# Find the system zshenv we can write to. Falls back to the first candidate.
+# Files inside the repo that should never be copied to ~/.config/zsh.
+# - plugins/ is auto-cloned on first launch by _zplugin_load
+# - install.sh is a meta file, not config
+# - README/CHEATSHEET are docs, optional
+EXCLUDE_PATTERNS=(
+  "plugins/"
+  "install.sh"
+  "README.md"
+  "CHEATSHEET.md"
+  ".gitignore"
+)
+
 detect_sys_zshenv() {
   for cand in "${SYS_ZSHENV_CANDIDATES[@]}"; do
     if [[ -f "$cand" || -d "$(dirname "$cand")" ]]; then
@@ -61,14 +71,11 @@ bold()   { printf '\033[1m%s\033[0m\n' "$1"; }
 detect_sys_zshenv
 
 # ---- sudo helper ---------------------------------------------------------
-# Returns the prefix to use for elevated commands (empty for root).
-# Sets SUDO_OK=1 if we have a usable sudo, 0 otherwise.
 SUDO=""
 SUDO_OK=0
 if [[ "$EUID" -eq 0 ]]; then
   SUDO_OK=1
 elif command -v sudo >/dev/null 2>&1; then
-  # -n: non-interactive; fail if a password is required.
   if sudo -n true 2>/dev/null; then
     SUDO="sudo"
     SUDO_OK=1
@@ -95,7 +102,6 @@ write_system_zshenv() {
   # shellcheck disable=SC2064
   trap "rm -f '$tmp'" RETURN
 
-  # Strip any prior block, keep everything else in the file.
   if [[ -f "$SYS_ZSHENV" ]]; then
     $SUDO cp "$SYS_ZSHENV" "$tmp"
     if grep -qF "$MARKER_BEGIN" "$tmp"; then
@@ -136,29 +142,69 @@ remove_system_zshenv() {
   yellow "Removed managed block from $SYS_ZSHENV"
 }
 
-# ---- repo → ~/.config/zsh bridge ----------------------------------------
-link_repo() {
-  mkdir -p "$(dirname "$TARGET_DIR")"
-
-  if [[ -e "$TARGET_DIR" || -L "$TARGET_DIR" ]]; then
-    if [[ -L "$TARGET_DIR" && "$(readlink -f "$TARGET_DIR")" == "$(readlink -f "$SOURCE_DIR")" ]]; then
-      green "~/.config/zsh already points at the repo"
-      return
+# ---- copy repo → ~/.config/zsh ------------------------------------------
+should_exclude() {
+  local rel="$1"
+  for pat in "${EXCLUDE_PATTERNS[@]}"; do
+    if [[ "$rel" == "$pat"* || "$rel" == "$pat" ]]; then
+      return 0
     fi
-    yellow "$TARGET_DIR already exists and is not a link to this repo."
-    yellow "  Leaving it alone. Remove it manually if you want to relink:"
-    yellow "  rm $TARGET_DIR && re-run install.sh"
-    return
+  done
+  # Work files are only included with --work
+  if [[ "$rel" == work/* && "$WORK" -ne 1 ]]; then
+    return 0
   fi
-
-  ln -s "$SOURCE_DIR" "$TARGET_DIR"
-  green "Linked $TARGET_DIR → $SOURCE_DIR"
+  return 1
 }
 
-unlink_repo() {
+copy_repo() {
+  mkdir -p "$TARGET_DIR"
+
+  # If the user previously had a symlink here, remove it so we can copy
+  # files into the path directly.
   if [[ -L "$TARGET_DIR" ]]; then
     rm "$TARGET_DIR"
-    yellow "Removed symlink $TARGET_DIR"
+    yellow "Removed legacy symlink at $TARGET_DIR"
+  fi
+
+  # Use git ls-files to get tracked files only (no plugins/, no .git/, etc.)
+  local files
+  files=$(git -C "$REPO" ls-files zsh/)
+
+  local copied=0
+  while IFS= read -r src; do
+    # src is like "zsh/aliases.zsh" or "zsh/work/functions.zsh"
+    local rel="${src#zsh/}"
+    should_exclude "$rel" && continue
+    [[ -d "$REPO/$src" ]] && continue
+
+    local dst="$TARGET_DIR/$rel"
+    mkdir -p "$(dirname "$dst")"
+    cp "$REPO/$src" "$dst"
+    copied=$((copied + 1))
+  done <<< "$files"
+
+  green "Copied $copied files from repo into $TARGET_DIR"
+}
+
+# Append ZSH_WORK=1 to the installed .zshenv if --work was passed.
+apply_work_flag() {
+  local zshenv="$TARGET_DIR/.zshenv"
+  if [[ "$WORK" -ne 1 ]]; then
+    # Remove the line if it's there (in case of a re-run without --work)
+    if [[ -f "$zshenv" ]] && grep -qF 'export ZSH_WORK=1' "$zshenv"; then
+      sed -i '/^export ZSH_WORK=1$/d' "$zshenv"
+      yellow "Removed ZSH_WORK=1 from installed .zshenv"
+    fi
+    return
+  fi
+  if [[ ! -f "$zshenv" ]]; then
+    yellow "Cannot enable --work: $zshenv not found"
+    return
+  fi
+  if ! grep -qF 'export ZSH_WORK=1' "$zshenv"; then
+    printf '\n# Work modules enabled (Astra/Kubernetes/CA/SSH-agent).\nexport ZSH_WORK=1\n' >> "$zshenv"
+    green "Set ZSH_WORK=1 in installed .zshenv"
   fi
 }
 
@@ -176,7 +222,15 @@ cleanup_legacy_shim() {
 # =========================================================================
 if [[ "$UNINSTALL" -eq 1 ]]; then
   bold "==> Uninstalling"
-  unlink_repo
+  if [[ -d "$TARGET_DIR" || -L "$TARGET_DIR" ]]; then
+    if [[ -L "$TARGET_DIR" ]]; then
+      rm "$TARGET_DIR"
+    else
+      # Back up the user's installed config rather than deleting it.
+      mv "$TARGET_DIR" "$TARGET_DIR.uninstalled.$TS"
+    fi
+    yellow "Removed $TARGET_DIR (backup at $TARGET_DIR.uninstalled.$TS if it was a dir)"
+  fi
   remove_system_zshenv
   bold "==> Done"
   exit 0
@@ -184,7 +238,8 @@ fi
 
 bold "==> Installing"
 write_system_zshenv
-link_repo
+copy_repo
+apply_work_flag
 cleanup_legacy_shim
 
 echo ""
@@ -193,17 +248,18 @@ echo "  Open a new terminal or run:  exec zsh -l"
 echo ""
 echo "  Layout:"
 echo "    $SYS_ZSHENV      → sets ZDOTDIR (managed)"
-echo "    ~/.config/zsh        → symlink to $SOURCE_DIR"
-echo "    ~/.config/zsh/.zshenv → XDG vars, starship, work env"
-echo "    ~/.config/zsh/.zshrc  → all modules + starship"
+echo "    $TARGET_DIR        → copied from the repo"
+echo "    $TARGET_DIR/.zshenv → XDG vars, starship, work env"
+echo "    $TARGET_DIR/.zshrc  → all modules + starship"
 echo ""
 echo "  First launch auto-installs missing plugins:"
 echo "    zsh-autosuggestions"
 echo "    zsh-history-substring-search"
 echo "    fast-syntax-highlighting"
 echo ""
-echo "  To toggle work modules, re-run:  ./install.sh --work"
-echo "  To remove everything:           ./install.sh --uninstall"
+echo "  To re-sync after editing the repo:  ./install.sh [--work]"
+echo "  To toggle work modules:             ./install.sh --work"
+echo "  To remove everything:               ./install.sh --uninstall"
 echo ""
 echo "  Recommended tools to install:"
 echo "    eza bat fd-find ripgrep fzf zoxide starship mise direnv keychain nvm lf nvim"
