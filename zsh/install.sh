@@ -184,20 +184,48 @@ copy_repo() {
   local files
   files=$(git -C "$REPO" ls-files zsh/)
 
-  local copied=0
+  # Build the set of paths we expect to exist after the copy.
+  local -A expected
   while IFS= read -r src; do
-    # src is like "zsh/aliases.zsh" or "zsh/work/functions.zsh"
     local rel="${src#zsh/}"
     should_exclude "$rel" && continue
     [[ -d "$REPO/$src" ]] && continue
-
-    local dst="$TARGET_DIR/$rel"
-    mkdir -p "$(dirname "$dst")"
-    cp "$REPO/$src" "$dst"
-    copied=$((copied + 1))
+    expected["$rel"]=1
   done <<< "$files"
 
+  # Copy each tracked file in.
+  local copied=0
+  for rel in "${!expected[@]}"; do
+    local dst="$TARGET_DIR/$rel"
+    mkdir -p "$(dirname "$dst")"
+    cp "$REPO/zsh/$rel" "$dst"
+    copied=$((copied + 1))
+  done
+
+  # Remove files that USED to be tracked but no longer are. Walk the
+  # installed tree and delete any regular file that isn't in $expected
+  # and isn't user-created (plugins/, work/az.env).
+  local removed=0
+  if [[ -d "$TARGET_DIR" ]]; then
+    while IFS= read -r -d '' f; do
+      local rel="${f#$TARGET_DIR/}"
+      # Skip excluded/auto-managed paths
+      case "$rel" in
+        plugins/*|work/az.env|.zshenv.uninstalled.*) continue ;;
+      esac
+      # Skip directories
+      [[ -d "$f" ]] && continue
+      # If it's in the expected set, keep it
+      [[ -n "${expected[$rel]:-}" ]] && continue
+      rm "$f"
+      removed=$((removed + 1))
+    done < <(find "$TARGET_DIR" -type f -print0 2>/dev/null)
+  fi
+
   green "Copied $copied files from repo into $TARGET_DIR"
+  if [[ "$removed" -gt 0 ]]; then
+    yellow "Removed $removed stale file(s) that are no longer in the repo"
+  fi
 }
 
 # Append ZSH_WORK=1 to the installed .zshenv if --work was passed.
@@ -275,7 +303,7 @@ echo "  To toggle work modules:             ./install.sh --work"
 echo "  To remove everything:               ./install.sh --uninstall"
 echo ""
 echo "  Recommended tools to install:"
-echo "    eza bat fd-find ripgrep fzf zoxide starship mise direnv keychain nvm lf nvim"
+echo "    eza bat fd-find ripgrep fzf zoxide starship mise direnv keychain lf nvim"
 
 if [[ "$WORK" -eq 1 ]]; then
   echo ""

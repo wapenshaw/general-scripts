@@ -2,7 +2,7 @@
 
 Modular personal zsh setup. The repo is copied into `~/.config/zsh/` on install — no symlinks, no per-user shim.
 
-**Stack:** starship · eza · bat · fd · ripgrep · fzf · zoxide · mise · direnv · nvim · lf · nvm (lazy) · uv · keychain (work)
+**Stack:** starship · eza · bat · fd · ripgrep · fzf · zoxide · mise · direnv · nvim · lf · uv · keychain (work)
 
 See [CHEATSHEET.md](./CHEATSHEET.md) for the full alias and keybinding reference.
 
@@ -60,6 +60,45 @@ zsh reads this on every invocation (always, cannot be skipped), so it sets `ZDOT
 
 ---
 
+## Design choices
+
+These are decisions baked into the config that aren't obvious from reading the file names. If something doesn't match your workflow, edit the relevant file — every choice has a clear override point.
+
+### nvm removed — use `mise` for Node
+
+Earlier versions of this config shipped a `nvm.zsh` that lazy-loaded NVM. It was removed. Use [mise](https://mise.jdx.dev/) for Node version management:
+
+```bash
+# In any project directory
+echo 'node = "20"' > .mise.toml
+mise use node@20
+mise install
+```
+
+Mise handles Node, Ruby, Go, Java, and more from a single `~/.config/mise/config.toml` or per-project `.mise.toml`. It's faster than nvm (single binary shim, no shell function) and doesn't have the NVM "slow first call" tax.
+
+If you still need NVM, you can recreate `~/.config/zsh/nvm.zsh` from the deleted file's git history (`git log --diff-filter=D -- zsh/zsh/nvm.zsh`).
+
+### uv prevails over mise for Python
+
+Both `mise` and `uv` are in the config. They don't conflict, but the **division of labor is**:
+
+- **`mise` for everything except Python** — Node, Ruby, Go, etc. via `~/.config/mise/config.toml` and per-project `.mise.toml`.
+- **`uv` for Python exclusively** — `uv` is purpose-built for Python, faster than `pyenv`/`python-build`, and handles venvs, package installs, lockfiles, and Python version management in one tool. It uses `uv.lock` and `pyproject.toml` instead of `requirements.txt`.
+
+If you let mise manage Python too, you'll get duplicate Python installs and `python` resolving to whichever loaded first. Either:
+
+- Don't put `python = "..."` in your `mise.toml` — let `uv` handle Python versions via `uv python install 3.12` or `requires-python` in `pyproject.toml`.
+- Or tell mise to skip Python entirely: in `~/.config/mise/config.toml`, set `[env]` with `MISE_PYTHON=0` or use `mise settings set python_compile false`.
+
+The `uv.zsh` module provides `uvdev`, `uvci`, `uvtst` shortcuts for the common work flows (`uv lock --upgrade && uv sync --dev` etc.).
+
+### Why `~/.config/zsh` instead of `~/.zsh`
+
+XDG Base Directory spec. See the [How it works](#how-it-works--copy--system-zshenv) section above for the bootstrap chain.
+
+---
+
 ## Module files
 
 | File | Owns |
@@ -74,7 +113,6 @@ zsh reads this on every invocation (always, cannot be skipped), so it sets `ZDOT
 | `fzf.zsh` | fzf UI, fd backend, bat preview |
 | `functions.zsh` | WSL, git, navigation helpers (general) |
 | `history.zsh` | History options + XDG state path |
-| `nvm.zsh` | Lazy-loaded NVM |
 | `plugins.zsh` | Plugin manager + auto-install |
 | `prompt.zsh` | Starship init |
 | `tools.zsh` | mise, direnv, zoxide |
@@ -173,7 +211,6 @@ Add `export PATH="$HOME/.local/bin:$HOME/go/bin:$PATH"` to your environment so t
 - **`fd-find` vs `fdfind` on Ubuntu** — the package is `fd-find`, the binary is `fdfind`. Fedora's package is `fd-find` but the binary is `fd`. Different naming, same problem solved differently.
 - **Snap installs of `bat` on Ubuntu 22.04+** are sandboxed and don't put `batcat` on PATH for WSL. Use `apt install bat` instead.
 - **WSL interop pollutes PATH with Windows tools.** When interop is on, the Windows PATH (containing `C:\Program Files\...`, etc.) gets prepended. `which python` may return a Windows binary. Workaround if you hit this: add `interop.enabled=false` to `/etc/wsl.conf` and run `wsl --shutdown` from PowerShell, then reopen.
-- **`mise` and `nvm` can fight each other for Node.** This config has both. `mise` is preferred; `nvm.zsh` lazy-loads NVM only when `node`/`npm` is first called. If you don't use NVM at all, `~/.config/zsh/nvm.zsh` is harmless — you can just delete it.
 - **Plugin auto-clone on first launch needs network.** Behind a corporate proxy, set `https_proxy` before `exec zsh -l` so the `_zplugin_load` git clones work.
 
 ### After install — required one-time steps
