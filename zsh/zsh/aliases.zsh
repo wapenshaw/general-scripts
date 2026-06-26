@@ -1,7 +1,5 @@
 # Navigation
 alias -- -='cd -'
-alias cda='cd "$ASTRA_HOME"'
-alias astra='cd "$ASTRA_HOME/Common-Automation"'
 
 # Dirstack — cd to numbered history positions (auto_pushd makes every cd push)
 alias dirh='dirs -v'   # show numbered dirstack
@@ -82,12 +80,4 @@ alias gadog='PAGER="less -F -X" git log --all --decorate --oneline --graph'
 alias gs='git status --short'
 alias gst='git status'
 
-# Kubernetes / Infra
-alias k='kubectl'
-alias h='helm'
-alias tf='terraform'
-alias kctx='kubectl config current-context'
-
-# Docker
-alias d='docker'
-alias dc='docker compose'
+# Kubernetes / Infra aliases (k, h, tf, kctx) and Docker (d, dc) are in work/aliases.zsh

@@ -3,11 +3,6 @@ if command -v mise >/dev/null 2>&1; then
   eval "$(mise activate zsh)"
 fi
 
-# SSH agent persistence (avoids repeated passphrase prompts)
-if command -v keychain >/dev/null 2>&1; then
-  eval "$(keychain --eval --quiet --agents ssh id_ed25519_assurant)"
-fi
-
 # direnv — load/unload env vars per directory
 if command -v direnv >/dev/null 2>&1; then
   eval "$(direnv hook zsh)"

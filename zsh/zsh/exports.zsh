@@ -8,29 +8,6 @@ path=("$HOME/.local/bin" $path)
 export BUN_INSTALL="$HOME/.bun"
 path=("$BUN_INSTALL/bin" "$HOME/.tfenv/bin" $path)
 
-# Remove Windows Node/NVM pollution from WSL PATH
-path=(${path:#/mnt/c/nvm4w/*})
-
-# Workspace
-export ASTRA_HOME="$HOME/astra"
-
-# Kubernetes
-export KUBECONFIG="${KUBECONFIG:-$HOME/.kube/config}"
-
-# Corporate CA compatibility (Assurant)
-export SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt
-export REQUESTS_CA_BUNDLE="$SSL_CERT_FILE"
-export CURL_CA_BUNDLE="$SSL_CERT_FILE"
-
-# Node.js — NODE_USE_SYSTEM_CA covers CA trust; ipv4first avoids WSL DNS hangs
-export NODE_USE_SYSTEM_CA=1
-export NODE_EXTRA_CA_CERTS="$SSL_CERT_FILE"
-export NODE_OPTIONS="--dns-result-order=ipv4first"
-
-# npm
-export npm_config_cafile="$SSL_CERT_FILE"
-export npm_config_strict_ssl=true
-
 # Editor
 export EDITOR="nvim"
 export VISUAL="nvim"

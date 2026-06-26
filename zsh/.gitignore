@@ -1,4 +1,1 @@
-zsh/plugins/
-zsh/.zcompdump*
-zsh/local.zsh
-*.zwc
+az.env
