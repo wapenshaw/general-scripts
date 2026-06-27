@@ -1,58 +1,75 @@
 # AI Coding Agent Guide
 
-This repo is a curated toolbox of Windows-centric PowerShell scripts and a focused OpenWrt (ER605 v2) flashing helper. There is no build system or tests; productivity comes from understanding directory roles, script conventions, and privilege/dependency requirements.
+This repo is a personal toolbox, not an application: Windows-focused PowerShell utilities, shell/profile configuration payloads, Starship/font/terminal assets, browser-extension snippets, and a TP-Link ER605 v2 OpenWrt flashing helper. There is no repo-wide package manager, build system, or test harness; validate the specific script family you touch.
 
-## Repo Layout and Roles
-- scripts/: Top-level, runnable PowerShell utilities (task-focused, interactive).
-- scripts/functions/: Reusable functions and aliases merged into the PowerShell profile by the installer.
-- scripts/registry-tweaks/: One-off .reg toggles (paired do/undo patterns).
-- starship/: Ready-to-copy Starship prompt themes.
-- fonts/: Font payloads used with the `Install-Font`/`Install-Fonts` functions.
-- er605-openwrt/: Shell scripts + guide for TP-Link ER605 v2 OpenWrt flashing and MTD backup.
+## Commands
 
-## Core Workflows
-- Install/refresh PowerShell profile:
-  - Run scripts/install-profile.ps1. It writes `$PROFILE` by concatenating scripts/my-profile.ps1 + all scripts/functions/*.ps1, then runs scripts/starship.ps1 to choose a theme.
-  - After installation, functions/aliases (e.g., `e`, `rsb`, `upmods`, `testsocks`) are available in new shells.
-- Winget upgrades with exclusions: scripts/winget-upgrade-all-except.ps1 prompts for interactive/batch and handles “explicit targeting” rows. Edit `$ExcludePackages` or pass `-ExcludePackages`.
-- Dev caches to `Z:\Packages`: scripts/dev-packages.ps1 configures env vars (User or Machine scope) and updates PATH for Python; also runs `npm config set cache`.
-- Network adapter reset + static config: scripts/network-setup.ps1 performs a clean reset, applies static IPv4, sets DNS (with DoH), enables NetBIOS, restarts adapter, then prints a succinct summary.
-- Windows Search web toggle: scripts/disable-websearch.ps1 and scripts/enable-websearch.ps1 set/remove policy keys with user confirmation.
-- ER605 OpenWrt: er605-openwrt/er605v2_write_initramfs.sh flashes both UBI kernel volumes; er605-openwrt/er605-mtd-backup.sh backs up MTD to an NTFS USB. See er605-openwrt/README.md.
+PowerShell workflows:
 
-## Conventions and Patterns
-- Admin checks: Scripts either use `#requires -RunAsAdministrator` (network-setup) or explicit principal checks with friendly prompts (winget, dev-packages, registry toggles). Match the existing style when adding admin-required flows.
-- Interactive UX: Use `Read-Host` and color-coded `Write-Host` messages; keep prompts concise and explicit about defaults.
-- Functions vs scripts: Put reusable helpers in scripts/functions/*.ps1. The profile installer concatenates files verbatim—no module manifest is used—so avoid conflicting function/alias names across files.
-- Aliases: Short, memorable aliases accompany common functions (e.g., `e` → Open-Explorer, `rsb` → Remove-StaleBranches, `upmods` → Update-Modules, `testsocks` → Test-SocksProxy).
-- Error handling: Prefer try/catch for user-facing errors and `-ErrorAction Stop` when appropriate; show actionable messages.
+```powershell
+Set-ExecutionPolicy -Scope CurrentUser RemoteSigned
+pwsh -File ./scripts/install-profile.ps1
+pwsh -File ./scripts/winget-upgrade-all-except.ps1 -ExcludePackages Youtube,Filebot
+pwsh -File ./scripts/dev-packages.ps1
+pwsh -File ./scripts/network-setup.ps1
+```
 
-## External Dependencies
-- PowerShell 7+, WinGet, Git, curl, Python launcher (`py`), npm, Starship, zoxide, and (optionally) smartmontools (`smartctl`).
-- OpenWrt flow assumes ER605 v2 with SSH access and UBI volumes `kernel` and `kernel.b`.
+Zsh workflows:
 
-## File Touchpoints and Examples
-- Profile content: scripts/my-profile.ps1 (PSReadLine tab-complete, `Microsoft.WinGet.CommandNotFound`, `starship`, `zoxide`).
-- Add functions: create new scripts in scripts/functions/, then re-run scripts/install-profile.ps1.
-- Fonts: Use functions/Install-Font.ps1 (`Install-Fonts -fontFolders "./fonts/nerd-fonts","./fonts/coding-fonts"`). The profile installer does not auto-install fonts—call the function explicitly if needed.
-- Git utilities: scripts/functions/Remove-StaleBranches.ps1 (`rsb`) cleans local branches not on remote; scripts/update-git-commits.ps1 rewrites author/committer metadata and optionally force-pushes.
+```bash
+./zsh/install.sh
+./zsh/install.sh --work
+./zsh/install.sh --uninstall
+```
 
-## Quick-Start Commands
-- Set execution policy (first run): Set-ExecutionPolicy -Scope CurrentUser RemoteSigned
-- Install profile: pwsh -File ./scripts/install-profile.ps1
-- Upgrade apps: pwsh -File ./scripts/winget-upgrade-all-except.ps1 -ExcludePackages Youtube,Filebot
-- Dev caches → Z: (choose scope): pwsh -File ./scripts/dev-packages.ps1
-- Network setup (edit adapter name first): pwsh -File ./scripts/network-setup.ps1
-- OpenWrt MTD backup (on router, NTFS USB mounted at /mnt/usb): sh ./er605-openwrt/er605-mtd-backup.sh
+OpenWrt ER605 workflows run on the router, not from the workstation:
 
-## Guidance for Changes
-- Keep scripts self-contained, interactive, and clear about admin needs.
-- Reuse existing patterns for prompts, colors, and env-var handling.
-- When adding new utilities, prefer functions in scripts/functions/ with optional short aliases; expose them via the profile installer.
+```sh
+sh ./er605-openwrt/er605-mtd-backup.sh
+sh ./er605-openwrt/er605v2_write_initramfs.sh openwrt-initramfs.bin
+```
 
-## Contributing Scripts
-- Functions: Add reusable helpers under [scripts/functions](scripts/functions). Avoid name conflicts; keep functions small and stateless; declare aliases at the end (e.g., see [scripts/functions/Open-Explorer.ps1](scripts/functions/Open-Explorer.ps1) and [scripts/functions/Remove-StaleBranches.ps1](scripts/functions/Remove-StaleBranches.ps1)). Re-run [scripts/install-profile.ps1](scripts/install-profile.ps1) to merge into `$PROFILE`.
-- CLI scripts: Place runnable, task-focused utilities in [scripts](scripts). Use `Read-Host` prompts and colored `Write-Host`. Gate admin paths with `#requires -RunAsAdministrator` or the principal check pattern (see [scripts/network-setup.ps1](scripts/network-setup.ps1), [scripts/winget-upgrade-all-except.ps1](scripts/winget-upgrade-all-except.ps1), [scripts/dev-packages.ps1](scripts/dev-packages.ps1)).
-- Registry toggles: Store .reg pairs under [scripts/registry-tweaks/dos](scripts/registry-tweaks/dos) and [scripts/registry-tweaks/undos](scripts/registry-tweaks/undos); pair do/undo keys (example: [scripts/registry-tweaks/dos/Remove_Edit_in_Notepad_context_menu_for_all_users.reg](scripts/registry-tweaks/dos/Remove_Edit_in_Notepad_context_menu_for_all_users.reg)).
-- Dependencies: Note external tools at the top of scripts and detect them (`Get-Command`, friendly errors). Examples: [scripts/test-farm-device.ps1](scripts/test-farm-device.ps1), [scripts/winget-upgrade-all-except.ps1](scripts/winget-upgrade-all-except.ps1).
-- OpenWrt: Add related helpers under [er605-openwrt](er605-openwrt) and update [er605-openwrt/README.md](er605-openwrt/README.md) with any new procedures.
+Script-level validation:
+
+```bash
+# All tracked PowerShell scripts
+pwsh -NoProfile -Command '$failed=$false; Get-ChildItem ./scripts -Recurse -Filter *.ps1 | ForEach-Object { $tokens=$null; $errors=$null; $null = [System.Management.Automation.Language.Parser]::ParseFile($_.FullName,[ref]$tokens,[ref]$errors); if ($errors) { $failed=$true; $errors | Format-List } }; if ($failed) { exit 1 }'
+
+# Single PowerShell script
+pwsh -NoProfile -Command '$tokens=$null; $errors=$null; $null = [System.Management.Automation.Language.Parser]::ParseFile((Resolve-Path ./scripts/dev-packages.ps1).Path,[ref]$tokens,[ref]$errors); if ($errors) { $errors | Format-List; exit 1 }'
+
+# POSIX shell entry points
+for f in ./er605-openwrt/*.sh; do sh -n "$f"; done
+
+# Bash entry point
+bash -n ./zsh/install.sh
+
+# Single shell script
+sh -n ./er605-openwrt/er605v2_write_initramfs.sh
+
+# Zsh config modules
+zsh -n ./zsh/zsh/.zshenv ./zsh/zsh/.zprofile ./zsh/zsh/.zshrc ./zsh/zsh/*.zsh ./zsh/zsh/work/*.zsh
+```
+
+## High-level architecture
+
+- `scripts/` contains runnable, task-oriented PowerShell utilities. `scripts/functions/` contains reusable helpers and aliases that become available through the PowerShell profile installer.
+- `scripts/install-profile.ps1` copies `scripts/my-profile.ps1` to `$HOME\.config\powershell\user_profile.ps1`, copies each `scripts/functions/*.ps1` to `$HOME\.config\powershell\functions\`, writes `$PROFILE` as a loader that dot-sources those installed files, then runs `scripts/starship.ps1`.
+- `scripts/my-profile.ps1` is intentionally small: PSReadLine tab menu completion, `Microsoft.WinGet.CommandNotFound`, Starship init, and zoxide init. Put new reusable commands in `scripts/functions/`, not in the generated loader.
+- Starship assets are split by shell: root `starship/` themes are selected by the PowerShell `scripts/starship.ps1` copier, while zsh uses `zsh/zsh/starship.toml` via `STARSHIP_CONFIG` from `.zshenv`.
+- `zsh/` is a copied XDG-style configuration. `zsh/install.sh` copies tracked config files into `~/.config/zsh`, manages a block in `/etc/zshenv` or `/etc/zsh/zshenv` to set `ZDOTDIR`, and excludes plugin/doc/meta files from the installed copy.
+- `zsh/zsh/.zshenv` owns non-interactive environment setup and work-mode environment modules. `zsh/zsh/.zshrc` sources modules in order, with work aliases/functions enabled only when `ZSH_WORK=1` is set by `./zsh/install.sh --work`.
+- `zsh/zsh/plugins.zsh` auto-clones plugins on first shell launch into `~/.config/zsh/plugins/`; do not vendor plugin checkouts into the repo.
+- `er605-openwrt/` contains router-side BusyBox/POSIX shell helpers plus the guide. The flashing script locates UBI volumes named `kernel` and `kernel.b` and writes the initramfs image to both; the backup script writes MTD backups to an NTFS USB mount.
+- `fonts/`, `windows-terminal/`, `extensions/`, and root Starship theme files are payload/config assets consumed manually by the scripts or external tools.
+
+## Key conventions
+
+- Admin-required PowerShell scripts either use `#requires -RunAsAdministrator` (`network-setup.ps1`) or an explicit principal check with friendly prompts (`winget-upgrade-all-except.ps1`, `dev-packages.ps1`). Match the local pattern in the file you edit.
+- Interactive PowerShell scripts use concise `Read-Host` prompts, color-coded `Write-Host` status, explicit defaults in prompt text, and actionable errors. Prefer `-ErrorAction Stop` where exceptions should enter `try`/`catch`.
+- Reusable PowerShell functions live in `scripts/functions/*.ps1` and commonly end with a short alias declaration, e.g. `e`, `rsb`, `upmods`, `testsocks`, `yolo`. There is no module manifest, so avoid duplicate function or alias names.
+- Dependency checks are local to each script. Use `Get-Command` with a clear user-facing message for PowerShell dependencies and keep external-tool assumptions near the top of the script.
+- Registry tweaks are paired `.reg` files under `scripts/registry-tweaks/dos/` and `scripts/registry-tweaks/undos/`; add matching do/undo entries when adding a tweak.
+- Zsh module order matters: history/exports/completion/fzf/tools load before aliases/functions/bindings/plugins, `fast-syntax-highlighting` stays last among plugins, and Starship is initialized after plugins.
+- Work-only zsh configuration belongs under `zsh/zsh/work/`. Real Azure IDs go in the installed, git-ignored `~/.config/zsh/work/az.env`, not in tracked files.
+- OpenWrt helpers should stay `/bin/sh` compatible for the router environment and avoid workstation-specific assumptions.

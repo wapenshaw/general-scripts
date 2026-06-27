@@ -16,7 +16,7 @@ cd /path/to/general-scripts
 ./zsh/install.sh --work    # base + work modules (Astra / Kubernetes / Azure / SSH agent)
 ```
 
-You'll be prompted for your sudo password once — install.sh appends a small block to `/etc/zshenv` (or `/etc/zsh/zshenv` on Arch) so zsh finds the config.
+You'll be prompted for your sudo password once — install.sh appends a small block to the active system zshenv (`/etc/zsh/zshenv` on Debian/Ubuntu/WSL/Arch, `/etc/zshenv` on Fedora/upstream builds) so zsh finds the config.
 
 To remove: `./zsh/install.sh --uninstall`.
 
@@ -31,7 +31,7 @@ The install has two parts:
 **1. A small block in the system zshenv** (one-time, requires sudo):
 
 ```sh
-# /etc/zshenv (or /etc/zsh/zshenv on Arch) — managed by install.sh
+# /etc/zsh/zshenv or /etc/zshenv — managed by install.sh
 if [[ -z "$XDG_CONFIG_HOME" ]]; then
     export XDG_CONFIG_HOME="$HOME/.config"
 fi
@@ -53,7 +53,7 @@ zsh reads this on every invocation (always, cannot be skipped), so it sets `ZDOT
 
 ### Sourcing order
 
-1. `/etc/zshenv` — sets `ZDOTDIR=$XDG_CONFIG_HOME/zsh` (system, immutable)
+1. System zshenv (`/etc/zsh/zshenv` or `/etc/zshenv`) — sets `ZDOTDIR=$XDG_CONFIG_HOME/zsh` (system, immutable)
 2. `~/.config/zsh/.zshenv` — sets `XDG_*_HOME`, `STARSHIP_CONFIG`, sources work env
 3. `~/.config/zsh/.zprofile` (login shells) — shared SSH agent
 4. `~/.config/zsh/.zshrc` — sources every module in order, then starship

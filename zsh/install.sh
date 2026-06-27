@@ -10,16 +10,18 @@
 #   ./install.sh --work   # also enable work modules
 #   ./install.sh --uninstall
 #
-# Safe to re-run; managed block in /etc/zshenv is replaced in place.
+# Safe to re-run; managed block in the active system zshenv is replaced in place.
 set -euo pipefail
 
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 SOURCE_DIR="$REPO/zsh"         # the dir copied into ~/.config/zsh
 TARGET_DIR="$HOME/.config/zsh"
-# System zshenv locations to try, in order. First match wins.
+# System zshenv locations to try, in order. First existing file wins, then
+# first directory that exists. Debian/Ubuntu/WSL and Arch use /etc/zsh/zshenv;
+# Fedora and upstream/default builds use /etc/zshenv.
 SYS_ZSHENV_CANDIDATES=(
-  "/etc/zshenv"          # Fedora, Debian, upstream default
-  "/etc/zsh/zshenv"      # Arch
+  "/etc/zsh/zshenv"
+  "/etc/zshenv"
 )
 MARKER_BEGIN="# >>> zsh/install.sh managed block >>>"
 MARKER_END="# <<< zsh/install.sh managed block <<<"
@@ -38,13 +40,23 @@ EXCLUDE_PATTERNS=(
 )
 
 detect_sys_zshenv() {
+  local cand
+
   for cand in "${SYS_ZSHENV_CANDIDATES[@]}"; do
-    if [[ -f "$cand" || -d "$(dirname "$cand")" ]]; then
+    if [[ -f "$cand" ]]; then
       SYS_ZSHENV="$cand"
       return
     fi
   done
-  SYS_ZSHENV="${SYS_ZSHENV_CANDIDATES[0]}"
+
+  for cand in "${SYS_ZSHENV_CANDIDATES[@]}"; do
+    if [[ -d "$(dirname "$cand")" ]]; then
+      SYS_ZSHENV="$cand"
+      return
+    fi
+  done
+
+  SYS_ZSHENV="/etc/zshenv"
 }
 
 WORK=0
@@ -139,20 +151,43 @@ write_system_zshenv() {
   green "Updated $SYS_ZSHENV (ZDOTDIR=$TARGET_DIR)"
 }
 
-remove_system_zshenv() {
-  if [[ ! -f "$SYS_ZSHENV" ]]; then return; fi
-  if ! grep -qF "$MARKER_BEGIN" "$SYS_ZSHENV"; then return; fi
+remove_managed_block_from_zshenv() {
+  local target="$1"
+  if [[ ! -f "$target" ]]; then return 0; fi
+  if ! grep -qF "$MARKER_BEGIN" "$target"; then return 0; fi
+
   if [[ "$SUDO_OK" -ne 1 ]]; then
-    yellow "Cannot remove managed block from $SYS_ZSHENV (no sudo)."
+    yellow "Cannot remove managed block from $target (no sudo)."
     return 1
   fi
+
   local tmp
   tmp="$(mktemp)"
-  $SUDO cp "$SYS_ZSHENV" "$tmp"
+  $SUDO cp "$target" "$tmp"
   sed -i "/$MARKER_BEGIN/,/$MARKER_END/d" "$tmp"
-  $SUDO install -m 644 "$tmp" "$SYS_ZSHENV"
+  $SUDO install -m 644 "$tmp" "$target"
   rm -f "$tmp"
-  yellow "Removed managed block from $SYS_ZSHENV"
+  yellow "Removed managed block from $target"
+}
+
+cleanup_inactive_zshenvs() {
+  local cand
+  [[ "$SUDO_OK" -eq 1 ]] || return 0
+
+  for cand in "${SYS_ZSHENV_CANDIDATES[@]}"; do
+    [[ "$cand" == "$SYS_ZSHENV" ]] && continue
+    remove_managed_block_from_zshenv "$cand" || true
+  done
+}
+
+remove_system_zshenv() {
+  local cand failed=0
+
+  for cand in "${SYS_ZSHENV_CANDIDATES[@]}"; do
+    remove_managed_block_from_zshenv "$cand" || failed=1
+  done
+
+  return "$failed"
 }
 
 # ---- copy repo → ~/.config/zsh ------------------------------------------
@@ -279,6 +314,7 @@ fi
 
 bold "==> Installing"
 write_system_zshenv
+cleanup_inactive_zshenvs
 copy_repo
 apply_work_flag
 cleanup_legacy_shim
