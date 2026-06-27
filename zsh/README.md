@@ -117,8 +117,48 @@ XDG Base Directory spec. See the [How it works](#how-it-works--copy--system-zshe
 | `prompt.zsh` | Starship init |
 | `tools.zsh` | mise, direnv, zoxide |
 | `uv.zsh` | uvdev / uvci / uvtst helpers |
-| `starship.toml` | Prompt config (Nerd Font required) |
+| `starship.toml` | (no longer in zsh/ — selected at install time from the repo-root `starship/` folder; see [Starship themes](#starship-themes) below) |
 | `work/` | Work-only modules (aliases, functions, exports, ssh-agent, az.env template) |
+
+---
+
+## Starship themes
+
+Prompt themes live at the repo root in `starship/` (siblings of `zsh/`):
+
+```
+starship/
+├── gruvbox-sid.toml
+├── nordic.toml
+├── nordic-sid.toml
+├── nova.toml          ← your current boxed-prompt setup
+├── pastel-powerline.toml
+└── tokyo-night-toml
+```
+
+At install time `zsh/install.sh` prompts:
+
+```
+Available starship themes:
+  1) gruvbox-sid
+  2) nordic
+  3) nordic-sid
+  4) nova
+  5) pastel-powerline
+  6) tokyo-night
+
+Pick a theme [1-6] (default: nova):
+```
+
+The chosen file is copied to `~/.config/zsh/starship.toml`. To skip the prompt (e.g. for scripted installs), set `ZSH_STARSHIP_THEME` before running install:
+
+```bash
+ZSH_STARSHIP_THEME=nordic ./zsh/install.sh
+```
+
+The `~/.config/zsh/.zshenv` already sets `STARSHIP_CONFIG=$ZDOTDIR/starship.toml` so the new file is picked up automatically.
+
+To add a new theme: drop a `.toml` in `starship/`, commit, re-run `install.sh`.
 
 ---
 

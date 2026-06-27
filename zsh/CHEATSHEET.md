@@ -307,5 +307,5 @@ Auto-loads/unloads env vars when you enter/leave a directory with an `.envrc`.
 | `~/.zsh/tools.zsh` | mise, keychain, direnv, zoxide |
 | `~/.zsh/plugins.zsh` | Add/remove zsh plugins |
 | `~/.zsh/prompt.zsh` | Starship init |
-| `~/.zsh/starship.toml` | Prompt appearance |
+| `~/.zsh/starship.toml` | Selected prompt theme (copied from `starship/<name>.toml` at install time) |
 | `~/.zsh/uv.zsh` | Python/uv helpers |

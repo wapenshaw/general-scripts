@@ -284,6 +284,80 @@ apply_work_flag() {
   fi
 }
 
+# ---- starship theme picker --------------------------------------------
+# Themes live in $REPO/../starship/ (sibling of zsh/). At install time the
+# user picks one, or sets ZSH_STARSHIP_THEME to skip the prompt.
+STARSHIP_THEMES_DIR="$REPO/../starship"
+STARSHIP_DEFAULT_THEME="nova"
+
+list_starship_themes() {
+  local f
+  for f in "$STARSHIP_THEMES_DIR"/*.toml; do
+    [[ -f "$f" ]] && basename "$f" .toml
+  done | sort
+}
+
+pick_starship_theme() {
+  local themes
+  themes=($(list_starship_themes))
+  if [[ ${#themes[@]} -eq 0 ]]; then
+    yellow "No starship themes found in $STARSHIP_THEMES_DIR"
+    return 1
+  fi
+
+  # If user supplied one, use it.
+  if [[ -n "${ZSH_STARSHIP_THEME:-}" ]]; then
+    printf '%s\n' "$ZSH_STARSHIP_THEME"
+    return 0
+  fi
+
+  # In an interactive terminal, prompt.
+  if [[ -t 0 && -t 1 ]]; then
+    local i=1 choice
+    printf '\nAvailable starship themes:\n'
+    for t in "${themes[@]}"; do
+      printf '  %d) %s\n' "$i" "$t"
+      i=$((i+1))
+    done
+    printf '\n'
+    read -r -p "Pick a theme [1-${#themes[@]}] (default: $STARSHIP_DEFAULT_THEME): " choice
+    if [[ -z "$choice" ]]; then
+      printf '%s\n' "$STARSHIP_DEFAULT_THEME"
+    elif [[ "$choice" =~ ^[0-9]+$ ]] && (( choice >= 1 && choice <= ${#themes[@]} )); then
+      printf '%s\n' "${themes[$((choice-1))]}"
+    else
+      yellow "Invalid choice '$choice' — using default"
+      printf '%s\n' "$STARSHIP_DEFAULT_THEME"
+    fi
+    return 0
+  fi
+
+  # Non-interactive: use the default.
+  printf '%s\n' "$STARSHIP_DEFAULT_THEME"
+}
+
+install_starship_theme() {
+  [[ -d "$STARSHIP_THEMES_DIR" ]] || {
+    yellow "No starship themes directory at $STARSHIP_THEMES_DIR — skipping"
+    return 0
+  }
+
+  local theme source dest
+  theme="$(pick_starship_theme)"
+  source="$STARSHIP_THEMES_DIR/$theme.toml"
+  dest="$TARGET_DIR/starship.toml"
+
+  if [[ ! -f "$source" ]]; then
+    yellow "Starship theme '$theme' not found at $source"
+    yellow "Available: $(list_starship_themes | tr '\n' ' ')"
+    return 1
+  fi
+
+  mkdir -p "$TARGET_DIR"
+  cp "$source" "$dest"
+  green "Installed starship theme: $theme"
+}
+
 # ---- remove old-style shim ---------------------------------------------
 cleanup_legacy_shim() {
   if [[ -e "$HOME/.zshenv" && ! -L "$HOME/.zshenv" ]]; then
@@ -316,6 +390,7 @@ bold "==> Installing"
 write_system_zshenv
 cleanup_inactive_zshenvs
 copy_repo
+install_starship_theme
 apply_work_flag
 cleanup_legacy_shim
 
