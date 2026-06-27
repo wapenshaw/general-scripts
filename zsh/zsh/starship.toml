@@ -1,4 +1,7 @@
-format = "$os$username$hostname$directory$git_branch$git_status$python$nodejs$rust$cmd_duration$character"
+add_newline = false
+
+format = """[╭─](bold green)$os$username$hostname$directory$git_branch$git_status$python$nodejs$rust$cmd_duration
+[╰─](bold green)$character"""
 
 [os]
 disabled = false
