@@ -1,7 +1,7 @@
 add_newline = false
 palette = 'current'
 
-format = """[╭─](bold green)$os$username$hostname$directory$git_branch$git_status$fill$python$nodejs$rust$lua$golang$haskell$ruby$package$aws$docker_context$jobs$cmd_duration
+format = """[╭─](bold blue)$os$username$hostname$directory$git_branch$git_status$fill$python$nodejs$rust$lua$golang$haskell$ruby$package$aws$docker_context$jobs$cmd_duration
 [╰─](bold green)$character"""
 
 # ─────────────────────────────────────────────────────────────────
@@ -139,7 +139,7 @@ detect_folders = ['node_modules']
 [aws]
 symbol = " "
 style = "bold yellow"
-format = "[$symbol($profile )(\[$duration\] )]($style)"
+format = '[$symbol($profile )(\[duration\] )]($style)'
 
 [docker_context]
 symbol = " "
