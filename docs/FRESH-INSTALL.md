@@ -8,7 +8,9 @@ Total time: ~45 min on a fast link, mostly waiting on downloads.
 
 ---
 
-## 1. Windows OOBE + winget working
+## Pre-flight
+
+### 1. Windows OOBE + winget working
 
 - Complete OOBE, sign in with the MS account that owns your OneDrive (this repo syncs there).
 - **Settings -> Windows Update** -> install all updates -> restart.
@@ -22,9 +24,7 @@ If `winget` is not recognized even though App Installer is installed, repair it 
 Add-AppxPackage -Path "https://aka.ms/Microsoft.DesktopAppInstaller_8wekyb3d8bbwe.msixbundle"
 ```
 
----
-
-## 2. PowerShell 7 - manual install
+### 2. PowerShell 7 - manual install
 
 Download and run the MSI from the GitHub release page:
 
@@ -34,98 +34,28 @@ Download and run the MSI from the GitHub release page:
 - It installs **side-by-side** with Windows PowerShell 5.1, so nothing breaks.
 - Verify: `pwsh --version` from `cmd` or a fresh Terminal tab.
 
-### Why manual PowerShell?
+#### Why manual PowerShell?
 
 - The MSI is the canonical install; it's signed by Microsoft and ships the day a release is cut.
 - `winget` lags GitHub by hours-to-days and you have less control over the install path and feature set.
 - Manual install avoids a chicken-and-egg if `winget` itself is misbehaving on first boot.
-- You'll have PowerShell 7 to run the profile installer in step 6 even if `winget` is still being repaired.
+- You'll have PowerShell 7 to run the profile installer in step 7 even if `winget` is still being repaired.
 
 ---
 
-## 3. Essentials via winget
+## Setup
 
-From an elevated PowerShell, either run the script:
+### 3. Clone the repo
 
 ```powershell
 git clone https://github.com/<you>/general-scripts.git Z:\Personal\general-scripts
-Z:\Personal\general-scripts\powershell\tools\Install-Essentials.ps1 -Essentials
 ```
 
-...or paste the commands individually:
+The scripts use `$PSScriptRoot`-relative paths so the repo can live anywhere, but `Set-DevPackagePaths.ps1` assumes `Z:\Packages` exists - mount that drive first or edit the `$BasePath` in the script.
 
-```powershell
-winget install --id Microsoft.PowerToys        --accept-source-agreements --accept-package-agreements
-winget install --id Microsoft.WindowsTerminal
-winget install --id Git.Git                     --source winget
-winget install --id 7zip.7zip
-winget install --id Microsoft.VisualStudioCode
-winget install --id Notepad++.Notepad++
-```
+### 4. Restore env vars from the captured snapshot
 
-These are the OS-level essentials on a Windows dev box - adjust to taste.
-
----
-
-## 4. Utilities via winget
-
-The ones marked with a star are already wired up by the repo's `User-Profile.ps1`:
-
-```powershell
-Z:\Personal\general-scripts\powershell\tools\Install-Essentials.ps1 -Utilities
-```
-
-Or individually:
-
-```powershell
-winget install --id ajeetdsouza.zoxide       # better cd
-winget install --id junegunn.fzf             # fuzzy finder
-winget install --id starship.starship        # cross-shell prompt
-winget install --id sharkdp.bat                            # better cat
-winget install --id eza-community.eza                       # better ls
-winget install --id BurntSushi.ripgrep.MSVC                 # better grep
-winget install --id sharkdp.fd                             # better find
-winget install --id JesseDuffield.lazygit                  # git TUI
-winget install --id dan-t.delta                            # git diff viewer
-winget install --id jqlang.jq                              # JSON processor
-winget install --id MikeFarah.yq                           # YAML processor
-```
-
-**Close and reopen Terminal** after this step so the new shims are on `PATH`.
-
----
-
-## 5. WSL (optional)
-
-Only needed if you use the `zsh/` half of this repo.
-
-```powershell
-wsl --install -d Ubuntu
-```
-
-Then follow `zsh/README.md`.
-
----
-
-## 6. Clone the repo + deploy the PowerShell profile
-
-```powershell
-git clone https://github.com/<you>/general-scripts.git Z:\Personal\general-scripts
-Z:\Personal\general-scripts\powershell\profile\Install-Profile.ps1
-```
-
-`Install-Profile.ps1` will:
-
-1. Copy `powershell/profile/User-Profile.ps1` to `$HOME\.config\powershell\user_profile.ps1`.
-2. Copy every `*.ps1` in `powershell/functions/` to `$HOME\.config\powershell\functions\`.
-3. Write a generated loader into `$PROFILE` that dot-sources the installed files.
-4. Run `Set-StarshipConfig.ps1` to pick a `starship.toml` from `starship/`.
-
-Restart PowerShell.
-
----
-
-## 7. Restore env vars from the captured snapshot
+Run **before** the winget installs, so toolchain path env vars (CARGO_HOME, GOPATH, etc.) are in place when those toolchains first launch.
 
 ```powershell
 # Preview first
@@ -137,15 +67,96 @@ Z:\Personal\general-scripts\powershell\tools\Import-Env.ps1
 
 The snapshot in `config/env/user.json` excludes secrets, session vars, and runtime vars (see `config/env/README.md` for the filter list).
 
+### 5. Set dev package paths
+
+`Set-DevPackagePaths.ps1` redirects common toolchain caches (NuGet, Go, Cargo, npm, PyPI, Ruby, Maven) into `Z:\Packages\...`. Run **before** `winget install` for the same reason as step 4.
+
+```powershell
+Z:\Personal\general-scripts\powershell\profile\Set-DevPackagePaths.ps1
+```
+
+Pick User (no admin) or System scope (admin required). Creates the target directories and writes the registry env vars. **Restart your terminal or reboot** when done so subsequent processes inherit the new vars.
+
 ---
 
-## 8. Toolchain paths
+## Install
 
-Your custom layout (`Z:\Packages\*`, `F:\Software\...`) is described in `config/env/paths.json`. On a fresh box:
+### 6. Apps via winget
 
-- Re-create the dirs.
-- Either reinstall each toolchain into the custom path or symlink the new default location (`%LOCALAPPDATA%`, `%PROGRAMFILES%`, etc.) to your preferred location.
-- Update any tool's config to point at the new locations (e.g. `cargo` home, `npm` prefix, `go` GOPATH).
+From an elevated PowerShell:
+
+```powershell
+Z:\Personal\general-scripts\powershell\tools\Install-Essentials.ps1
+```
+
+Defaults to installing both `-Essentials` (PowerToys, Windows Terminal, Git, 7-Zip, VS Code, Notepad++) and `-Utilities` (zoxide, fzf, starship, plus other dev/CLI tools - see `$UtilitiesList` in the script for the full current list).
+
+The script:
+
+- refreshes `winget` sources,
+- installs each package with `--accept-source-agreements --accept-package-agreements`,
+- tracks per-package failures and reports them at the end rather than aborting on the first one,
+- is idempotent - `winget` skips packages that are already installed at the requested version.
+
+For a list of what would be installed: `Install-Essentials.ps1 -List`.
+
+**Close and reopen Terminal** after this step so the new shims are on `PATH`.
+
+---
+
+## Post-install scripts
+
+### 7. Run these in order
+
+These are the repo scripts that need to run once on a fresh box, in this order. Most require an elevated PowerShell (admin).
+
+1. **`Install-Profile.ps1`** - copies `User-Profile.ps1` and `functions/` to `~/.config/powershell/`, writes a generated loader into `$PROFILE`, runs `Set-StarshipConfig.ps1` to pick a `starship.toml`. *No admin required.*
+   ```powershell
+   Z:\Personal\general-scripts\powershell\profile\Install-Profile.ps1
+   ```
+
+2. **`Update-GitCommitIdentity.ps1`** - sets `git config user.name` and `user.email` so your commits are attributed correctly. *No admin required.*
+   ```powershell
+   Z:\Personal\general-scripts\powershell\tools\Update-GitCommitIdentity.ps1
+   ```
+
+3. **`Invoke-RegistryTweaks.ps1`** - applies the registry tweaks in `registry-tweaks/dos/*.reg`. *Admin required.*
+   ```powershell
+   Z:\Personal\general-scripts\powershell\system\Invoke-RegistryTweaks.ps1
+   ```
+
+4. **`Set-NetworkAdapter.ps1`** - network adapter tweaks (offloads, RSS, etc.). *Admin required.*
+   ```powershell
+   Z:\Personal\general-scripts\powershell\system\Set-NetworkAdapter.ps1
+   ```
+
+5. **`Optimize-Shutdown.ps1`** - speeds up Windows shutdown by reducing the wait-for-kill timeout. *Admin required.*
+   ```powershell
+   Z:\Personal\general-scripts\powershell\system\Optimize-Shutdown.ps1
+   ```
+
+6. **`Set-DlssIndicator.ps1`** *(optional, gaming)* - toggles the DLSS frame-generation indicator on/off. *Admin required.*
+   ```powershell
+   Z:\Personal\general-scripts\powershell\system\Set-DlssIndicator.ps1
+   ```
+
+### 8. Restart PowerShell
+
+After all of the above, close every PowerShell window and reopen. The new `$PROFILE` loader, env vars, and winget shims all need a fresh session.
+
+---
+
+## Optional
+
+### 9. WSL
+
+Only needed if you use the `zsh/` half of this repo.
+
+```powershell
+wsl --install -d Ubuntu
+```
+
+Then follow `zsh/README.md`.
 
 ---
 
@@ -155,8 +166,10 @@ Your custom layout (`Z:\Packages\*`, `F:\Software\...`) is described in `config/
 |------|------|-----|
 | 1 | winget working | App Installer from MS Store |
 | 2 | PowerShell 7 | MSI from github.com/PowerShell/PowerShell/releases |
-| 3 | Essentials | `Install-Essentials.ps1 -Essentials` |
-| 4 | Utilities | `Install-Essentials.ps1 -Utilities` |
-| 5 | WSL | `wsl --install -d Ubuntu` |
-| 6 | Profile | `Install-Profile.ps1` |
-| 7 | Env restore | `Import-Env.ps1` |
+| 3 | Clone repo | `git clone ...` |
+| 4 | Restore env vars | `Import-Env.ps1` (before winget) |
+| 5 | Dev package paths | `Set-DevPackagePaths.ps1` (admin for System scope) |
+| 6 | Apps via winget | `Install-Essentials.ps1` |
+| 7 | Post-install scripts | Run the 6 numbered scripts in order |
+| 8 | Restart PowerShell | close + reopen |
+| 9 | WSL (optional) | `wsl --install -d Ubuntu` |

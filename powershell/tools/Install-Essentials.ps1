@@ -5,7 +5,9 @@
 .DESCRIPTION
     Runs winget install for the package lists defined in this script:
     - Essentials: PowerToys, Windows Terminal, Git, 7-Zip, VS Code, Notepad++
-    - Utilities:  zoxide, fzf, starship, bat, eza, ripgrep, fd, lazygit, delta, jq, yq
+    - Utilities:  zoxide, fzf, starship, bat, eza, ripgrep, fd, lazygit, delta,
+                  jq, yq, duf, fastfetch, hyperfine, gh, az, Sysinternals,
+                  btop4win, ffmpeg, Terraform, mise, Rustup, SQLite, Stripe
 
     Idempotent. winget skips packages that are already installed at the requested
     version. Run from an elevated PowerShell session - some packages need admin
@@ -60,17 +62,35 @@ $EssentialsList = @(
 )
 
 $UtilitiesList = @(
+    # Shell
     "ajeetdsouza.zoxide"
     "junegunn.fzf"
     "starship.starship"
+    # File / search
     "sharkdp.bat"
     "eza-community.eza"
     "BurntSushi.ripgrep.MSVC"
     "sharkdp.fd"
+    "muesli.duf"
+    # System info / monitoring
+    "Fastfetch-cli.Fastfetch"
+    "aristocratos.btop4win"
+    "sharkdp.hyperfine"
+    "Gyan.FFmpeg"
+    "Microsoft.Sysinternals.Suite"
+    # VCS / dev workflow
     "JesseDuffield.lazygit"
-    "dan-t.delta"
+    "dandavison.delta"
+    "GitHub.cli"
+    "Hashicorp.Terraform"
+    "jdx.mise"
+    "Rustlang.Rustup"
+    # Data / cloud CLIs
     "jqlang.jq"
     "MikeFarah.yq"
+    "SQLite.SQLite"
+    "Microsoft.AzureCLI"
+    "Stripe.StripeCli"
 )
 
 if ($List) {
