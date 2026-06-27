@@ -1,6 +1,6 @@
 add_newline = false
 
-format = """[╭─](bold green)$os$username$hostname$directory$git_branch$git_status$python$nodejs$rust$fill$cmd_duration
+format = """[╭─](bold green)$os$username$hostname$directory$git_branch$git_status$fill$python$nodejs$rust$lua$golang$haskell$ruby$package$aws$docker_context$jobs$cmd_duration
 [╰─](bold green)$character"""
 
 [fill]
