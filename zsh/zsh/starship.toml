@@ -1,7 +1,42 @@
 add_newline = false
+palette = 'current'
 
 format = """[╭─](bold green)$os$username$hostname$directory$git_branch$git_status$fill$python$nodejs$rust$lua$golang$haskell$ruby$package$aws$docker_context$jobs$cmd_duration
 [╰─](bold green)$character"""
+
+# ─────────────────────────────────────────────────────────────────
+# Palettes
+# Switch by setting palette = 'current' (default) or palette = 'nord'.
+# ─────────────────────────────────────────────────────────────────
+
+[palettes.current]
+# Captures the colors used in the previous inline-styled config so switching
+# to palette mode is visually identical.
+blue = "blue"
+yellow = "yellow"
+cyan = "cyan"
+purple = "purple"
+red = "red"
+green = "green"
+white = "white"
+black = "black"
+
+[palettes.nord]
+dark_blue = '#5E81AC'
+blue      = '#81A1C1'
+teal      = '#88C0D0'
+red       = '#BF616A'
+orange    = '#D08770'
+green     = '#A3BE8C'
+yellow    = '#EBCB8B'
+purple    = '#B48EAD'
+gray      = '#434C5E'
+black     = '#2E3440'
+white     = '#D8DEE9'
+
+# ─────────────────────────────────────────────────────────────────
+# Modules
+# ─────────────────────────────────────────────────────────────────
 
 [fill]
 symbol = " "
@@ -19,9 +54,9 @@ Fedora = "󰣛 "
 Ubuntu = "󰕈 "
 Arch = "󰣇 "
 Debian = "󰣚 "
-Alpine = " "
-Amazon = " "
-CentOS = " "
+Alpine = " "
+Amazon = " "
+CentOS = " "
 Redhat = "󱄛 "
 RedHatEnterprise = "󱄛 "
 
@@ -44,7 +79,7 @@ style = "bold blue"
 format = "[$path]($style) "
 
 [git_branch]
-symbol = " "
+symbol = " "
 style = "bold purple"
 format = "[$symbol$branch]($style) "
 
@@ -53,19 +88,71 @@ style = "bold red"
 format = "[$all_status$ahead_behind]($style) "
 
 [python]
-symbol = " "
+symbol = " "
 style = "bold yellow"
 format = "[$symbol$version]($style) "
 
 [nodejs]
-symbol = " "
+symbol = " "
 style = "bold green"
 format = "[$symbol$version]($style) "
 
+[lua]
+symbol = " "
+style = "bold blue"
+format = "[$symbol$version]($style) "
+detect_files = ['.lua-version']
+detect_extensions = ['lua']
+
+[golang]
+symbol = " "
+style = "bold cyan"
+format = "[$symbol$version]($style) "
+detect_files = ['go.mod', 'go.sum', 'glide.yaml', 'Gopkg.yml', 'Gopkg.lock', '.go-version']
+detect_extensions = ['go']
+detect_folders = ['Godeps']
+
+[haskell]
+symbol = " "
+style = "bold purple"
+format = "[$symbol$version]($style) "
+
 [rust]
-symbol = " "
+symbol = " "
 style = "bold red"
 format = "[$symbol$version]($style) "
+
+[ruby]
+symbol = " "
+style = "bold red"
+format = "[$symbol$version]($style) "
+detect_files = ['.ruby-version', 'Gemfile']
+detect_folders = ['Gemfile']
+
+[package]
+symbol = "󰏗 "
+style = "bold yellow"
+format = "[$symbol$version]($style) "
+detect_files = ['package.json', 'package-lock.json', 'yarn.lock', 'pnpm-lock.yaml', 'bun.lockb', 'bun.lock']
+detect_folders = ['node_modules']
+
+[aws]
+symbol = " "
+style = "bold yellow"
+format = "[$symbol($profile )(\[$duration\] )]($style)"
+
+[docker_context]
+symbol = " "
+style = "bold cyan"
+format = "[$symbol]($style) $path"
+detect_files = ['docker-compose.yml', 'docker-compose.yaml', 'Dockerfile']
+detect_extensions = ['Dockerfile']
+
+[jobs]
+symbol = " "
+style = "bold red"
+number_threshold = 1
+format = "[$symbol]($style)"
 
 [cmd_duration]
 min_time = 2_000
