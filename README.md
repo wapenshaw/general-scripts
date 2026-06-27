@@ -6,7 +6,7 @@
 
 > AI agents: See the project guide at [.github/copilot-instructions.md](.github/copilot-instructions.md) for repo structure, workflows, and conventions.
 
-## 1. [PowerShell Script to Install Starship, Update Profile, and Install Fonts](./scripts/install-profile.ps1)
+## 1. [PowerShell Profile Installer](./powershell/Install-Profile.ps1)
 
 This PowerShell script automates the following tasks:
 
@@ -25,7 +25,7 @@ This script simplifies setting up a development environment by automating the in
 
 ---
 
-## 2. [Windows Package Upgrader Script](./scripts/winget-upgrade-all-except.ps1)
+## 2. [Windows Package Upgrader Script](./powershell/Update-WinGetPackages.ps1)
 
 ### Description
 
@@ -67,7 +67,7 @@ See [zsh/README.md](./zsh/README.md) for the full setup guide and [zsh/CHEATSHEE
 
 ---
 
-## 4. [Copy Starship Configuration Script](./scripts/starship.ps1)
+## 4. [Copy Starship Configuration Script](./powershell/Set-StarshipConfig.ps1)
 
 ### Description
 

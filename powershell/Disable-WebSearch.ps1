@@ -1,3 +1,22 @@
+<#
+.SYNOPSIS
+    Disables web results in Windows Search via Group Policy registry keys.
+
+.DESCRIPTION
+    Sets three DWORD policies under HKLM:\SOFTWARE\Policies\Microsoft\Windows\Windows Search:
+        DisableWebSearch = 1
+        ConnectedSearchUseWeb = 0
+        ConnectedSearchUseWebOverMeteredConnections = 0
+
+    Prompts the user to create the registry key path if missing and to confirm each policy.
+
+.EXAMPLE
+    PS> pwsh -File .\Disable-WebSearch.ps1
+
+.NOTES
+    Run from an elevated (Administrator) PowerShell session. Restart required.
+#>
+
 # Registry paths for the Group Policy settings
 $policies = @{
     "NoWebSearch"  = @{

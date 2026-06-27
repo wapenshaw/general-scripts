@@ -1,3 +1,26 @@
+<#
+.SYNOPSIS
+    Tests a SOCKS proxy by fetching a URL through it with curl.
+
+.DESCRIPTION
+    Defines the Test-SocksProxy function (alias: testsocks) which builds a curl
+    --proxy command and runs it. Reports success or, on failure, decodes the
+    common curl error codes (7, 35, 52, 56, etc.) with likely causes.
+
+.PARAMETER Proxy
+    Proxy URL. Defaults to socks5://127.0.0.1:1080 if not provided. The script
+    will prepend socks5:// if no scheme is given.
+.PARAMETER Url
+    Target URL. Defaults to https://www.google.com.
+
+.EXAMPLE
+    PS> testsocks
+    PS> Test-SocksProxy -Proxy 'socks5://10.0.0.1:1080' -Url 'https://example.com'
+
+.NOTES
+    Requires curl on PATH (ships with Windows 10+).
+#>
+
 function Test-SocksProxy {
     param(
         [Parameter(Position = 0, Mandatory = $false)]

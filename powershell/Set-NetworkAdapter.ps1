@@ -1,3 +1,22 @@
+<#
+.SYNOPSIS
+    Applies a static IPv4 + DNS-over-HTTPS configuration to a named network adapter.
+
+.DESCRIPTION
+    Resets the named adapter (default: "Intel"), then re-applies a static IPv4 address,
+    gateway, and subnet mask, and sets Cloudflare/Google DNS (IPv4 + IPv6) with DoH
+    enabled. Enables NetBIOS over TCP/IP and restarts the adapter at the end.
+
+    Edit the variables in the USER CONFIGURATION block at the top of the script to
+    match your environment (adapter name, IP, gateway, subnet, DNS list).
+
+.EXAMPLE
+    PS> pwsh -File .\Set-NetworkAdapter.ps1
+
+.NOTES
+    Run from an elevated PowerShell session. The adapter will lose connectivity
+    briefly during the restart.
+#>
 #requires -RunAsAdministrator
 
 # --------------------------------------------------------------------------

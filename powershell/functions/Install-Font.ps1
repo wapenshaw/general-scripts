@@ -1,4 +1,27 @@
-function Install-Font {  
+<#
+.SYNOPSIS
+    Installs a single TrueType/OpenType font file into Windows Fonts and registers it in the registry.
+
+.DESCRIPTION
+    Defines two functions:
+        Install-Font  - copies a single .ttf/.otf into $env:windir\Fonts and registers it under
+                        HKLM:\Software\Microsoft\Windows NT\CurrentVersion\Fonts with the
+                        correct "(TrueType)"/"(OpenType)" suffix.
+        Install-Fonts - walks a list of folders recursively and installs every .ttf/.otf found.
+
+.PARAMETER fontFile
+    (Install-Font) A [System.IO.FileInfo] pointing at the font file.
+.PARAMETER fontFolders
+    (Install-Fonts) One or more folder paths to scan.
+
+.EXAMPLE
+    PS> Install-Fonts -fontFolders 'D:\Fonts','E:\MoreFonts'
+
+.NOTES
+    Requires an elevated PowerShell session (writes to HKLM).
+#>
+
+function Install-Font {
     param  
     (  
         [System.IO.FileInfo]$fontFile  

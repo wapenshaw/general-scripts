@@ -1,3 +1,35 @@
+<#
+.SYNOPSIS
+    Updates every installed PowerShell module to the latest version and uninstalls older ones.
+
+.DESCRIPTION
+    Defines the Update-Modules function (alias: upmods) which fetches the latest
+    version of each installed module from the gallery in batches of 63 (PSGallery
+    limit), runs Update-Module, then Uninstall-Module for any old versions that
+    linger.
+
+.PARAMETER AllowPrerelease
+    Update to the latest prerelease instead of production.
+.PARAMETER Name
+    Wildcard filter for module names. Default: '*'.
+.PARAMETER Exclude
+    Module names to skip.
+.PARAMETER Scope
+    AllUsers (default, requires admin) or CurrentUser.
+.PARAMETER WhatIf
+    Pass through to Update-Module / Uninstall-Module.
+.PARAMETER Verbose
+    Pass through to Update-Module / Uninstall-Module.
+
+.EXAMPLE
+    PS> upmods
+    PS> Update-Modules -AllowPrerelease -Scope CurrentUser
+    PS> Update-Modules -Exclude Az.Accounts,Az.Resources -WhatIf
+
+.NOTES
+    Alias: upmods. AllUsers scope requires an elevated session.
+#>
+
 function Update-Modules {
     param (
         [switch]$AllowPrerelease,

@@ -1,3 +1,21 @@
+<#
+.SYNOPSIS
+    Redirects development toolchain caches (NuGet, Go, Cargo, npm, PyPI, Ruby) to Z:\Packages.
+
+.DESCRIPTION
+    Sets the env vars that govern where common dev toolchains store their caches/packages and
+    configures npm to use Z:\Packages\npm_cache. Prompts the user to choose User (no admin) or
+    Machine (admin required) scope. On Machine scope, any existing User-scope values for the
+    same variables are cleared to avoid conflicts. Adds the active Python interpreter to the
+    selected scope's PATH if not already present.
+
+.EXAMPLE
+    PS> pwsh -File .\Set-DevPackagePaths.ps1
+
+.NOTES
+    Requires drive Z: to be mounted before running. Restart your terminal or reboot when done.
+#>
+
 # 1. Setup & Functions
 $ErrorActionPreference = "Stop"
 

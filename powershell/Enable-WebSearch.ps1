@@ -1,3 +1,23 @@
+<#
+.SYNOPSIS
+    Re-enables web results in Windows Search by removing the Group Policy registry keys.
+
+.DESCRIPTION
+    Removes the three DWORD policies under HKLM:\SOFTWARE\Policies\Microsoft\Windows\Windows Search
+    that Enable-WebSearch.ps1's counterpart Disable-WebSearch.ps1 installs:
+        DisableWebSearch
+        ConnectedSearchUseWeb
+        ConnectedSearchUseWebOverMeteredConnections
+
+    Prompts to confirm each removal.
+
+.EXAMPLE
+    PS> pwsh -File .\Enable-WebSearch.ps1
+
+.NOTES
+    Run from an elevated (Administrator) PowerShell session. Restart required.
+#>
+
 # Registry paths for the Group Policy settings
 $policies = @{
     "NoWebSearch"  = @{

@@ -1,3 +1,20 @@
+<#
+.SYNOPSIS
+    Reports the current Git repository's identity, remote, signing, and SSH state.
+
+.DESCRIPTION
+    Defines the gverify function which inspects the surrounding Git repo and prints
+    identity, remote URL (with auto-fix for known alias patterns), signing config, the
+    last commit's signature status, loaded SSH agent keys, and runs an SSH identity
+    test against the matching host alias.
+
+.EXAMPLE
+    PS> gverify
+
+.NOTES
+    Run from inside a Git repository.
+#>
+
 function gverify {
     Write-Host "== Git Verification ==" -ForegroundColor Cyan
 

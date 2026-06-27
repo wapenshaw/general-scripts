@@ -1,3 +1,25 @@
+<#
+.SYNOPSIS
+    Upgrades every installed WinGet package, with an opt-out exclude list.
+
+.DESCRIPTION
+    Parses `winget upgrade`, splits the list into available and excluded (matching
+    -ExcludePackages by name or id), and upgrades everything else. Runs in either
+    interactive (per-package prompt) or batch (one prompt for all) mode.
+
+.PARAMETER ExcludePackages
+    Names or package ids to skip. Default: Youtube, Filebot.
+.PARAMETER Interactive
+    When set, prompts before each upgrade instead of once for all.
+
+.EXAMPLE
+    PS> pwsh -File .\Update-WinGetPackages.ps1
+    PS> pwsh -File .\Update-WinGetPackages.ps1 -ExcludePackages Youtube,Filebot,VSCode -Interactive
+
+.NOTES
+    Recommended to run from an elevated PowerShell session.
+#>
+
 param(
     [string[]]$ExcludePackages = @("Youtube", "Filebot")
 )

@@ -1,10 +1,26 @@
+<#
+.SYNOPSIS
+    Installs the repo's PowerShell profile, helper functions, and Starship config into the user's XDG config directory.
+
+.DESCRIPTION
+    Copies powershell/User-Profile.ps1 to $HOME\.config\powershell\user_profile.ps1, copies every *.ps1 in powershell/functions/ to $HOME\.config\powershell\functions\, writes a generated loader into $PROFILE that dot-sources the installed files, then runs Set-StarshipConfig.ps1 to pick a starship.toml.
+
+    Re-running is idempotent. Existing files are overwritten in place.
+
+.EXAMPLE
+    PS> pwsh -File .\Install-Profile.ps1
+
+.NOTES
+    Run from any shell. Does not require admin.
+#>
+
 $ErrorActionPreference = "Stop"
 
 # --- Configuration ---
 $SourceRoot      = $PSScriptRoot
-$SourceProfile   = Join-Path $SourceRoot "my-profile.ps1"
+$SourceProfile   = Join-Path $SourceRoot "User-Profile.ps1"
 $SourceFunctions = Join-Path $SourceRoot "functions"
-$SourceStarship  = Join-Path $SourceRoot "starship.ps1"
+$SourceStarship  = Join-Path $SourceRoot "Set-StarshipConfig.ps1"
 
 # Destination config directory (Using XDG-like structure)
 $InstallDir      = Join-Path $HOME ".config\powershell"
@@ -50,7 +66,7 @@ if (-not (Test-Path $ProfileDir)) {
 
 # Create the loader script content
 $LoaderScript = @"
-# --- Generated Loader by install-profile.ps1 ---
+# --- Generated Loader by Install-Profile.ps1 ---
 `$ConfigDir = "$InstallDir"
 `$UserProfile = Join-Path `$ConfigDir "user_profile.ps1"
 

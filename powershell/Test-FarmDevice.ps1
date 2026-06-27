@@ -1,7 +1,28 @@
+<#
+.SYNOPSIS
+    Validates Seagate drive FARM hours against SMART power-on hours for every non-NVMe drive.
+
+.DESCRIPTION
+    For every non-NVMe device smartctl --scan reports, reads the SMART attribute
+    Power_On_Hours and the FARM log Power on Hours. PASSes if the two are within
+    1 hour of each other; FAILs otherwise. Skips drives without FARM support.
+
+    Requires smartmontools 7.4+ installed at C:\Program Files\smartmontools\.
+
+    Original purpose: detect refurbished Seagate drives whose SMART and FARM counters
+    disagree (a common sign of clock/usage tampering).
+
+.EXAMPLE
+    PS> pwsh -File .\Test-FarmDevice.ps1
+
+.NOTES
+    Run from an elevated PowerShell session. NVMe drives are skipped by design.
+#>
+
 # Download smartmontools from https://www.smartmontools.org/
 # Requires SmartMontools 7.4 or later https://sourceforge.net/projects/smartmontools/files/smartmontools/7.4/
 # IMPORTANT - Must be run from an ADMINISTRATOR PowerShell session
-# Usage example: .\test-farm-device.ps1 G:\ H:\
+# Usage example: .\Test-FarmDevice.ps1
 
 # Set smartctl path
 $smartctlPath = "C:\Program Files\smartmontools\bin\smartctl.exe"

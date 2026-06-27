@@ -1,11 +1,24 @@
-# PowerShell script to scan my movies folder and all its sub folders to find duplicate movie files.
-# Sometimes I have multiple copies of the same movie in the folder with different extensions.
-# It will check for files larger than a specified size (default 500MB)
-# and will group them by folder name.
-# It will then check if there are more than two files in that folder
-# that are larger than the specified size.
-# If so, it will print the folder name and the names of the files in that folder.
-# This is useful for finding duplicate movie files that are larger than a specified size.
+<#
+.SYNOPSIS
+    Finds duplicate movie files (same folder, > -SizeMB) in a movies directory.
+
+.DESCRIPTION
+    Walks -RootFolder recursively and groups files larger than -SizeMB by their
+    parent folder. Any folder containing more than one such file is reported as a
+    potential duplicate (different extensions of the same movie are common).
+
+.PARAMETER RootFolder
+    Movies root. Default: G:\Movies.
+.PARAMETER SizeMB
+    Minimum file size in MB to consider. Default: 500.
+
+.EXAMPLE
+    PS> Find-DuplicateMovieFiles -RootFolder 'G:\Movies' -SizeMB 700
+    PS> dupedelete     # alias uses the defaults
+
+.NOTES
+    No admin required. Alias: dupedelete.
+#>
 
 function Find-DuplicateMovieFiles {
     [CmdletBinding()]

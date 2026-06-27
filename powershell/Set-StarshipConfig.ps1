@@ -1,3 +1,18 @@
+<#
+.SYNOPSIS
+    Interactive picker for a starship.toml from the repo's starship\ directory.
+
+.DESCRIPTION
+    Lists every file in the repo's starship\ directory and copies the chosen one to
+    $HOME\.config\starship.toml, creating the directory if needed.
+
+.EXAMPLE
+    PS> pwsh -File .\Set-StarshipConfig.ps1
+
+.NOTES
+    No admin required. Run by Install-Profile.ps1 automatically as part of profile setup.
+#>
+
 # Define the source directory
 $sourceDirectory = Join-Path $PSScriptRoot "../starship"
 

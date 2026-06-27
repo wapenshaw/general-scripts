@@ -1,4 +1,18 @@
-# Added for Azure CLI
+<#
+.SYNOPSIS
+    Registers tab-completion for the Azure CLI (az) in PowerShell.
+
+.DESCRIPTION
+    Uses Register-ArgumentCompleter with the argcomplete temp-file protocol to feed
+    az's own completion output back into PowerShell. Idempotent - call it once from
+    a profile loader and the completer sticks.
+
+.EXAMPLE
+    # Dot-source this file from your profile loader.
+
+.NOTES
+    Requires the Azure CLI on PATH.
+#>
 
 Register-ArgumentCompleter -Native -CommandName az -ScriptBlock {
     param($commandName, $wordToComplete, $cursorPosition)

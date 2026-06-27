@@ -1,3 +1,26 @@
+<#
+.SYNOPSIS
+    Rewrites the author/committer name and email of every commit in a Git repo.
+
+.DESCRIPTION
+    Uses git filter-branch with an env-filter to override GIT_AUTHOR_* and GIT_COMMITTER_*
+    on every commit, then optionally force-pushes the result. Useful for fixing commits
+    that were made with the wrong identity (typo, machine switch, work/personal mixup).
+
+.PARAMETER NewEmail
+    Email to apply to every commit.
+.PARAMETER NewName
+    Name to apply to every commit.
+.PARAMETER RepositoryPath
+    Path to the repository. Defaults to the current directory.
+
+.EXAMPLE
+    PS> pwsh -File .\Update-GitCommitIdentity.ps1 -NewName 'Alice' -NewEmail 'alice@example.com' -RepositoryPath 'C:\code\repo'
+
+.NOTES
+    Rewriting history is destructive. Coordinate with collaborators before force-pushing.
+#>
+
 # Script to update all Git commit emails in a repository
 param(
     [Parameter(Mandatory = $true)]
