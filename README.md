@@ -77,7 +77,23 @@ This PowerShell script allows you to select a file from the `starship/` director
 
 ---
 
-## 5. [Font Cache Reset](./powershell/system/fontcache.bat)
+## 5. [Move Special Folders](./powershell/profile/Move-Special-Folders.ps1)
+
+One-time script for a fresh box. Redirects the standard Windows user folders (Desktop, Documents, Favorites, Music, Pictures, Videos) to `E:\` so the user data lives on a separate drive and Desktop/Documents are inside `E:\OneDrive` for sync.
+
+Uses `robocopy /MOVE` to migrate existing contents, calls `SHSetKnownFolderPath`, edits the `User Shell Folders` and `Shell Folders` registry keys, and restarts Explorer. Prints a summary of which Known Folders now live on `E:\`.
+
+### Usage
+
+```powershell
+.\powershell\profile\Move-Special-Folders.ps1
+```
+
+**Before running:** close Explorer and any app that has Desktop/Documents open. Requires the `E:\` drive and the `E:\OneDrive` parent folder to exist.
+
+---
+
+## 6. [Font Cache Reset](./powershell/system/fontcache.bat)
 
 Windows batch script that resets the Windows font cache. Useful when fonts fail to render correctly or after bulk-installing new fonts.
 

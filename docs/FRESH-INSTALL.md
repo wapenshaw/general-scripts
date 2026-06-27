@@ -39,7 +39,7 @@ Download and run the MSI from the GitHub release page:
 - The MSI is the canonical install; it's signed by Microsoft and ships the day a release is cut.
 - `winget` lags GitHub by hours-to-days and you have less control over the install path and feature set.
 - Manual install avoids a chicken-and-egg if `winget` itself is misbehaving on first boot.
-- You'll have PowerShell 7 to run the profile installer in step 7 even if `winget` is still being repaired.
+- You'll have PowerShell 7 to run the profile installer in step 8 even if `winget` is still being repaired.
 
 ---
 
@@ -53,9 +53,23 @@ git clone https://github.com/<you>/general-scripts.git Z:\Personal\general-scrip
 
 The scripts use `$PSScriptRoot`-relative paths so the repo can live anywhere, but `Set-DevPackagePaths.ps1` assumes `Z:\Packages` exists - mount that drive first or edit the `$BasePath` in the script.
 
-### 4. Restore env vars from the captured snapshot
+### 4. Set up OneDrive and move special folders
 
-Run **before** the winget installs, so toolchain path env vars (CARGO_HOME, GOPATH, etc.) are in place when those toolchains first launch.
+Sign in to OneDrive during the initial OOBE flow (it auto-launches). During setup, **change the OneDrive folder location to `E:\OneDrive`** rather than the default `C:\Users\<user>\OneDrive`. Wait for initial sync to finish (or pause sync for now).
+
+Then redirect the standard Windows user folders so Desktop, Documents, Favorites, Music, Pictures, and Videos live on E:\ - with Desktop and Documents inside the OneDrive folder so they sync.
+
+```powershell
+Z:\Personal\general-scripts\powershell\profile\Move-Special-Folders.ps1
+```
+
+The script uses `robocopy /MOVE` to migrate existing contents, calls `SHSetKnownFolderPath` to update the per-user Known Folder path, edits both `User Shell Folders` and `Shell Folders` registry keys, then restarts Explorer.
+
+**Before running:** close all apps that have Desktop/Documents open (OneDrive, Outlook, etc.). Requires the `E:\` drive to exist and target parent folders (e.g. `E:\OneDrive`) to be present.
+
+### 5. Restore env vars from the captured snapshot
+
+Run **before** the winget installs, so toolchain path env vars (CARGO_HOME, GOPATH, etc.) are in place when those toolchains first launch. The `OneDrive` env var in the snapshot points at `E:\OneDrive`, which is why step 4 (moving Desktop/Documents there) must come first.
 
 ```powershell
 # Preview first
@@ -67,9 +81,9 @@ Z:\Personal\general-scripts\powershell\tools\Import-Env.ps1
 
 The snapshot in `config/env/user.json` excludes secrets, session vars, and runtime vars (see `config/env/README.md` for the filter list).
 
-### 5. Set dev package paths
+### 6. Set dev package paths
 
-`Set-DevPackagePaths.ps1` redirects common toolchain caches (NuGet, Go, Cargo, npm, PyPI, Ruby, Maven) into `Z:\Packages\...`. Run **before** `winget install` for the same reason as step 4.
+`Set-DevPackagePaths.ps1` redirects common toolchain caches (NuGet, Go, Cargo, npm, PyPI, Ruby, Maven) into `Z:\Packages\...`. Run **before** `winget install` for the same reason as step 5.
 
 ```powershell
 Z:\Personal\general-scripts\powershell\profile\Set-DevPackagePaths.ps1
@@ -81,7 +95,7 @@ Pick User (no admin) or System scope (admin required). Creates the target direct
 
 ## Install
 
-### 6. Apps via winget
+### 7. Apps via winget
 
 From an elevated PowerShell:
 
@@ -106,7 +120,7 @@ For a list of what would be installed: `Install-Essentials.ps1 -List`.
 
 ## Post-install scripts
 
-### 7. Run these in order
+### 8. Run these in order
 
 These are the repo scripts that need to run once on a fresh box, in this order. Most require an elevated PowerShell (admin).
 
@@ -140,7 +154,7 @@ These are the repo scripts that need to run once on a fresh box, in this order. 
    Z:\Personal\general-scripts\powershell\system\Set-DlssIndicator.ps1
    ```
 
-### 8. Restart PowerShell
+### 9. Restart PowerShell
 
 After all of the above, close every PowerShell window and reopen. The new `$PROFILE` loader, env vars, and winget shims all need a fresh session.
 
@@ -148,7 +162,7 @@ After all of the above, close every PowerShell window and reopen. The new `$PROF
 
 ## Optional
 
-### 9. WSL
+### 10. WSL
 
 Only needed if you use the `zsh/` half of this repo.
 
@@ -167,9 +181,10 @@ Then follow `zsh/README.md`.
 | 1 | winget working | App Installer from MS Store |
 | 2 | PowerShell 7 | MSI from github.com/PowerShell/PowerShell/releases |
 | 3 | Clone repo | `git clone ...` |
-| 4 | Restore env vars | `Import-Env.ps1` (before winget) |
-| 5 | Dev package paths | `Set-DevPackagePaths.ps1` (admin for System scope) |
-| 6 | Apps via winget | `Install-Essentials.ps1` |
-| 7 | Post-install scripts | Run the 6 numbered scripts in order |
-| 8 | Restart PowerShell | close + reopen |
-| 9 | WSL (optional) | `wsl --install -d Ubuntu` |
+| 4 | OneDrive + special folders | `Move-Special-Folders.ps1` |
+| 5 | Restore env vars | `Import-Env.ps1` (before winget) |
+| 6 | Dev package paths | `Set-DevPackagePaths.ps1` (admin for System scope) |
+| 7 | Apps via winget | `Install-Essentials.ps1` |
+| 8 | Post-install scripts | Run the 6 numbered scripts in order |
+| 9 | Restart PowerShell | close + reopen |
+| 10 | WSL (optional) | `wsl --install -d Ubuntu` |
