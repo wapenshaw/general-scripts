@@ -1,29 +1,27 @@
 <#
 .SYNOPSIS
-    Moves Windows Known Folders (Desktop, Documents, Favorites, Music, Pictures, Videos) to E:\ and updates the registry + Known Folder API so the new locations stick.
+    Moves Windows Known Folders to E:\ and updates Windows Known Folder paths.
 
 .DESCRIPTION
-    For each of the six standard Windows user folders:
-    1. Uses robocopy /E /MOVE to migrate existing contents to the configured E:\ target. Desktop and Documents go into E:\OneDrive; the other four go directly to E:\.
-    2. Calls SHSetKnownFolderPath to update the per-user Known Folder path.
-    3. Updates both the User Shell Folders and Shell Folders registry keys so Explorer and Win32 APIs see the new location.
-    4. Removes the now-empty old folder if the move was successful.
+    Moves Desktop, Documents, Favorites, Music, Pictures, and Videos to fixed E:\ paths.
 
-    After all six folders are moved, restarts Explorer to make the new paths take effect and prints a final summary of which Known Folders now live on E:\.
+    Target layout:
+      Desktop   -> E:\OneDrive\Desktop
+      Documents -> E:\OneDrive\Documents
+      Favorites -> E:\Favorites
+      Music     -> E:\Music
+      Pictures  -> E:\Pictures
+      Videos    -> E:\Videos
 
-.PARAMETER <none>
-
-.EXAMPLE
-    PS> pwsh -File .\Move-Special-Folders.ps1
+    Uses robocopy /MOVE to move existing files, then updates the Windows Known Folder path
+    through SHSetKnownFolderPath and the Explorer registry values.
 
 .NOTES
-    Run as the logged-in user whose folders are being moved. Close Explorer and any app that has Desktop/Documents/etc. open (OneDrive, Outlook, etc.) before running. Requires the E:\ drive to exist and target parent folders (e.g. E:\OneDrive) to be present - OneDrive setup must have run first if Desktop/Documents are to be moved into the OneDrive folder.
+    Run as the logged-in user whose folders are being moved.
+    Close Explorer windows and apps using Desktop/Documents/etc. before running.
 #>
 
 $ErrorActionPreference = "Stop"
-
-# Run this as the logged-in user whose folders are being moved.
-# Close Explorer windows and apps using Desktop/Documents/etc. before running.
 
 if (-not (Test-Path -LiteralPath "E:\")) {
     throw "E: drive does not exist."
@@ -74,7 +72,8 @@ $KnownFolders = @(
     }
 )
 
-Add-Type @"
+if (-not ("KnownFolderNative" -as [type])) {
+    Add-Type @"
 using System;
 using System.Runtime.InteropServices;
 
@@ -88,26 +87,36 @@ public static class KnownFolderNative {
     );
 }
 "@
+}
 
 $UserShellFolders = "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\User Shell Folders"
 $ShellFolders = "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Shell Folders"
 
 function Get-CanonicalPath {
-    param([Parameter(Mandatory)][string]$Path)
+    param(
+        [Parameter(Mandatory)]
+        [string]$Path
+    )
 
     $resolved = Resolve-Path -LiteralPath $Path -ErrorAction SilentlyContinue
+
     if ($resolved) {
-        return $resolved.ProviderPath.TrimEnd('\')
+        return $resolved.ProviderPath.TrimEnd("\")
     }
 
-    return $Path.TrimEnd('\')
+    return $Path.TrimEnd("\")
 }
 
 function Move-KnownFolderContents {
     param(
-        [Parameter(Mandatory)][string]$Name,
-        [Parameter(Mandatory)][string]$SourcePath,
-        [Parameter(Mandatory)][string]$TargetPath
+        [Parameter(Mandatory)]
+        [string]$Name,
+
+        [Parameter(Mandatory)]
+        [string]$SourcePath,
+
+        [Parameter(Mandatory)]
+        [string]$TargetPath
     )
 
     if ([string]::IsNullOrWhiteSpace($SourcePath)) {
@@ -130,6 +139,10 @@ function Move-KnownFolderContents {
         return
     }
 
+    if ($targetCanonical.StartsWith($sourceCanonical + "\", [System.StringComparison]::OrdinalIgnoreCase)) {
+        throw "$Name target path is inside source path. Refusing to move recursively."
+    }
+
     Write-Host "Moving $Name contents..."
     Write-Host "  From: $SourcePath"
     Write-Host "  To:   $TargetPath"
@@ -138,7 +151,6 @@ function Move-KnownFolderContents {
 
     $robocopyExitCode = $LASTEXITCODE
 
-    # Robocopy exit codes 0-7 are success/non-fatal.
     if ($robocopyExitCode -ge 8) {
         throw "Robocopy failed for $Name with exit code $robocopyExitCode"
     }
@@ -148,9 +160,14 @@ function Move-KnownFolderContents {
 
 function Remove-OldFolderIfEmpty {
     param(
-        [Parameter(Mandatory)][string]$Name,
-        [Parameter(Mandatory)][string]$OldPath,
-        [Parameter(Mandatory)][string]$TargetPath
+        [Parameter(Mandatory)]
+        [string]$Name,
+
+        [Parameter(Mandatory)]
+        [string]$OldPath,
+
+        [Parameter(Mandatory)]
+        [string]$TargetPath
     )
 
     if ([string]::IsNullOrWhiteSpace($OldPath)) {
@@ -187,6 +204,8 @@ foreach ($folder in $KnownFolders) {
 
     Write-Host ""
     Write-Host "==== $name ===="
+    Write-Host "Current: $sourcePath"
+    Write-Host "Target:  $targetPath"
 
     Move-KnownFolderContents `
         -Name $name `
@@ -203,7 +222,7 @@ foreach ($folder in $KnownFolders) {
     )
 
     if ($result -ne 0) {
-        throw "Failed to set $name. HRESULT: 0x{0:X8}" -f $result
+        throw ("Failed to set $name. HRESULT: 0x{0:X8}" -f $result)
     }
 
     Set-ItemProperty -Path $UserShellFolders -Name $folder.RegName -Value $targetPath
