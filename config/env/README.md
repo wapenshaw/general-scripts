@@ -6,8 +6,8 @@ This folder stores the Windows environment variables for the **TITAN** machine s
 
 | File | Purpose | How to (re)generate |
 |---|---|---|
-| `user.json` | Captured user-scope env vars (HKCU\Environment). | `pwsh -File ../../powershell/Export-Env.ps1` |
-| `system.json` | Captured system-scope env vars (HKLM\…\Session Manager\Environment). | `pwsh -File ../../powershell/Export-Env.ps1 -IncludeMachine` (admin shell) |
+| `user.json` | Captured user-scope env vars (HKCU\Environment). | `pwsh -File ../../powershell/tools/Export-Env.ps1` |
+| `system.json` | Captured system-scope env vars (HKLM\…\Session Manager\Environment). | `pwsh -File ../../powershell/tools/Export-Env.ps1 -IncludeMachine` (admin shell) |
 | `paths.json` | Custom directory layout this machine relies on (toolchain caches, portable apps, OneDrive). | Edit by hand when the layout changes. |
 
 ## Filter (always stripped on export)

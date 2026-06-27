@@ -3,7 +3,7 @@
     Installs the repo's PowerShell profile, helper functions, and Starship config into the user's XDG config directory.
 
 .DESCRIPTION
-    Copies powershell/User-Profile.ps1 to $HOME\.config\powershell\user_profile.ps1, copies every *.ps1 in powershell/functions/ to $HOME\.config\powershell\functions\, writes a generated loader into $PROFILE that dot-sources the installed files, then runs Set-StarshipConfig.ps1 to pick a starship.toml.
+    Copies powershell/profile/User-Profile.ps1 to $HOME\.config\powershell\user_profile.ps1, copies every *.ps1 in powershell/functions/ to $HOME\.config\powershell\functions\, writes a generated loader into $PROFILE that dot-sources the installed files, then runs Set-StarshipConfig.ps1 to pick a starship.toml.
 
     Re-running is idempotent. Existing files are overwritten in place.
 
@@ -19,7 +19,7 @@ $ErrorActionPreference = "Stop"
 # --- Configuration ---
 $SourceRoot      = $PSScriptRoot
 $SourceProfile   = Join-Path $SourceRoot "User-Profile.ps1"
-$SourceFunctions = Join-Path $SourceRoot "functions"
+$SourceFunctions = Join-Path $PSScriptRoot "..\functions"
 $SourceStarship  = Join-Path $SourceRoot "Set-StarshipConfig.ps1"
 
 # Destination config directory (Using XDG-like structure)

@@ -8,10 +8,10 @@ PowerShell workflows:
 
 ```powershell
 Set-ExecutionPolicy -Scope CurrentUser RemoteSigned
-pwsh -File ./powershell/Install-Profile.ps1
-pwsh -File ./powershell/Update-WinGetPackages.ps1 -ExcludePackages Youtube,Filebot
-pwsh -File ./powershell/Set-DevPackagePaths.ps1
-pwsh -File ./powershell/Set-NetworkAdapter.ps1
+pwsh -File ./powershell/profile/Install-Profile.ps1
+pwsh -File ./powershell/tools/Update-WinGetPackages.ps1 -ExcludePackages Youtube,Filebot
+pwsh -File ./powershell/profile/Set-DevPackagePaths.ps1
+pwsh -File ./powershell/system/Set-NetworkAdapter.ps1
 ```
 
 Zsh workflows:
@@ -36,7 +36,7 @@ Script-level validation:
 pwsh -NoProfile -Command '$failed=$false; Get-ChildItem ./powershell -Recurse -Filter *.ps1 | ForEach-Object { $tokens=$null; $errors=$null; $null = [System.Management.Automation.Language.Parser]::ParseFile($_.FullName,[ref]$tokens,[ref]$errors); if ($errors) { $failed=$true; $errors | Format-List } }; if ($failed) { exit 1 }'
 
 # Single PowerShell script
-pwsh -NoProfile -Command '$tokens=$null; $errors=$null; $null = [System.Management.Automation.Language.Parser]::ParseFile((Resolve-Path ./powershell/Set-DevPackagePaths.ps1).Path,[ref]$tokens,[ref]$errors); if ($errors) { $errors | Format-List; exit 1 }'
+pwsh -NoProfile -Command '$tokens=$null; $errors=$null; $null = [System.Management.Automation.Language.Parser]::ParseFile((Resolve-Path ./powershell/profile/Set-DevPackagePaths.ps1).Path,[ref]$tokens,[ref]$errors); if ($errors) { $errors | Format-List; exit 1 }'
 
 # POSIX shell entry points
 for f in ./er605-openwrt/*.sh; do sh -n "$f"; done
@@ -53,16 +53,16 @@ zsh -n ./zsh/zsh/.zshenv ./zsh/zsh/.zprofile ./zsh/zsh/.zshrc ./zsh/zsh/*.zsh ./
 
 ## High-level architecture
 
-- `powershell/` contains runnable, task-oriented PowerShell utilities. `powershell/functions/` contains reusable helpers and aliases that become available through the PowerShell profile installer.
-- `powershell/Install-Profile.ps1` copies `powershell/User-Profile.ps1` to `$HOME\.config\powershell\user_profile.ps1`, copies each `powershell/functions/*.ps1` to `$HOME\.config\powershell\functions\`, writes `$PROFILE` as a loader that dot-sources those installed files, then runs `powershell/Set-StarshipConfig.ps1`.
-- `powershell/User-Profile.ps1` is intentionally small: PSReadLine tab menu completion, `Microsoft.WinGet.CommandNotFound`, Starship init, and zoxide init. Put new reusable commands in `powershell/functions/`, not in the generated loader.
-- Starship themes live at the repo root in `starship/` (e.g. `nova.toml`, `nordic.toml`). The zsh installer (`zsh/install.sh`) prompts for which one to copy to `~/.config/zsh/starship.toml`; the PowerShell `powershell/Set-StarshipConfig.ps1` does the same for the Windows side.
+- `powershell/` contains runnable, task-oriented PowerShell utilities organised by intent: `profile/` (install + startup), `system/` (registry/network/shutdown tweaks), `tools/` (ad-hoc and daily helpers), `diagnostics/` (Test-* probes). `powershell/functions/` contains reusable helpers and aliases that become available through the PowerShell profile installer.
+- `powershell/profile/Install-Profile.ps1` copies `powershell/profile/User-Profile.ps1` to `$HOME\.config\powershell\user_profile.ps1`, copies each `powershell/functions/*.ps1` to `$HOME\.config\powershell\functions\`, writes `$PROFILE` as a loader that dot-sources those installed files, then runs `powershell/profile/Set-StarshipConfig.ps1`.
+- `powershell/profile/User-Profile.ps1` is intentionally small: PSReadLine tab menu completion, `Microsoft.WinGet.CommandNotFound`, Starship init, and zoxide init. Put new reusable commands in `powershell/functions/`, not in the generated loader.
+- Starship themes live at the repo root in `starship/` (e.g. `nova.toml`, `nordic.toml`). The zsh installer (`zsh/install.sh`) prompts for which one to copy to `~/.config/zsh/starship.toml`; the PowerShell `powershell/profile/Set-StarshipConfig.ps1` does the same for the Windows side.
 - `zsh/` is a copied XDG-style configuration. `zsh/install.sh` copies tracked config files into `~/.config/zsh`, manages a block in `/etc/zshenv` or `/etc/zsh/zshenv` to set `ZDOTDIR`, and excludes plugin/doc/meta files from the installed copy.
 - `zsh/zsh/.zshenv` owns non-interactive environment setup and work-mode environment modules. `zsh/zsh/.zshrc` sources modules in order, with work aliases/functions enabled only when `ZSH_WORK=1` is set by `./zsh/install.sh --work`.
 - `zsh/zsh/plugins.zsh` auto-clones plugins on first shell launch into `~/.config/zsh/plugins/`; do not vendor plugin checkouts into the repo.
 - `er605-openwrt/` contains router-side BusyBox/POSIX shell helpers plus the guide. The flashing script locates UBI volumes named `kernel` and `kernel.b` and writes the initramfs image to both; the backup script writes MTD backups to an NTFS USB mount.
 - `fonts/`, `windows-terminal/`, `extensions/`, and root Starship theme files are payload/config assets consumed manually by the scripts or external tools.
-- `config/env/` holds captured Windows environment variables (user.json, system.json) plus a paths.json documenting the custom drive layout, written by `powershell/Export-Env.ps1` and `powershell/Import-Env.ps1`.
+- `config/env/` holds captured Windows environment variables (user.json, system.json) plus a paths.json documenting the custom drive layout, written by `powershell/tools/Export-Env.ps1` and `powershell/tools/Import-Env.ps1`.
 
 ## Key conventions
 
@@ -77,4 +77,4 @@ zsh -n ./zsh/zsh/.zshenv ./zsh/zsh/.zprofile ./zsh/zsh/.zshrc ./zsh/zsh/*.zsh ./
 
 ## PowerShell script naming
 
-Standalone scripts and functions follow the PowerShell `Verb-Noun` convention with PascalCase, using approved verbs from `Get-Verb`. See `powershell/Install-Profile.ps1` for a non-actionable exception (it's a static config file, not a script). Every script and function has comment-based help (`<# .SYNOPSIS ... #>`) at the top so `Get-Help <file>` works.
+Standalone scripts and functions follow the PowerShell `Verb-Noun` convention with PascalCase, using approved verbs from `Get-Verb`. See `powershell/profile/Install-Profile.ps1` for a non-actionable exception (it's a static config file, not a script). Every script and function has comment-based help (`<# .SYNOPSIS ... #>`) at the top so `Get-Help <file>` works.

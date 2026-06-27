@@ -6,26 +6,28 @@
 
 > AI agents: See the project guide at [.github/copilot-instructions.md](.github/copilot-instructions.md) for repo structure, workflows, and conventions.
 
-## 1. [PowerShell Profile Installer](./powershell/Install-Profile.ps1)
+## 1. [PowerShell Profile Installer](./powershell/profile/Install-Profile.ps1)
 
-This PowerShell script automates the following tasks:
+Installs the repo's PowerShell profile and helper functions into the user's XDG config directory, then runs the starship config picker.
 
-1. **Check for Winget Installation**: The script checks if Winget is installed on the system. If Winget is not installed, it prompts the user to install it.
-2. **Install Starship Prompt**: Using Winget, the script installs the Starship prompt.
-3. **Update PowerShell Profile**: The script overwrites the current PowerShell profile with the contents of a specified `myprofile.ps1` file.
-4. **Install Fonts**: The script installs all fonts located in the `fonts/nerd-fonts` and `fonts/coding-fonts` directories, ensuring that already installed fonts are skipped.
+1. **Install User Profile**: Copies `powershell/profile/User-Profile.ps1` to `$HOME/.config/powershell/user_profile.ps1`.
+2. **Install Functions**: Copies every `*.ps1` in `powershell/functions/` to `$HOME/.config/powershell/functions/`.
+3. **Generate Profile Loader**: Writes a generated loader into `$PROFILE` (the live PowerShell profile path) that dot-sources the installed files.
+4. **Pick Starship Config**: Runs `Set-StarshipConfig.ps1` to interactively choose a `starship.toml` from `starship/` and copy it to `$HOME/.config/starship.toml`.
+
+Re-running is idempotent — existing files are overwritten in place. Does **not** install winget, starship, or fonts; those are prerequisites.
 
 ### Usage
 
-1. Ensure that the `myprofile.ps1` file is present in the same directory as the script.
-2. Place your font files in the `fonts/nerd-fonts` and `fonts/coding-fonts` directories.
-3. Run the script in a PowerShell session.
+```powershell
+pwsh -File .\powershell\profile\Install-Profile.ps1
+```
 
-This script simplifies setting up a development environment by automating the installation of essential tools and configurations.
+Restart PowerShell after running to apply the new profile.
 
 ---
 
-## 2. [Windows Package Upgrader Script](./powershell/Update-WinGetPackages.ps1)
+## 2. [Windows Package Upgrader Script](./powershell/tools/Update-WinGetPackages.ps1)
 
 ### Description
 
@@ -67,8 +69,24 @@ See [zsh/README.md](./zsh/README.md) for the full setup guide and [zsh/CHEATSHEE
 
 ---
 
-## 4. [Copy Starship Configuration Script](./powershell/Set-StarshipConfig.ps1)
+## 4. [Copy Starship Configuration Script](./powershell/profile/Set-StarshipConfig.ps1)
 
 ### Description
 
 This PowerShell script allows you to select a file from the `starship/` directory and copy it to `$HOME/.config/starship.toml`. It lists all files in the `starship/` folder, presents them in a numbered menu, and prompts you to choose which file to copy. After selecting a file, it creates the destination directory if it doesn't exist and copies the chosen file to `$HOME/.config/starship.toml`. This script ensures you copy the correct file interactively, enhancing file management efficiency.
+
+---
+
+## 5. [Font Cache Reset](./powershell/system/fontcache.bat)
+
+Windows batch script that resets the Windows font cache. Useful when fonts fail to render correctly or after bulk-installing new fonts.
+
+**Requires Administrator.** Stops the `FontCache` service, grants the current user access to `%WinDir%\ServiceProfiles\LocalService`, deletes the font cache files (`FontCache*` and `FNTCACHE.DAT`), then restarts the service.
+
+### Usage
+
+Run from an elevated Command Prompt or PowerShell:
+
+```cmd
+.\powershell\system\fontcache.bat
+```

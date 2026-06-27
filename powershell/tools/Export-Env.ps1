@@ -27,7 +27,7 @@
 
 [CmdletBinding()]
 param(
-    [string]$OutputDir = (Join-Path $PSScriptRoot "..\config\env"),
+    [string]$OutputDir = (Join-Path $PSScriptRoot "..\..\config\env"),
     [switch]$IncludeMachine
 )
 

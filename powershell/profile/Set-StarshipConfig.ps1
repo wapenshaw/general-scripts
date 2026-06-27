@@ -14,7 +14,7 @@
 #>
 
 # Define the source directory
-$sourceDirectory = Join-Path $PSScriptRoot "../starship"
+$sourceDirectory = Join-Path $PSScriptRoot "../../starship"
 
 # Get all files in the source directory
 $files = Get-ChildItem -Path $sourceDirectory -File

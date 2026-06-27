@@ -31,7 +31,7 @@
 
 [CmdletBinding()]
 param(
-    [string]$ConfigDir = (Join-Path $PSScriptRoot "..\config\env"),
+    [string]$ConfigDir = (Join-Path $PSScriptRoot "..\..\config\env"),
     [switch]$IncludeMachine,
     [switch]$MergePath,
     [switch]$DryRun

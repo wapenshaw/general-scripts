@@ -23,7 +23,7 @@ if (-not ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdent
 $action = Read-Host "Do you want to apply or undo the registry tweaks? (Enter 'apply' or 'undo')"
 
 # Set the path based on the user's choice
-$registryTweaksRoot = Join-Path $PSScriptRoot "..\registry-tweaks"
+$registryTweaksRoot = Join-Path $PSScriptRoot "..\..\registry-tweaks"
 if ($action -eq 'apply') {
     $regFilesPath = Join-Path $registryTweaksRoot "dos"
 }
