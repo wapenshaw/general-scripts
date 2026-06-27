@@ -120,7 +120,7 @@ function Move-KnownFolderContents {
         return
     }
 
-    New-Item -ItemType Directory -Force -Path $TargetPath | Out-Null
+    [System.IO.Directory]::CreateDirectory($TargetPath) | Out-Null
 
     $sourceCanonical = Get-CanonicalPath -Path $SourcePath
     $targetCanonical = Get-CanonicalPath -Path $TargetPath
