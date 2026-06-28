@@ -1,9 +1,9 @@
 {
   "schemaVersion": 1,
-  "capturedAt": "2026-06-27T02:20:45Z",
+  "capturedAt": "2026-06-27T03:24:20Z",
   "host": "TITAN",
   "scope": "User",
-  "varCount": 31,
+  "varCount": 29,
   "filteredCount": 2,
   "vars": {
     "CARGO_HOME": {
@@ -54,14 +54,6 @@
       "value": "Z:\\Packages\\.nuget",
       "type": "REG_SZ"
     },
-    "NVM_HOME": {
-      "value": "C:\\Users\\tHeSiD\\AppData\\Local\\nvm",
-      "type": "REG_EXPAND_SZ"
-    },
-    "NVM_SYMLINK": {
-      "value": "C:\\nvm4w\\nodejs",
-      "type": "REG_EXPAND_SZ"
-    },
     "OneDrive": {
       "value": "E:\\OneDrive",
       "type": "REG_EXPAND_SZ"
@@ -75,7 +67,7 @@
       "type": "REG_SZ"
     },
     "Path": {
-      "value": "C:\\Users\\tHeSiD\\.grok\\bin;C:\\Users\\tHeSiD\\AppData\\Local\\Programs\\OpenAI\\Codex\\bin;C:\\Users\\tHeSiD\\AppData\\Local\\agy\\bin;Z:\\Packages\\.pyenv\\pyenv-win\\bin;Z:\\Packages\\.pyenv\\pyenv-win\\shims;Z:\\Packages\\.cargo\\bin;Z:\\Packages\\.gem\\bin;Z:\\Packages\\.go\\bin;Z:\\Packages\\uv_python_bin;Z:\\Packages\\uv_tool_bin;C:\\Users\\tHeSiD\\.aspire\\bin;C:\\Users\\tHeSiD\\AppData\\Local\\UniGetUI\\Chocolatey\\bin;C:\\Users\\tHeSiD\\AppData\\Local\\Microsoft\\WindowsApps;C:\\Users\\tHeSiD\\AppData\\Local\\nvm;C:\\nvm4w\\nodejs;C:\\Users\\tHeSiD\\AppData\\Local\\Programs\\Microsoft VS Code\\bin;C:\\Users\\tHeSiD\\AppData\\Local\\Microsoft\\WinGet\\Packages\\Microsoft.Sysinternals.Suite_Microsoft.Winget.Source_8wekyb3d8bbwe;F:/Software\\Fastfetch-cli.Fastfetch_Microsoft.Winget.Source_8wekyb3d8bbwe;F:/Software\\ajeetdsouza.zoxide_Microsoft.Winget.Source_8wekyb3d8bbwe;C:\\Users\\tHeSiD\\.lmstudio\\bin;C:\\Users\\tHeSiD\\.dotnet\\tools;F:\\Software\\GitHub.Copilot_Microsoft.Winget.Source_8wekyb3d8bbwe;C:\\Users\\tHeSiD\\AppData\\Local\\JetBrains\\Toolbox\\scripts;F:\\Software\\Stripe.StripeCli_Microsoft.Winget.Source_8wekyb3d8bbwe;Z:\\Vatify-Refactor\\New-Vatify\\codex-dotnet-home\\.dotnet\\tools;C:\\Users\\tHeSiD\\.dotnet\\tools;c:\\users\\thesid\\.local\\bin;F:\\Software\\Gyan.FFmpeg_Microsoft.Winget.Source_8wekyb3d8bbwe\\ffmpeg-8.1.1-full_build\\bin;F:\\Software\\Hashicorp.Terraform_Microsoft.Winget.Source_8wekyb3d8bbwe;C:\\Users\\tHeSiD\\.dotnet\\tools;F:\\Software\\aristocratos.btop4win_Microsoft.Winget.Source_8wekyb3d8bbwe\\btop4win;F:\\Software\\SST.opencode_Microsoft.Winget.Source_8wekyb3d8bbwe;F:\\Software\\SQLite.SQLite_Microsoft.Winget.Source_8wekyb3d8bbwe;F:\\Software\\BurntSushi.ripgrep.MSVC_Microsoft.Winget.Source_8wekyb3d8bbwe\\ripgrep-15.1.0-x86_64-pc-windows-msvc;F:\\Software\\OpenAI.Codex_Microsoft.Winget.Source_8wekyb3d8bbwe;F:\\Software\\sharkdp.fd_Microsoft.Winget.Source_8wekyb3d8bbwe\\fd-v10.4.2-x86_64-pc-windows-msvc;F:\\Software\\sharkdp.bat_Microsoft.Winget.Source_8wekyb3d8bbwe\\bat-v0.26.1-x86_64-pc-windows-msvc;F:\\Software\\junegunn.fzf_Microsoft.Winget.Source_8wekyb3d8bbwe;F:\\Software\\dandavison.delta_Microsoft.Winget.Source_8wekyb3d8bbwe\\delta-0.19.2-x86_64-pc-windows-msvc;F:\\Software\\eza-community.eza_Microsoft.Winget.Source_8wekyb3d8bbwe;F:\\Software\\muesli.duf_Microsoft.Winget.Source_8wekyb3d8bbwe;F:\\Software\\sharkdp.hyperfine_Microsoft.Winget.Source_8wekyb3d8bbwe\\hyperfine-v1.20.0-x86_64-pc-windows-msvc;F:\\Software\\MikeFarah.yq_Microsoft.Winget.Source_8wekyb3d8bbwe;C:\\Users\\tHeSiD\\.bun\\bin;F:\\Software\\jqlang.jq_Microsoft.Winget.Source_8wekyb3d8bbwe;C:\\Users\\tHeSiD\\AppData\\Local\\PowerToys\\DSCModules\\",
+      "value": "C:\\Users\\tHeSiD\\.grok\\bin;C:\\Users\\tHeSiD\\AppData\\Local\\Programs\\OpenAI\\Codex\\bin;C:\\Users\\tHeSiD\\AppData\\Local\\agy\\bin;Z:\\Packages\\.pyenv\\pyenv-win\\bin;Z:\\Packages\\.pyenv\\pyenv-win\\shims;Z:\\Packages\\.cargo\\bin;Z:\\Packages\\.gem\\bin;Z:\\Packages\\.go\\bin;Z:\\Packages\\uv_python_bin;Z:\\Packages\\uv_tool_bin;C:\\Users\\tHeSiD\\.aspire\\bin;C:\\Users\\tHeSiD\\AppData\\Local\\UniGetUI\\Chocolatey\\bin;C:\\Users\\tHeSiD\\AppData\\Local\\Microsoft\\WindowsApps;C:\\Users\\tHeSiD\\AppData\\Local\\Programs\\Microsoft VS Code\\bin;C:\\Users\\tHeSiD\\AppData\\Local\\Microsoft\\WinGet\\Packages\\Microsoft.Sysinternals.Suite_Microsoft.Winget.Source_8wekyb3d8bbwe;F:/Software\\Fastfetch-cli.Fastfetch_Microsoft.Winget.Source_8wekyb3d8bbwe;F:/Software\\ajeetdsouza.zoxide_Microsoft.Winget.Source_8wekyb3d8bbwe;C:\\Users\\tHeSiD\\.lmstudio\\bin;C:\\Users\\tHeSiD\\.dotnet\\tools;F:\\Software\\GitHub.Copilot_Microsoft.Winget.Source_8wekyb3d8bbwe;C:\\Users\\tHeSiD\\AppData\\Local\\JetBrains\\Toolbox\\scripts;F:\\Software\\Stripe.StripeCli_Microsoft.Winget.Source_8wekyb3d8bbwe;Z:\\Vatify-Refactor\\New-Vatify\\codex-dotnet-home\\.dotnet\\tools;C:\\Users\\tHeSiD\\.dotnet\\tools;c:\\users\\thesid\\.local\\bin;F:\\Software\\Gyan.FFmpeg_Microsoft.Winget.Source_8wekyb3d8bbwe\\ffmpeg-8.1.1-full_build\\bin;F:\\Software\\Hashicorp.Terraform_Microsoft.Winget.Source_8wekyb3d8bbwe;C:\\Users\\tHeSiD\\.dotnet\\tools;F:\\Software\\aristocratos.btop4win_Microsoft.Winget.Source_8wekyb3d8bbwe\\btop4win;F:\\Software\\SST.opencode_Microsoft.Winget.Source_8wekyb3d8bbwe;F:\\Software\\SQLite.SQLite_Microsoft.Winget.Source_8wekyb3d8bbwe;F:\\Software\\BurntSushi.ripgrep.MSVC_Microsoft.Winget.Source_8wekyb3d8bbwe\\ripgrep-15.1.0-x86_64-pc-windows-msvc;F:\\Software\\OpenAI.Codex_Microsoft.Winget.Source_8wekyb3d8bbwe;F:\\Software\\sharkdp.fd_Microsoft.Winget.Source_8wekyb3d8bbwe\\fd-v10.4.2-x86_64-pc-windows-msvc;F:\\Software\\sharkdp.bat_Microsoft.Winget.Source_8wekyb3d8bbwe\\bat-v0.26.1-x86_64-pc-windows-msvc;F:\\Software\\junegunn.fzf_Microsoft.Winget.Source_8wekyb3d8bbwe;F:\\Software\\dandavison.delta_Microsoft.Winget.Source_8wekyb3d8bbwe\\delta-0.19.2-x86_64-pc-windows-msvc;F:\\Software\\eza-community.eza_Microsoft.Winget.Source_8wekyb3d8bbwe;F:\\Software\\muesli.duf_Microsoft.Winget.Source_8wekyb3d8bbwe;F:\\Software\\sharkdp.hyperfine_Microsoft.Winget.Source_8wekyb3d8bbwe\\hyperfine-v1.20.0-x86_64-pc-windows-msvc;F:\\Software\\MikeFarah.yq_Microsoft.Winget.Source_8wekyb3d8bbwe;C:\\Users\\tHeSiD\\.bun\\bin;F:\\Software\\jqlang.jq_Microsoft.Winget.Source_8wekyb3d8bbwe;C:\\Users\\tHeSiD\\AppData\\Local\\PowerToys\\DSCModules\\",
       "type": "REG_SZ"
     },
     "PIP_CACHE_DIR": {

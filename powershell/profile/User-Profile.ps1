@@ -1,18 +1,10 @@
 <#
-User-Profile.ps1
-
-Static profile content copied to $HOME\.config\powershell\user_profile.ps1 by
-Install-Profile.ps1. The generated loader in $PROFILE dot-sources this file plus
-every *.ps1 in functions\ (via Get-ChildItem).
-
-Add new reusable commands to powershell\functions\<Verb-Noun>.ps1 instead of
-editing this file directly.
+.SYNOPSIS
+  DEPRECATED — replaced by the modular profile in modules/.
+.DESCRIPTION
+  This file is kept for backward compatibility. The modular PowerShell profile
+  now lives in powershell/profile/modules/ and is deployed by Install-Profile.ps1.
+  The generated $PROFILE loader sources modules in order instead of this file.
+  You can safely delete your installed copy at ~/.config/powershell/user_profile.ps1.
 #>
-
-Set-PSReadlineKeyHandler -Key Tab -Function MenuComplete
-
-Import-Module -Name Microsoft.WinGet.CommandNotFound
-
-Invoke-Expression (&starship init powershell)
-
-Invoke-Expression (& { (zoxide init powershell | Out-String) })
+Write-Verbose "User-Profile.ps1 is deprecated. Profile modules are now in modules/."

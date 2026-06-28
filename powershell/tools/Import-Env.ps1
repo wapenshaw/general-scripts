@@ -79,7 +79,15 @@ function Apply-Env {
         }
 
         if ($DryRun) {
-            Write-Host ("  [DRY] {0} :: {1} = {2}" -f $Scope, $name, $value) -ForegroundColor DarkGray
+            Write-Host ("  [DRY] {0} :: {1} ({2}) = {3}" -f $Scope, $name, $kind, $value) -ForegroundColor DarkGray
+        } elseif ($kind -eq 'REG_EXPAND_SZ') {
+            $regPath = if ($Scope -eq 'Machine') {
+                'HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager\Environment'
+            } else {
+                'HKCU:\Environment'
+            }
+            Set-ItemProperty -LiteralPath $regPath -Name $name -Value $value -Type ExpandString -Force
+            Write-Host ("  [set] {0} :: {1} (REG_EXPAND_SZ)" -f $Scope, $name) -ForegroundColor Green
         } else {
             [Environment]::SetEnvironmentVariable($name, $value, $Scope)
             Write-Host ("  [set] {0} :: {1}" -f $Scope, $name) -ForegroundColor Green

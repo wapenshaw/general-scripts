@@ -64,9 +64,9 @@ zsh reads this on every invocation (always, cannot be skipped), so it sets `ZDOT
 
 These are decisions baked into the config that aren't obvious from reading the file names. If something doesn't match your workflow, edit the relevant file — every choice has a clear override point.
 
-### nvm removed — use `mise` for Node
+### `mise` for Node (and everything except Python)
 
-Earlier versions of this config shipped a `nvm.zsh` that lazy-loaded NVM. It was removed. Use [mise](https://mise.jdx.dev/) for Node version management:
+Use [mise](https://mise.jdx.dev/) for Node version management:
 
 ```bash
 # In any project directory
@@ -75,9 +75,7 @@ mise use node@20
 mise install
 ```
 
-Mise handles Node, Ruby, Go, Java, and more from a single `~/.config/mise/config.toml` or per-project `.mise.toml`. It's faster than nvm (single binary shim, no shell function) and doesn't have the NVM "slow first call" tax.
-
-If you still need NVM, you can recreate `~/.config/zsh/nvm.zsh` from the deleted file's git history (`git log --diff-filter=D -- zsh/zsh/nvm.zsh`).
+Mise handles Node, Ruby, Go, Java, and more from a single `~/.config/mise/config.toml` or per-project `.mise.toml`. It's a single binary shim — no shell function overhead, no slow first call.
 
 ### uv prevails over mise for Python
 

@@ -21,5 +21,5 @@ export NODE_OPTIONS="--dns-result-order=ipv4first"
 export npm_config_cafile="$SSL_CERT_FILE"
 export npm_config_strict_ssl=true
 
-# Remove Windows Node/NVM pollution from WSL PATH
-path=(${path:#/mnt/c/nvm4w/*})
+# Remove Windows Node pollution from WSL PATH
+path=(${path:#/mnt/c/Program\ Files/nodejs/*})

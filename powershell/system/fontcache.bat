@@ -1,11 +1,20 @@
 @echo off
 
 :: Stop and disable "Windows Font Cache Service" service
+set RETRY=0
 :FontCache
-sc stop "FontCache"
-sc config "FontCache" start=disabled
-sc query FontCache | findstr /I /C:"STOPPED"
-if not %errorlevel%==0 (goto FontCache)
+sc stop "FontCache" >nul 2>&1
+sc config "FontCache" start=disabled >nul 2>&1
+sc query FontCache | findstr /I /C:"STOPPED" >nul 2>&1
+if %errorlevel%==0 goto FontCacheStopped
+set /a RETRY+=1
+if %RETRY% GEQ 10 (
+    echo ERROR: FontCache service did not stop after 10 attempts. Aborting.
+    exit /b 1
+)
+timeout /t 3 /nobreak >nul
+goto FontCache
+:FontCacheStopped
 
 
 :: Grant access rights to current user for "%WinDir%\ServiceProfiles\LocalService" folder and contents

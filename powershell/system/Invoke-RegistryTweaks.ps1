@@ -20,7 +20,15 @@ if (-not ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdent
 }
 
 # Ask the user whether to apply or undo the registry tweaks
-$action = Read-Host "Do you want to apply or undo the registry tweaks? (Enter 'apply' or 'undo')"
+do {
+    $action = (Read-Host "Do you want to apply or undo the registry tweaks? (Enter 'apply' or 'undo')").Trim().ToLower()
+    if ([string]::IsNullOrEmpty($action)) {
+        Write-Output "Input cannot be empty. Please enter 'apply' or 'undo'."
+    }
+    elseif ($action -notin 'apply', 'undo') {
+        Write-Output "Invalid input. Please enter 'apply' or 'undo'."
+    }
+} while ([string]::IsNullOrEmpty($action) -or $action -notin 'apply', 'undo')
 
 # Set the path based on the user's choice
 $registryTweaksRoot = Join-Path $PSScriptRoot "..\..\registry-tweaks"
@@ -42,7 +50,10 @@ if (Test-Path $regFilesPath) {
     foreach ($regFile in $regFiles) {
         # Import the .reg file into the system registry
         Write-Host "Importing $($regFile.Name)..." -ForegroundColor Cyan
-        Start-Process -FilePath "reg.exe" -ArgumentList "import", "`"$($regFile.FullName)`"" -Wait -NoNewWindow
+        $regProc = Start-Process -FilePath "reg.exe" -ArgumentList "import", "`"$($regFile.FullName)`"" -Wait -NoNewWindow -PassThru
+        if ($regProc.ExitCode -ne 0) {
+            Write-Warning "reg.exe import failed for $($regFile.Name) (exit code $($regProc.ExitCode))"
+        }
     }
 
     Write-Output "All .reg files have been processed."

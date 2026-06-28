@@ -14,6 +14,12 @@
     NVIDIA App / NGX is installed.
 #>
 
+$currentPrincipal = New-Object Security.Principal.WindowsPrincipal([Security.Principal.WindowsIdentity]::GetCurrent())
+if (-not $currentPrincipal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
+    Write-Host "This script requires administrator privileges. Please run as Administrator." -ForegroundColor Red
+    exit 1
+}
+
 $path = "HKLM:\SOFTWARE\NVIDIA Corporation\Global\NGXCore";
 $name = "ShowDlssIndicator";
 
