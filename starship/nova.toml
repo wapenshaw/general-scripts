@@ -133,8 +133,6 @@ detect_folders = ['Gemfile']
 symbol = "󰏗 "
 style = "bold yellow"
 format = "[$symbol$version]($style) "
-detect_files = ['package.json', 'package-lock.json', 'yarn.lock', 'pnpm-lock.yaml', 'bun.lockb', 'bun.lock']
-detect_folders = ['node_modules']
 
 [aws]
 symbol = " "

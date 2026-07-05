@@ -21,7 +21,8 @@
     generated loader. Mutually exclusive with all other flags.
 
 .PARAMETER StarshipTheme
-    Skip the interactive starship theme picker and install the named theme.
+    Starship theme to install. Defaults to 'nova'. Pass a different theme name
+    (e.g. 'nordic') to override, or omit to use the default.
 
 .PARAMETER InstallDir
     Override the destination directory. Defaults to $HOME\.config\powershell.
@@ -32,7 +33,7 @@
 .EXAMPLE
     PS> pwsh -File .\Install-Profile.ps1
 
-    Default install with interactive starship picker.
+    Default install: core modules + functions + nova starship theme.
 
 .EXAMPLE
     PS> pwsh -File .\Install-Profile.ps1 -Work
@@ -42,7 +43,7 @@
 .EXAMPLE
     PS> pwsh -File .\Install-Profile.ps1 -StarshipTheme nordic
 
-    Install with a non-interactive starship theme.
+    Install with a different starship theme instead of the default nova.
 
 .EXAMPLE
     PS> pwsh -File .\Install-Profile.ps1 -Uninstall
@@ -62,7 +63,7 @@
 param(
     [switch]$Work,
     [switch]$Uninstall,
-    [string]$StarshipTheme,
+    [string]$StarshipTheme = 'nova',
     [string]$InstallDir = (Join-Path $HOME '.config\powershell'),
     [string[]]$ExcludeModules = @()
 )

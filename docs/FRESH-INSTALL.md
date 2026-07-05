@@ -131,13 +131,13 @@ For a list of what would be installed: `Install-Essentials.ps1 -List`.
 
 These are the repo scripts that need to run once on a fresh box, in this order. Most require an elevated PowerShell (admin).
 
-1. **`Install-Profile.ps1`** - deploys the modular PowerShell profile: copies `modules/*.ps1` and `functions/*.ps1` to `~/.config/powershell/`, writes a generated loader into `$PROFILE` that sources modules in dependency order (history → exports → completion → fzf → tools → aliases → functions → bindings → plugins → uv → prompt), runs `Set-StarshipConfig.ps1` to pick a `starship.toml`. *No admin required.* **Must run after step 7** — the profile modules invoke `starship init`, `zoxide init`, and `Microsoft.WinGet.CommandNotFound` on every shell start, all of which require binaries/modules installed in step 7 (and step 1). Every init is guarded by `try/catch` so a missing tool prints a warning but never breaks the shell.
+1. **`Install-Profile.ps1`** - deploys the modular PowerShell profile: copies `modules/*.ps1` and `functions/*.ps1` to `~/.config/powershell/`, writes a generated loader into `$PROFILE` that sources modules in dependency order (history → exports → completion → fzf → tools → aliases → functions → bindings → plugins → uv → vsdev → prompt), runs `Set-StarshipConfig.ps1` to install the `nova` starship theme. *No admin required.* **Must run after step 7** — the profile modules invoke `starship init`, `zoxide init`, and `Microsoft.WinGet.CommandNotFound` on every shell start, all of which require binaries/modules installed in step 7 (and step 1). Every init is guarded by `try/catch` so a missing tool prints a warning but never breaks the shell. The `11-vsdev` module silently activates the Visual Studio Developer Shell (MSVC + Windows SDK on PATH/INCLUDE/LIB) when VS is installed and no-ops otherwise.
    ```powershell
    Z:\Personal\general-scripts\powershell\profile\Install-Profile.ps1
    ```
    **Flags:**
    - `-Work` — also installs `modules/work/` and sets `$env:PS_WORK = '1'` in the loader so work-only aliases, exports, and functions are sourced on every shell start. Mirrors `zsh/install.sh --work`.
-   - `-StarshipTheme <name>` — skip the interactive theme picker (e.g. `-StarshipTheme nordic`). Also settable via `$env:PS_STARSHIP_THEME`.
+   - `-StarshipTheme <name>` — override the starship theme (defaults to `nova`; e.g. `-StarshipTheme nordic`). Also settable via `$env:PS_STARSHIP_THEME`.
    - `-Uninstall` — back up `~/.config/powershell/` to `~/.config/powershell.uninstalled.<timestamp>`, restore `$PROFILE` from pre-install backup. Mutually exclusive with all other flags.
    - `-ExcludeModules <names>` — skip specific module files (e.g. `-ExcludeModules '10-uv.ps1'`).
    - `-InstallDir <path>` — override the install destination (default: `$HOME\.config\powershell`).
