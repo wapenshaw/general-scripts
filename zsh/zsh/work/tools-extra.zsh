@@ -1,6 +1,4 @@
-# SSH agent persistence for work — Assurant key.
-# Only loaded when installed with --work.
+# Work shells should always point at the fixed agent socket.
+# The login-shell ssh-agent module owns starting the agent and loading keys.
 
-if command -v keychain >/dev/null 2>&1; then
-  eval "$(keychain --eval --quiet --agents ssh id_ed25519_assurant)"
-fi
+export SSH_AUTH_SOCK="$HOME/.ssh/agent.sock"

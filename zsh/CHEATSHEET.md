@@ -304,7 +304,7 @@ Auto-loads/unloads env vars when you enter/leave a directory with an `.envrc`.
 | `~/.zsh/exports.zsh` | Env vars, PATH, shell options, WORDCHARS |
 | `~/.zsh/fzf.zsh` | fzf UI and default commands |
 | `~/.zsh/functions.zsh` | WSL, Azure, k8s, git, navigation helpers |
-| `~/.zsh/tools.zsh` | mise, keychain, direnv, zoxide |
+| `~/.zsh/tools.zsh` | mise, direnv, zoxide |
 | `~/.zsh/plugins.zsh` | Add/remove zsh plugins |
 | `~/.zsh/prompt.zsh` | Starship init |
 | `~/.zsh/starship.toml` | Selected prompt theme (copied from `starship/<name>.toml` at install time) |

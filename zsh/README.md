@@ -2,7 +2,7 @@
 
 Modular personal zsh setup. The repo is copied into `~/.config/zsh/` on install — no symlinks, no per-user shim.
 
-**Stack:** starship · eza · bat · fd · ripgrep · fzf · zoxide · mise · direnv · nvim · lf · uv · keychain (work)
+**Stack:** starship · eza · bat · fd · ripgrep · fzf · zoxide · mise · direnv · nvim · lf · uv · ssh-agent (work)
 
 See [CHEATSHEET.md](./CHEATSHEET.md) for the full alias and keybinding reference.
 
@@ -50,6 +50,7 @@ zsh reads this on every invocation (always, cannot be skipped), so it sets `ZDOT
 - Re-running `install.sh` re-syncs the copy from the repo. The repo is the source of truth; `~/.config/zsh/` is the installed snapshot.
 - Plugins still auto-clone on first launch into `~/.config/zsh/plugins/`. They survive re-runs of install.sh (the copy step skips `plugins/`).
 - Work modules toggle via `$ZSH_WORK=1` in the installed `.zshenv` — install.sh adds or removes that line based on the `--work` flag.
+- Work mode reuses a fixed OpenSSH agent socket at `~/.ssh/agent.sock` and auto-loads `~/.ssh/id_ed25519_assurant` in interactive shells.
 
 ### Sourcing order
 
@@ -174,13 +175,13 @@ Auto-cloned on first shell start via `_zplugin_load`. Update all with `zplugin-u
 
 ## Tool install
 
-This config uses: `zsh` `eza` `bat` `fd` `ripgrep` `fzf` `zoxide` `starship` `mise` `direnv` `neovim` `lf` `uv` `bun` (+ `keychain` for work mode).
+This config uses: `zsh` `eza` `bat` `fd` `ripgrep` `fzf` `zoxide` `starship` `mise` `direnv` `neovim` `lf` `uv` `bun` (+ OpenSSH `ssh-agent` for work mode).
 
 ### Fedora
 
 ```bash
 # System packages — Fedora names fd as 'fd-find' (binary is `fd`), so no symlink needed
-sudo dnf install -y zsh eza bat fd-find ripgrep fzf direnv neovim keychain
+sudo dnf install -y zsh eza bat fd-find ripgrep fzf direnv neovim
 
 # Ensure ~/.local/bin exists and is in PATH (needed for curl-installed tools)
 mkdir -p ~/.local/bin
@@ -208,7 +209,7 @@ Add `export PATH="$HOME/.local/bin:$HOME/go/bin:$PATH"` to your environment (in 
 
 ```bash
 # System packages. NOTE: Ubuntu's `bat` package installs `batcat`; `fd-find` installs `fdfind`.
-sudo apt install -y zsh eza bat fd-find ripgrep fzf direnv neovim keychain
+sudo apt install -y zsh eza bat fd-find ripgrep fzf direnv neovim
 
 # Make ~/.local/bin exist before symlinking into it (CRITICAL on fresh WSL)
 mkdir -p ~/.local/bin
@@ -297,7 +298,21 @@ curl -sSfL https://raw.githubusercontent.com/ajeetdsouza/zoxide/main/install.sh 
 # Or: download a release binary directly
 ```
 
-#### 5. (Optional) WSL interop — turn off if you want pure Linux
+#### 5. (Work) Pin your GitHub identity in `~/.ssh/config`
+
+If you use multiple GitHub keys, add a host block so SSH picks the Assurant key instead of guessing from agent order:
+
+```sshconfig
+Host github.com github-assurant
+    HostName github.com
+    User git
+    IdentityFile ~/.ssh/id_ed25519_assurant
+    IdentitiesOnly yes
+    IdentityAgent ~/.ssh/agent.sock
+    AddKeysToAgent yes
+```
+
+#### 6. (Optional) WSL interop — turn off if you want pure Linux
 
 If Windows tools leaking into WSL's PATH bothers you (e.g. `python` resolves to `C:\Python\python.exe`):
 
@@ -325,6 +340,11 @@ echo "STARSHIP_CONFIG=$STARSHIP_CONFIG"
 echo "XDG_STATE_HOME=$XDG_STATE_HOME"
 [[ "$ZDOTDIR" == "$HOME/.config/zsh" ]] && echo "  ✓ ZDOTDIR points to XDG location" || echo "  ✗ ZDOTDIR wrong: $ZDOTDIR"
 [[ "$STARSHIP_CONFIG" == "$ZDOTDIR/starship.toml" ]] && echo "  ✓ starship config wired" || echo "  ✗ starship config wrong"
+
+echo ""
+echo "=== SSH ==="
+echo "SSH_AUTH_SOCK=$SSH_AUTH_SOCK"
+ssh-add -l 2>/dev/null || echo "  ! no SSH identities loaded"
 
 echo ""
 echo "=== Widgets ==="

@@ -1,11 +1,25 @@
 autoload -Uz compinit
 
-# Rebuild dump at most once per day; -C skips security check on cache hit
-if [[ -n "$XDG_CACHE_HOME/zsh/zcompdump"(#qN.mh+24) ]]; then
-  compinit -d "$XDG_CACHE_HOME/zsh/zcompdump"
-else
-  compinit -C -d "$XDG_CACHE_HOME/zsh/zcompdump"
+_zsh_completion_dump="$XDG_CACHE_HOME/zsh/zcompdump"
+if [[ -d /usr/share/zsh/vendor-completions ]]; then
+  for _zsh_completion in /usr/share/zsh/vendor-completions/*(N); do
+    if [[ -L "$_zsh_completion" && ! -e "$_zsh_completion" ]]; then
+      fpath=(${fpath:#/usr/share/zsh/vendor-completions})
+      [[ -f "$_zsh_completion_dump" ]] && rm -f "$_zsh_completion_dump"
+      break
+    fi
+  done
+  unset _zsh_completion
 fi
+
+# Rebuild dump at most once per day; -C skips security check on cache hit
+if [[ -n "$_zsh_completion_dump"(#qN.mh+24) ]]; then
+  compinit -d "$_zsh_completion_dump"
+else
+  compinit -C -d "$_zsh_completion_dump"
+fi
+
+unset _zsh_completion_dump
 
 # =========================================================
 # Completion behavior (cherry-picked from zephyr/compstyle)

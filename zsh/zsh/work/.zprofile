@@ -1,5 +1,5 @@
 # Work login-shell setup — runs once per session, before .zshrc.
-# Establishes the SSH agent socket at a fixed path so VS Code, Git, and
-# keychain all share the same agent across the WSL session.
+# Reuse the shared SSH agent module so VS Code, Git, and the shell keep
+# the same fixed socket across the WSL session.
 
-source "$ZDOTDIR/work/ssh-agent.zsh"
+source "$ZDOTDIR/ssh-agent.zsh"

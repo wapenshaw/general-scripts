@@ -414,7 +414,7 @@ echo "  To toggle work modules:             ./install.sh --work"
 echo "  To remove everything:               ./install.sh --uninstall"
 echo ""
 echo "  Recommended tools to install:"
-echo "    eza bat fd-find ripgrep fzf zoxide starship mise direnv keychain lf nvim"
+echo "    eza bat fd-find ripgrep fzf zoxide starship mise direnv lf nvim"
 
 if [[ "$WORK" -eq 1 ]]; then
   echo ""
