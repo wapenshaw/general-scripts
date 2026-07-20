@@ -22,4 +22,4 @@ function CopilotYolo {
     copilot --yolo --resume
 }
 
-Set-Alias yolo CopilotYolo
+Set-Alias -Name yolo -Value CopilotYolo -Scope Global -Force

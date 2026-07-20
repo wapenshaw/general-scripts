@@ -28,4 +28,4 @@ function Set-KeyboardLayout {
     Get-WinUserLanguageList | Format-List 'LanguageTag', 'EnglishName'
 }
 
-Set-Alias -Name skl -Value Set-KeyboardLayout -Force
+Set-Alias -Name skl -Value Set-KeyboardLayout -Scope Global -Force

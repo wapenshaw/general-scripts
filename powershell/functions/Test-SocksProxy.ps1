@@ -96,5 +96,5 @@ function Test-SocksProxy {
     }
 }
 
-Set-Alias -Name testsocks -Value Test-SocksProxy -Scope Global
+Set-Alias -Name testsocks -Value Test-SocksProxy -Scope Global -Force
 # Usage: testsocks

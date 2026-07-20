@@ -168,4 +168,4 @@ function Update-Modules {
     }
 }
 
-Set-Alias -Name upmods -Value Update-Modules -Scope Global
+Set-Alias -Name upmods -Value Update-Modules -Scope Global -Force

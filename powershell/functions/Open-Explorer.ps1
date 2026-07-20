@@ -14,4 +14,4 @@ function Open-Explorer {
     explorer.exe .
 }
 
-Set-Alias e Open-Explorer
+Set-Alias -Name e -Value Open-Explorer -Scope Global -Force

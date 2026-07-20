@@ -9,7 +9,7 @@ Personal Windows 11 post-install + dev-environment toolbox. No build system, no 
 
 ## Layout
 
-- `powershell/` — runnable utilities: `profile/` (install + startup, modular `modules/` with ordered `NN-name.ps1` files + `work/` for work mode), `system/` (registry/network/shutdown), `tools/` (daily helpers), `diagnostics/` (probes), `functions/` (profile-loaded helpers)
+- `powershell/` — runnable utilities: `profile/` (install + startup, modular `modules/` with ordered `NN-name.ps1` files + `work/` for work mode, `Register-ProfileFunctions.ps1` lazy-loads `functions/`), `system/` (registry/network/shutdown), `tools/` (daily helpers), `diagnostics/` (probes), `functions/` (profile-loaded helpers + short aliases)
 - `zsh/` — modular WSL zsh config (XDG-style, `install.sh` deploys)
 - `config/env/` — captured Windows env vars (`user.json`, `system.json`, `paths.json`)
 - `starship/`, `fonts/`, `windows-terminal/`, `extensions/`, `icons/` — config/asset payloads

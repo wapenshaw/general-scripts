@@ -180,4 +180,4 @@ function Remove-StaleBranches {
     }
 }
 
-Set-Alias rsb Remove-StaleBranches
+Set-Alias -Name rsb -Value Remove-StaleBranches -Scope Global -Force
