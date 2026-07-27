@@ -1,4 +1,4 @@
-# uv workflow helpers for Astra Python development
+# uv workflow helpers for Astra/Common Automation Python development.
 
 uvdev() (
   unset UV_NO_SOURCES UV_LOCKED UV_FROZEN

@@ -17,7 +17,7 @@ export FZF_CTRL_T_OPTS="--preview '$_FZF_PREVIEW_CMD'"
 
 # Initialize fzf key bindings and completion (Ctrl-T, Ctrl-R, Alt-C)
 # fzf --zsh requires v0.48+; fall back to system paths for apt-installed fzf
-if command -v fzf >/dev/null 2>&1; then
+if [[ -t 0 && -t 1 ]] && command -v fzf >/dev/null 2>&1; then
   if fzf --zsh >/dev/null 2>&1; then
     source <(fzf --zsh)
   elif [[ -f /usr/share/doc/fzf/examples/key-bindings.zsh ]]; then

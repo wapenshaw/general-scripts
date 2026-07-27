@@ -2,7 +2,7 @@
 
 # Claude Code shortcut — opens in Common-Automation with full permissions
 colo() {
-  cd /home/heaton/astra/Common-Automation && claude --dangerously-skip-permissions "$@"
+  cd "$ASTRA_HOME/Common-Automation" && claude --dangerously-skip-permissions "$@"
 }
 
 # Copilot yolo shortcut

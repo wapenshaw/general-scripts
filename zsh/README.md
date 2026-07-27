@@ -1,6 +1,6 @@
 # zsh config
 
-Modular personal zsh setup. The repo is copied into `~/.config/zsh/` on install — no symlinks, no per-user shim.
+Modular personal zsh setup. The repo is copied into `~/.config/zsh/` on install — no symlinks. Linux uses a managed system-zshenv block; macOS uses a managed `~/.zshenv` bootstrap.
 
 **Stack:** starship · eza · bat · fd · ripgrep · fzf · zoxide · mise · direnv · nvim · lf · uv · ssh-agent (work)
 
@@ -12,26 +12,29 @@ See [CHEATSHEET.md](./CHEATSHEET.md) for the full alias and keybinding reference
 
 ```bash
 cd /path/to/general-scripts
-./zsh/install.sh           # base
-./zsh/install.sh --work    # base + work modules (Astra / Kubernetes / Azure / SSH agent)
+./zsh/install.sh           # Linux: base + work; macOS: base only
+./zsh/install.sh --work    # explicitly enable work modules
+./zsh/install.sh --base    # explicitly disable work modules
 ```
 
-You'll be prompted for your sudo password once — install.sh appends a small block to the active system zshenv (`/etc/zsh/zshenv` on Debian/Ubuntu/WSL/Arch, `/etc/zshenv` on Fedora/upstream builds) so zsh finds the config.
+On Linux, install.sh appends a small block to the active system zshenv (`/etc/zsh/zshenv` on Debian/Ubuntu/WSL/Arch, `/etc/zshenv` on Fedora/upstream builds), so it may prompt for sudo once. On macOS, it writes a managed bootstrap block to `~/.zshenv` and does not modify system files.
+
+The default profile is platform-aware: Linux gets **base + work**; macOS gets **base only**. Work means the Assurant/Astra/Common Automation environment—corporate CA settings, Azure/Kubernetes/Docker helpers, Astra navigation, and the work SSH agent. Use `--work` only on a machine that needs those modules.
 
 To remove: `./zsh/install.sh --uninstall`.
 
-To sync changes from the repo: re-run `./install.sh [--work]`.
+To sync changes from the repo: re-run `./install.sh [--work|--base]`.
 
 ---
 
-## How it works — copy + system zshenv
+## How it works — copy + zshenv bootstrap
 
 The install has two parts:
 
-**1. A small block in the system zshenv** (one-time, requires sudo):
+**1. A small zshenv bootstrap:**
 
 ```sh
-# /etc/zsh/zshenv or /etc/zshenv — managed by install.sh
+# /etc/zsh/zshenv or /etc/zshenv on Linux; ~/.zshenv on macOS
 if [[ -z "$XDG_CONFIG_HOME" ]]; then
     export XDG_CONFIG_HOME="$HOME/.config"
 fi
@@ -40,23 +43,24 @@ if [[ -d "$XDG_CONFIG_HOME/zsh" ]]; then
 fi
 ```
 
-zsh reads this on every invocation (always, cannot be skipped), so it sets `ZDOTDIR` before any user config is loaded.
+On Linux, zsh reads the system file on every invocation. On macOS, the managed `~/.zshenv` sets `ZDOTDIR` and explicitly sources the installed `.zshenv`; later login and interactive files then resolve from `~/.config/zsh/`.
 
 **2. A copy of the repo's `zsh/` files** at `~/.config/zsh/`. Every subsequent zsh file (`.zshenv`, `.zshrc`, `.zprofile`) is read from there.
 
 **Why this design:**
 - `~/.config/zsh/` is the standard XDG location. Nothing in `$HOME` references the repo path.
 - No symlinks at all — repo and config dir are independent.
+- macOS only gets a small managed `~/.zshenv` bootstrap; any pre-existing file is backed up on first install.
 - Re-running `install.sh` re-syncs the copy from the repo. The repo is the source of truth; `~/.config/zsh/` is the installed snapshot.
 - Plugins still auto-clone on first launch into `~/.config/zsh/plugins/`. They survive re-runs of install.sh (the copy step skips `plugins/`).
-- Work modules toggle via `$ZSH_WORK=1` in the installed `.zshenv` — install.sh adds or removes that line based on the `--work` flag.
-- Work mode reuses a fixed OpenSSH agent socket at `~/.ssh/agent.sock` and auto-loads `~/.ssh/id_ed25519_assurant` in interactive shells.
+- Work modules toggle via `$ZSH_WORK=1` in the installed `.zshenv` — install.sh adds or removes that line based on the selected profile.
+- Work mode reuses a fixed OpenSSH agent socket at `~/.ssh/agent.sock` and auto-loads `~/.ssh/id_ed25519_assurant` in interactive shells. Base macOS does not start or configure this agent.
 
 ### Sourcing order
 
-1. System zshenv (`/etc/zsh/zshenv` or `/etc/zshenv`) — sets `ZDOTDIR=$XDG_CONFIG_HOME/zsh` (system, immutable)
+1. Managed zshenv bootstrap (system zshenv on Linux, `~/.zshenv` on macOS) — sets `ZDOTDIR`
 2. `~/.config/zsh/.zshenv` — sets `XDG_*_HOME`, `STARSHIP_CONFIG`, sources work env
-3. `~/.config/zsh/.zprofile` (login shells) — shared SSH agent
+3. `~/.config/zsh/.zprofile` (login shells) — Homebrew initialization on macOS; work-only SSH agent
 4. `~/.config/zsh/.zshrc` — sources every module in order, then starship
 
 ---
@@ -76,7 +80,7 @@ mise use node@20
 mise install
 ```
 
-Mise handles Node, Ruby, Go, Java, and more from a single `~/.config/mise/config.toml` or per-project `.mise.toml`. It's a single binary shim — no shell function overhead, no slow first call.
+Mise handles Node, Ruby, Go, Java, and more from a single `~/.config/mise/config.toml` or per-project `.mise.toml`. The zsh environment initializes mise for both interactive and non-interactive shells; `tools.zsh` adds directory-change hooks for interactive shells. It's a single binary shim — no nvm or other Node manager is needed.
 
 ### uv prevails over mise for Python
 
@@ -94,7 +98,7 @@ The `uv.zsh` module provides `uvdev`, `uvci`, `uvtst` shortcuts for the common w
 
 ### Why `~/.config/zsh` instead of `~/.zsh`
 
-XDG Base Directory spec. See the [How it works](#how-it-works--copy--system-zshenv) section above for the bootstrap chain.
+XDG Base Directory spec. See the [How it works](#how-it-works--copy--zshenv-bootstrap) section above for the bootstrap chain.
 
 ---
 
@@ -110,14 +114,14 @@ XDG Base Directory spec. See the [How it works](#how-it-works--copy--system-zshe
 | `completion.zsh` | compinit, zstyles, fuzzy matching |
 | `exports.zsh` | PATH, env vars, shell options |
 | `fzf.zsh` | fzf UI, fd backend, bat preview |
-| `functions.zsh` | WSL, git, navigation helpers (general) |
+| `functions.zsh` | Platform helpers, git, navigation helpers (general) |
 | `history.zsh` | History options + XDG state path |
 | `plugins.zsh` | Plugin manager + auto-install |
 | `prompt.zsh` | Starship init |
 | `tools.zsh` | mise, direnv, zoxide |
-| `uv.zsh` | uvdev / uvci / uvtst helpers |
+| `uv.zsh` | Work-only Astra/Common Automation uvdev / uvci / uvtst helpers |
 | `starship.toml` | (no longer in zsh/ — selected at install time from the repo-root `starship/` folder; see [Starship themes](#starship-themes) below) |
-| `work/` | Work-only modules (aliases, functions, exports, ssh-agent, az.env template) |
+| `work/` | Assurant/Astra/Common Automation modules (aliases, functions, exports, uv, ssh-agent, az.env template) |
 
 ---
 
@@ -176,6 +180,14 @@ Auto-cloned on first shell start via `_zplugin_load`. Update all with `zplugin-u
 ## Tool install
 
 This config uses: `zsh` `eza` `bat` `fd` `ripgrep` `fzf` `zoxide` `starship` `mise` `direnv` `neovim` `lf` `uv` `bun` (+ OpenSSH `ssh-agent` for work mode).
+
+### macOS (Homebrew)
+
+```bash
+brew install eza bat fd ripgrep fzf zoxide starship mise direnv neovim lf uv bun
+```
+
+The installed `.zprofile` initializes Homebrew for login shells. The base config also uses macOS `open`, `pbcopy`, and `pbpaste` for platform integration.
 
 ### Fedora
 

@@ -14,6 +14,20 @@ export XDG_STATE_HOME="${XDG_STATE_HOME:-$HOME/.local/state}"
 # Starship config lives alongside the zsh modules
 export STARSHIP_CONFIG="$ZDOTDIR/starship.toml"
 
+# mise owns Node and other non-Python runtimes. Initialize its environment
+# here so mise-managed tools also work in non-interactive shells; tools.zsh
+# adds the interactive directory hooks later.
+_mise_bin=''
+if [[ -x /opt/homebrew/bin/mise ]]; then
+  _mise_bin=/opt/homebrew/bin/mise
+elif command -v mise >/dev/null 2>&1; then
+  _mise_bin="$(command -v mise)"
+fi
+if [[ -n "$_mise_bin" ]]; then
+  eval "$("$_mise_bin" env -s zsh 2>/dev/null)"
+fi
+unset _mise_bin
+
 # Cargo (Rust) — must be available in non-interactive shells too
 [ -f "$HOME/.cargo/env" ] && . "$HOME/.cargo/env"
 

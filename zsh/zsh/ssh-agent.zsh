@@ -1,6 +1,11 @@
 # Stable SSH agent socket for work login shells.
 # Fixes a known socket path so VS Code, Git, and the shell all share the same agent.
 
+if [[ ! -d "$HOME/.ssh" ]]; then
+  mkdir -p "$HOME/.ssh"
+  chmod 700 "$HOME/.ssh"
+fi
+
 export SSH_AUTH_SOCK="$HOME/.ssh/agent.sock"
 _ssh_identity="$HOME/.ssh/id_ed25519_assurant"
 

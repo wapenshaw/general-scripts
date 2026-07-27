@@ -1,6 +1,11 @@
 # Deduplicate PATH entries automatically
 typeset -U path PATH
 
+# Keep Homebrew available even when a terminal starts a non-login shell.
+if [[ "$OSTYPE" == darwin* ]]; then
+  path=(/opt/homebrew/bin /opt/homebrew/sbin /usr/local/bin $path)
+fi
+
 # Local user binaries first
 path=("$HOME/.local/bin" $path)
 
@@ -19,7 +24,9 @@ export UV_PYTHON_PREFERENCE=managed
 export UV_CACHE_DIR="$HOME/.cache/uv"
 
 # GPG (interactive shells only — tty is defined here)
-export GPG_TTY=$(tty)
+if [[ -t 0 || -t 1 ]]; then
+  export GPG_TTY="$(tty 2>/dev/null)"
+fi
 
 # Better man pages via bat
 export MANPAGER="bat -l man -p"

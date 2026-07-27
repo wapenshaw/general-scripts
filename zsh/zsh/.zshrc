@@ -9,7 +9,9 @@ source "$ZDOTDIR/fzf.zsh"
 source "$ZDOTDIR/tools.zsh"
 source "$ZDOTDIR/aliases.zsh"
 source "$ZDOTDIR/functions.zsh"
-source "$ZDOTDIR/uv.zsh"
+if [[ "${ZSH_WORK:-0}" == "1" && -f "$ZDOTDIR/uv.zsh" ]]; then
+  source "$ZDOTDIR/uv.zsh"
+fi
 source "$ZDOTDIR/bindings.zsh"
 source "$ZDOTDIR/plugins.zsh"   # fast-syntax-highlighting must stay last plugin
 

@@ -1,4 +1,4 @@
-# WSL shell helpers
+# Cross-platform shell helpers
 
 # =========================================================
 # Git — stale remote-branch cleanup
@@ -104,23 +104,29 @@ _rsb_clean_repo() {
 }
 
 # =========================================================
-# WSL utilities
+# Platform integration. Leave macOS's native `open` command untouched.
 # =========================================================
 
-open() {
-  if command -v wslview >/dev/null 2>&1; then
-    wslview "${1:-.}"
-  else
-    cmd.exe /c start "" "${1:-.}" >/dev/null 2>&1
-  fi
-}
+if [[ "$OSTYPE" == darwin* ]]; then
+  explore() { open -R "${1:-.}"; }
+  clipcopy()  { pbcopy; }
+  clippaste() { pbpaste; }
+elif command -v wslpath >/dev/null 2>&1; then
+  open() {
+    if command -v wslview >/dev/null 2>&1; then
+      wslview "${1:-.}"
+    else
+      cmd.exe /c start "" "${1:-.}" >/dev/null 2>&1
+    fi
+  }
 
-explore() {
-  explorer.exe "$(wslpath -w "${1:-.}")" >/dev/null 2>&1
-}
+  explore() {
+    explorer.exe "$(wslpath -w "${1:-.}")" >/dev/null 2>&1
+  }
 
-clipcopy()  { clip.exe; }
-clippaste() { powershell.exe -NoProfile -Command Get-Clipboard 2>/dev/null | tr -d '\r'; }
+  clipcopy()  { clip.exe; }
+  clippaste() { powershell.exe -NoProfile -Command Get-Clipboard 2>/dev/null | tr -d '\r'; }
+fi
 
 # =========================================================
 # Navigation

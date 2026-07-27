@@ -1,6 +1,7 @@
 # Shell Cheatsheet
 
-> Config lives in `~/.zsh/` — edit the relevant module file and run `reload`.
+> Config lives in `~/.config/zsh/` — edit the relevant module file and run `reload`.
+> Profiles: Linux defaults to base + work; macOS defaults to base only. Work covers Assurant/Astra/Common Automation.
 
 ---
 
@@ -233,7 +234,7 @@ rsb -D           # force delete (-D instead of -d)
 
 | Alias / Command | Action |
 |-----------------|--------|
-| `sysup` | `apt update + full-upgrade + autoremove + clean + autoclean` |
+| `sysup` | Homebrew update/upgrade/cleanup on macOS; apt maintenance on Linux |
 | `help <builtin>` | Better help for zsh builtins (e.g. `help setopt`) |
 | `colormap` | Print all 256 terminal colors |
 | `sedi 's/old/new/g' file` | Cross-platform `sed -i` (GNU + BSD) |
@@ -248,14 +249,14 @@ rsb -D           # force delete (-D instead of -d)
 
 ---
 
-## WSL helpers
+## Platform helpers
 
 | Command | Action |
 |---------|--------|
-| `open <path/url>` | Open in Windows (wslview / cmd.exe start) |
-| `explore <path>` | Open Windows Explorer at path |
-| `clipcopy` | Copy stdin to Windows clipboard — `echo foo \| clipcopy` |
-| `clippaste` | Paste from Windows clipboard |
+| `open <path/url>` | Native macOS open, or WSL open integration |
+| `explore <path>` | Reveal in Finder on macOS, or open Windows Explorer in WSL |
+| `clipcopy` | Copy stdin to the system clipboard |
+| `clippaste` | Paste from the system clipboard |
 
 ---
 
@@ -263,9 +264,9 @@ rsb -D           # force delete (-D instead of -d)
 
 | Command | Action |
 |---------|--------|
-| `zplugin-update` | Pull latest for all plugins in `~/.zsh/plugins/` |
+| `zplugin-update` | Pull latest for all plugins in `~/.config/zsh/plugins/` |
 
-Plugins live in `~/.zsh/plugins/`. New ones auto-clone on next shell start if added to `plugins.zsh`.
+Plugins live in `~/.config/zsh/plugins/`. New ones auto-clone on next shell start if added to `plugins.zsh`.
 
 ---
 
@@ -298,14 +299,14 @@ Auto-loads/unloads env vars when you enter/leave a directory with an `.envrc`.
 
 | File | What to edit |
 |------|-------------|
-| `~/.zsh/aliases.zsh` | Aliases, dirstack shortcuts, python/pip fallbacks |
-| `~/.zsh/bindings.zsh` | Keybindings, ZLE widgets |
-| `~/.zsh/completion.zsh` | Completion behavior, zstyles |
-| `~/.zsh/exports.zsh` | Env vars, PATH, shell options, WORDCHARS |
-| `~/.zsh/fzf.zsh` | fzf UI and default commands |
-| `~/.zsh/functions.zsh` | WSL, Azure, k8s, git, navigation helpers |
-| `~/.zsh/tools.zsh` | mise, direnv, zoxide |
-| `~/.zsh/plugins.zsh` | Add/remove zsh plugins |
-| `~/.zsh/prompt.zsh` | Starship init |
-| `~/.zsh/starship.toml` | Selected prompt theme (copied from `starship/<name>.toml` at install time) |
-| `~/.zsh/uv.zsh` | Python/uv helpers |
+| `~/.config/zsh/aliases.zsh` | Aliases, dirstack shortcuts, python/pip fallbacks |
+| `~/.config/zsh/bindings.zsh` | Keybindings, ZLE widgets |
+| `~/.config/zsh/completion.zsh` | Completion behavior, zstyles |
+| `~/.config/zsh/exports.zsh` | Env vars, PATH, shell options, WORDCHARS |
+| `~/.config/zsh/fzf.zsh` | fzf UI and default commands |
+| `~/.config/zsh/functions.zsh` | Platform, Azure, k8s, git, navigation helpers |
+| `~/.config/zsh/tools.zsh` | mise, direnv, zoxide |
+| `~/.config/zsh/plugins.zsh` | Add/remove zsh plugins |
+| `~/.config/zsh/prompt.zsh` | Starship init |
+| `~/.config/zsh/starship.toml` | Selected prompt theme (copied from `starship/<name>.toml` at install time) |
+| `~/.config/zsh/uv.zsh` | Python/uv helpers |

@@ -35,7 +35,15 @@ lf() {
 # Shell
 alias cls='clear'
 alias reload='exec zsh -l'
-alias cheat='bat ~/.zsh/cheatsheet.md'
+cheat() {
+  local cheatsheet="$ZDOTDIR/CHEATSHEET.md"
+  if [[ -f "$cheatsheet" ]]; then
+    bat "$cheatsheet"
+  else
+    print -u2 'No profile cheatsheet is installed.'
+    return 1
+  fi
+}
 alias vim='nvim'
 alias colormap='for i in {0..255}; do print -Pn "%K{$i}  %k%F{$i}${(l:3::0:)i}%f " ${${(M)$((i%6)):#3}:+"\n"}; done'
 
@@ -49,7 +57,16 @@ alias help='run-help'
 (( $+commands[pip3]    )) && ! (( $+commands[pip]    )) && alias pip='pip3'
 
 # System maintenance
-alias sysup='sudo apt update -y && sudo apt full-upgrade -y && sudo apt autoremove -y && sudo apt clean -y && sudo apt autoclean -y'
+sysup() {
+  if [[ "$OSTYPE" == darwin* ]] && (( $+commands[brew] )); then
+    brew update && brew upgrade && brew cleanup
+  elif (( $+commands[apt] )); then
+    sudo apt update -y && sudo apt full-upgrade -y && sudo apt autoremove -y && sudo apt clean -y && sudo apt autoclean -y
+  else
+    print -u2 'No supported package manager found (brew or apt).'
+    return 1
+  fi
+}
 
 # ls / eza (icons + git status)
 alias ls='eza --icons'
@@ -63,7 +80,9 @@ alias cat='bat'
 
 # Core utils
 alias grep='rg --color=auto'
-alias diff='diff --color=auto'
+if command diff --color=auto /dev/null /dev/null >/dev/null 2>&1; then
+  alias diff='diff --color=auto'
+fi
 alias df='df -h'
 
 # Safety prompts
@@ -80,4 +99,4 @@ alias gadog='PAGER="less -F -X" git log --all --decorate --oneline --graph'
 alias gs='git status --short'
 alias gst='git status'
 
-# Kubernetes / Infra aliases (k, h, tf, kctx) and Docker (d, dc) are in work/aliases.zsh
+# Kubernetes, Docker, and other work aliases are loaded only in the work profile.
