@@ -6,9 +6,9 @@
 # ~/.zshenv bootstrap because macOS does not ship a writable zshenv location.
 #
 # Usage:
-#   ./install.sh          # Linux: base + work; macOS: base only
-#   ./install.sh --work   # explicitly enable Assurant/Astra work modules
-#   ./install.sh --base   # explicitly disable work modules
+#   ./install.sh              # personal profile (default on every OS)
+#   ./install.sh --assurant   # Assurant/Astra modules
+#   ./install.sh --base       # explicit personal profile
 #   ./install.sh --uninstall
 #
 # Safe to re-run; managed bootstrap blocks are replaced in place.
@@ -80,18 +80,20 @@ sed_in_place() {
   fi
 }
 
-case "$OS" in
-  Linux) WORK=1 ;;  # Linux box: base + work by default
-  *)      WORK=0 ;;  # macOS and other platforms: base only by default
-esac
+# Personal profile is the default on every OS. Assurant modules are opt-in.
+ASSURANT=0
 UNINSTALL=0
 for arg in "$@"; do
   case "$arg" in
-    --work) WORK=1 ;;
-    --base|--no-work) WORK=0 ;;
+    --assurant)
+      ASSURANT=1
+      ;;
+    --base)
+      ASSURANT=0
+      ;;
     --uninstall) UNINSTALL=1 ;;
     -h|--help)
-      sed -n '2,12p' "$0"
+      sed -n '2,13p' "$0"
       exit 0
       ;;
     *)
@@ -277,15 +279,15 @@ should_exclude() {
       return 0
     fi
   done
-  # SSH agent support belongs to the work profile (Assurant/Astra).
-  if [[ "$rel" == "ssh-agent.zsh" && "$WORK" -ne 1 ]]; then
+  # SSH agent support belongs to the Assurant profile.
+  if [[ "$rel" == "ssh-agent.zsh" && "$ASSURANT" -ne 1 ]]; then
     return 0
   fi
-  if [[ "$rel" == "uv.zsh" && "$WORK" -ne 1 ]]; then
+  if [[ "$rel" == "uv.zsh" && "$ASSURANT" -ne 1 ]]; then
     return 0
   fi
-  # Work files are only included with --work
-  if [[ "$rel" == work/* && "$WORK" -ne 1 ]]; then
+  # Assurant files are only included with --assurant
+  if [[ "$rel" == work/* && "$ASSURANT" -ne 1 ]]; then
     return 0
   fi
   return 1
@@ -314,9 +316,8 @@ copy_repo() {
     expected["$rel"]=1
   done <<< "$files"
 
-  # CHEATSHEET.md contains work commands, so install it only with the work
-  # profile. The base macOS profile should contain no work-facing material.
-  [[ "$WORK" -eq 1 && -f "$REPO/CHEATSHEET.md" ]] && expected["CHEATSHEET.md"]=1
+  # CHEATSHEET.md contains Assurant commands; personal profile stays clean.
+  [[ "$ASSURANT" -eq 1 && -f "$REPO/CHEATSHEET.md" ]] && expected["CHEATSHEET.md"]=1
 
   # Copy each tracked file in.
   local copied=0
@@ -355,24 +356,25 @@ copy_repo() {
   fi
 }
 
-# Append ZSH_WORK=1 to the installed .zshenv if --work was passed.
-apply_work_flag() {
+# Append ZSH_ASSURANT=1 to the installed .zshenv if --assurant was passed.
+apply_assurant_flag() {
   local zshenv="$TARGET_DIR/.zshenv"
-  if [[ "$WORK" -ne 1 ]]; then
-    # Remove the line if it's there (in case of a re-run without --work)
-    if [[ -f "$zshenv" ]] && grep -qF 'export ZSH_WORK=1' "$zshenv"; then
-      sed_in_place '/^export ZSH_WORK=1$/d' "$zshenv"
-      yellow "Removed ZSH_WORK=1 from installed .zshenv"
+  if [[ ! -f "$zshenv" ]]; then
+    [[ "$ASSURANT" -eq 1 ]] && yellow "Cannot enable --assurant: $zshenv not found"
+    return
+  fi
+
+  if [[ "$ASSURANT" -ne 1 ]]; then
+    if grep -qF 'export ZSH_ASSURANT=1' "$zshenv"; then
+      sed_in_place '/^export ZSH_ASSURANT=1$/d' "$zshenv"
+      yellow "Removed ZSH_ASSURANT=1 from installed .zshenv"
     fi
     return
   fi
-  if [[ ! -f "$zshenv" ]]; then
-    yellow "Cannot enable --work: $zshenv not found"
-    return
-  fi
-  if ! grep -qF 'export ZSH_WORK=1' "$zshenv"; then
-    printf '\n# Work modules enabled (Astra/Kubernetes/CA/SSH-agent).\nexport ZSH_WORK=1\n' >> "$zshenv"
-    green "Set ZSH_WORK=1 in installed .zshenv"
+
+  if ! grep -qF 'export ZSH_ASSURANT=1' "$zshenv"; then
+    printf '\n# Assurant modules enabled (Astra/Kubernetes/CA/SSH-agent).\nexport ZSH_ASSURANT=1\n' >> "$zshenv"
+    green "Set ZSH_ASSURANT=1 in installed .zshenv"
   fi
 }
 
@@ -489,13 +491,13 @@ else
 fi
 copy_repo
 install_starship_theme
-apply_work_flag
+apply_assurant_flag
 cleanup_legacy_shim
 
-if [[ "$WORK" -eq 1 ]]; then
-  PROFILE="base + work"
+if [[ "$ASSURANT" -eq 1 ]]; then
+  PROFILE="personal + assurant"
 else
-  PROFILE="base"
+  PROFILE="personal"
 fi
 
 echo ""
@@ -506,7 +508,7 @@ echo "  Layout:"
 echo "    Profile:              $PROFILE"
 echo "    $SYS_ZSHENV      → sets ZDOTDIR (managed)"
 echo "    $TARGET_DIR        → copied from the repo"
-echo "    $TARGET_DIR/.zshenv → XDG vars, starship, work env"
+echo "    $TARGET_DIR/.zshenv → XDG vars, starship, Assurant env (if enabled)"
 echo "    $TARGET_DIR/.zshrc  → all modules + starship"
 echo ""
 echo "  First launch auto-installs missing plugins:"
@@ -514,15 +516,15 @@ echo "    zsh-autosuggestions"
 echo "    zsh-history-substring-search"
 echo "    fast-syntax-highlighting"
 echo ""
-echo "  To re-sync after editing the repo:  ./install.sh [--work|--base]"
-echo "  To enable work modules:             ./install.sh --work"
-echo "  To disable work modules:            ./install.sh --base"
+echo "  To re-sync after editing the repo:  ./install.sh [--assurant|--base]"
+echo "  To enable Assurant modules:         ./install.sh --assurant"
+echo "  To keep the personal profile:       ./install.sh --base"
 echo "  To remove everything:               ./install.sh --uninstall"
 echo ""
 echo "  Recommended tools to install:"
 echo "    eza bat fd-find ripgrep fzf zoxide starship mise direnv lf nvim"
 
-if [[ "$WORK" -eq 1 ]]; then
+if [[ "$ASSURANT" -eq 1 ]]; then
   echo ""
   bold "==> Action required: Azure IDs"
   echo "  Copy the template and fill in the IDs:"

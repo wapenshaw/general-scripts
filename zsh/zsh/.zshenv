@@ -28,11 +28,22 @@ if [[ -n "$_mise_bin" ]]; then
 fi
 unset _mise_bin
 
-# Cargo (Rust) — must be available in non-interactive shells too
-[ -f "$HOME/.cargo/env" ] && . "$HOME/.cargo/env"
+# Cargo (Rust) — available in non-interactive shells, but only when rustup's
+# cargo is actually installed. rustup self uninstall removes ~/.cargo/bin/cargo;
+# leftover env files must not keep a dead directory on PATH.
+if [[ -x "$HOME/.cargo/bin/cargo" ]]; then
+  if [[ -f "$HOME/.cargo/env" ]]; then
+    . "$HOME/.cargo/env"
+  else
+    case ":${PATH}:" in
+      *:"$HOME/.cargo/bin":*) ;;
+      *) export PATH="$HOME/.cargo/bin:$PATH" ;;
+    esac
+  fi
+fi
 
-# Work-specific environment (sourced only when ZSH_WORK=1 in ~/.zshenv)
-if [[ "${ZSH_WORK:-0}" == "1" ]]; then
+# Assurant environment (sourced only when install.sh --assurant set ZSH_ASSURANT=1).
+if [[ "${ZSH_ASSURANT:-0}" == "1" ]]; then
   for _f in "$ZDOTDIR"/work/exports.zsh "$ZDOTDIR"/work/tools-extra.zsh; do
     [[ -f "$_f" ]] && source "$_f"
   done

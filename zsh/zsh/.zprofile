@@ -11,8 +11,8 @@ if [[ "$OSTYPE" == darwin* ]]; then
   unset _brew
 fi
 
-# Work profile only: sets up a stable SSH agent socket at
-# ~/.ssh/agent.sock so work zsh, VS Code, and git share the same agent.
-if [[ "${ZSH_WORK:-0}" == "1" && -f "$ZDOTDIR/ssh-agent.zsh" ]]; then
+# Assurant profile only: stable SSH agent socket at ~/.ssh/agent.sock
+# so zsh, VS Code, and git share the same agent.
+if [[ "${ZSH_ASSURANT:-0}" == "1" && -f "$ZDOTDIR/ssh-agent.zsh" ]]; then
   source "$ZDOTDIR/ssh-agent.zsh"
 fi

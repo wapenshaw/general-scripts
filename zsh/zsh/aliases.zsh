@@ -99,4 +99,4 @@ alias gadog='PAGER="less -F -X" git log --all --decorate --oneline --graph'
 alias gs='git status --short'
 alias gst='git status'
 
-# Kubernetes, Docker, and other work aliases are loaded only in the work profile.
+# Kubernetes, Docker, and other Assurant aliases are loaded only with --assurant.

@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-  Work-only functions. Only sourced when $env:PS_WORK = '1'.
+  Assurant functions. Only sourced when $env:PS_ASSURANT = '1'.
 .DESCRIPTION
   Work module 02. Mirrors zsh's work/functions.zsh.
 #>

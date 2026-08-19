@@ -1,6 +1,36 @@
-# General Scripts I use on a Windows 11 install
+# Personal workstation toolbox
 
-### Should also work for Windows 10 and other similar Editions of Windows
+macOS and Linux use **zsh**. Windows uses **PowerShell 7 + Windows Terminal**. First-run installers are failsafe: a missing package manager or package does not abort the rest. The Windows bootstrap downloads the official App Installer bundle when `winget` is missing; the Mac bootstrap treats missing `uv` as expected until its tool-install phase. See [CHANGELOG.md](./CHANGELOG.md) for what changed and why.
+
+| OS | First-run | Later updates | Shell config |
+|----|-----------|---------------|--------------|
+| **macOS** | [`macos/install.zsh`](./macos/install.zsh) — installs Homebrew if needed, then CLI tools + rustup, then zsh | [`mac-update.zsh`](./mac-update.zsh) | [`zsh/install.sh --base`](./zsh/install.sh) |
+| **Fedora / Ubuntu / WSL** | [`linux/install.sh`](./linux/install.sh) — `dnf` or `apt-get`, official fallbacks, then zsh | re-run `linux/install.sh --update` | [`zsh/install.sh`](./zsh/install.sh) (personal by default) |
+| **Windows 11** | [`powershell/tools/Install-Workstation.ps1`](./powershell/tools/Install-Workstation.ps1) — App Installer/winget + profile | [`Update-WinGetPackages.ps1`](./powershell/tools/Update-WinGetPackages.ps1) | [`Install-Profile.ps1`](./powershell/profile/Install-Profile.ps1) |
+
+```bash
+# macOS
+./macos/install.zsh                 # personal (default)
+./macos/install.zsh --assurant      # Assurant/Astra modules
+./mac-update.zsh                    # later Homebrew / mise / rustup / uv updates
+./mac-update.zsh --bootstrap        # install Homebrew if missing + curated tools
+
+# Fedora, Ubuntu, Debian, WSL
+./linux/install.sh                  # personal (default)
+./linux/install.sh --assurant       # Assurant/Astra modules
+./linux/install.sh --base           # explicit personal profile
+./linux/install.sh --update         # also upgrade installed packages
+```
+
+```powershell
+# Windows — elevated pwsh recommended; repairs winget if needed
+pwsh -File .\powershell\tools\Install-Workstation.ps1
+pwsh -File .\powershell\tools\Install-Workstation.ps1 -Assurant
+```
+
+On a brand-new Windows box, drive layout / env restore still follow **[docs/FRESH-INSTALL.md](./docs/FRESH-INSTALL.md)** (steps 1–6) *before* the workstation installer so rustup and mise write into `Z:\Packages`.
+
+Cargo/rustup PATH is added only when the `cargo` binary exists (zsh: `~/.cargo/bin/cargo`; PowerShell: `$env:CARGO_HOME\bin\cargo.exe` or `~\.cargo\bin\cargo.exe`). `rustup self uninstall` therefore drops it off PATH.
 
 ---
 
@@ -16,20 +46,25 @@ Install these **before** running the profile installer. The profile will still l
 
 | Need | How | Required? |
 |------|-----|-----------|
-| **winget** | Windows **App Installer** (Microsoft Store). Verify: `winget --version` | Yes (to install the rest) |
+| **winget** | Windows **App Installer** (Microsoft Store). Verify: `winget --version`; the workstation bootstrap repairs it if missing | Required for direct `Install-Essentials.ps1`; repaired automatically by the workstation bootstrap |
 | **PowerShell 7 (`pwsh`)** | **Manual MSI** from [PowerShell releases](https://github.com/PowerShell/PowerShell/releases/latest) — not via winget. Verify: `pwsh --version` | Yes |
 | **Git** | `winget` / [Install-Essentials.ps1](./powershell/tools/Install-Essentials.ps1) | Yes (clone + git helpers) |
 | **starship, zoxide, fzf** | `Install-Essentials.ps1` (Utilities list) | Strongly recommended — prompt, `cd` jumper, fuzzy find |
 | **eza, bat, ripgrep, mise, …** | Same essentials script | Optional; aliases/modules no-op if absent |
 | **Windows Terminal** | Essentials list | Recommended host for `pwsh` |
 
-Minimal CLI path (after `pwsh` + `winget` work):
+Minimal CLI path:
 
 ```powershell
-# Elevated pwsh recommended
-.\powershell\tools\Install-Essentials.ps1
-# Close and reopen the terminal so starship/zoxide/fzf are on PATH
+# Elevated pwsh recommended — packages + profile
+.\powershell\tools\Install-Workstation.ps1
+# Close and reopen the terminal so starship/zoxide/fzf/cargo are on PATH
 ```
+
+If `winget` is missing, `Install-Workstation.ps1` downloads the official
+Microsoft App Installer bundle to a temporary file, installs it, and retries
+the package pass. If the new `winget` shim is not visible immediately, open a
+new PowerShell window and re-run the installer.
 
 Utilities-only (shell tools without PowerToys/VS Code/etc.):
 
@@ -55,7 +90,7 @@ Re-running is idempotent. Does **not** install winget, PowerShell, starship, fon
 pwsh -File .\powershell\profile\Install-Profile.ps1
 
 # Common flags
-pwsh -File .\powershell\profile\Install-Profile.ps1 -Work              # work modules + $env:PS_WORK=1
+pwsh -File .\powershell\profile\Install-Profile.ps1 -Assurant          # Assurant modules + $env:PS_ASSURANT=1
 pwsh -File .\powershell\profile\Install-Profile.ps1 -StarshipTheme nordic
 pwsh -File .\powershell\profile\Install-Profile.ps1 -Uninstall
 ```
@@ -94,15 +129,11 @@ This PowerShell script checks if it is running with administrator privileges. If
 
 ---
 
-## 3. [WSL Zsh Configuration](./zsh/)
+## 3. [Zsh configuration](./zsh/) (macOS, Linux, WSL)
 
-A modular zsh setup for WSL Ubuntu built around starship, eza, bat, fzf, zoxide, mise, and uv. Config is split into focused files (aliases, bindings, completion, exports, etc.) all living under `~/.zsh/` via ZDOTDIR. Symlink-based install — editing the repo file edits the live config.
+Modular XDG zsh config (`~/.config/zsh`). `zsh/install.sh` copies the payload; it does **not** install packages. Use `./macos/install.zsh` or `./linux/install.sh` for first-run tool bootstrap.
 
-```bash
-bash ~/wapenshaw/zsh/install.sh
-```
-
-See [zsh/README.md](./zsh/README.md) for the full setup guide and [zsh/CHEATSHEET.md](./zsh/CHEATSHEET.md) for all aliases and keybindings.
+See [zsh/README.md](./zsh/README.md) and [zsh/CHEATSHEET.md](./zsh/CHEATSHEET.md).
 
 ---
 

@@ -14,12 +14,28 @@ pwsh -File ./powershell/profile/Set-DevPackagePaths.ps1
 pwsh -File ./powershell/system/Set-NetworkAdapter.ps1
 ```
 
-Zsh workflows:
+Zsh / platform bootstrap:
 
 ```bash
-./zsh/install.sh
-./zsh/install.sh --work
+./macos/install.zsh                 # macOS first-run: Homebrew + tools + zsh (personal)
+./macos/install.zsh --assurant
+./mac-update.zsh                    # recurring Mac maintenance
+./mac-update.zsh --bootstrap        # install Homebrew if missing + curated tools
+
+./linux/install.sh                  # Fedora/Ubuntu first-run: dnf or apt-get + zsh (personal)
+./linux/install.sh --assurant
+./linux/install.sh --update
+
+./zsh/install.sh                    # config only (personal on every OS)
+./zsh/install.sh --assurant
 ./zsh/install.sh --uninstall
+```
+
+Windows first-run (PowerShell 7):
+
+```powershell
+pwsh -File ./powershell/tools/Install-Workstation.ps1
+pwsh -File ./powershell/tools/Install-Workstation.ps1 -Assurant
 ```
 
 OpenWrt ER605 workflows run on the router, not from the workstation:
@@ -41,8 +57,11 @@ pwsh -NoProfile -Command '$tokens=$null; $errors=$null; $null = [System.Manageme
 # POSIX shell entry points
 for f in ./er605-openwrt/*.sh; do sh -n "$f"; done
 
-# Bash entry point
-bash -n ./zsh/install.sh
+# Bash entry points
+bash -n ./zsh/install.sh ./linux/install.sh
+
+# macOS bootstrap / maintenance
+zsh -n ./macos/install.zsh ./mac-update.zsh
 
 # Single shell script
 sh -n ./er605-openwrt/er605v2_write_initramfs.sh
@@ -54,12 +73,15 @@ zsh -n ./zsh/zsh/.zshenv ./zsh/zsh/.zprofile ./zsh/zsh/.zshrc ./zsh/zsh/*.zsh ./
 ## High-level architecture
 
 - `powershell/` contains runnable, task-oriented PowerShell utilities organised by intent: `profile/` (install + startup), `system/` (registry/network/shutdown tweaks), `tools/` (ad-hoc and daily helpers), `diagnostics/` (Test-* probes). `powershell/functions/` contains reusable helpers and aliases that become available through the PowerShell profile installer.
-- `powershell/profile/Install-Profile.ps1` deploys the modular PowerShell profile: copies `powershell/profile/modules/*.ps1` and `powershell/functions/*.ps1` to `$HOME\.config\powershell\`, installs `Register-ProfileFunctions.ps1`, writes the full loader to `$HOME\.config\powershell\profile.ps1`, and writes a thin stub into `$PROFILE` that dotsources that loader. Modules are eager-sourced in dependency order (`NN-name.ps1`); functions are AST-lazy-autoloaded (aliases like `rsb` registered immediately). Supports `-Work`, `-Uninstall`, `-StarshipTheme`, `-ExcludeModules`, and `-InstallDir`.
-- `powershell/profile/modules/` contains the modular profile files, each owning one concern: `01-history.ps1` (PSReadLine history), `02-exports.ps1` (env vars, PATH), `03-completion.ps1` (PSReadLine prediction), `04-fzf.ps1` (fzf env), `05-tools.ps1` (zoxide, WinGet.CommandNotFound), `06-aliases.ps1` (Set-Alias), `07-functions.ps1` (inline helpers), `08-bindings.ps1` (PSReadLine key handlers), `09-plugins.ps1` (auto-install PSGallery modules), `10-uv.ps1` (uv helpers), `99-prompt.ps1` (starship init, loaded last). `modules/work/` contains work-only modules sourced when `$env:PS_WORK = '1'`. Every `Invoke-Expression`/`Import-Module` is wrapped in `try/catch` so a missing tool never breaks the shell.
+- `powershell/profile/Install-Profile.ps1` deploys the modular PowerShell profile: copies `powershell/profile/modules/*.ps1` and `powershell/functions/*.ps1` to `$HOME\.config\powershell\`, installs `Register-ProfileFunctions.ps1`, writes the full loader to `$HOME\.config\powershell\profile.ps1`, and writes a thin stub into `$PROFILE` that dotsources that loader. Modules are eager-sourced in dependency order (`NN-name.ps1`); functions are AST-lazy-autoloaded (aliases like `rsb` registered immediately). Supports `-Assurant`, `-Uninstall`, `-StarshipTheme`, `-ExcludeModules`, and `-InstallDir`.
+- `powershell/profile/modules/` contains the modular profile files, each owning one concern: `01-history.ps1` (PSReadLine history), `02-exports.ps1` (env vars, PATH), `03-completion.ps1` (PSReadLine prediction), `04-fzf.ps1` (fzf env), `05-tools.ps1` (zoxide, WinGet.CommandNotFound), `06-aliases.ps1` (Set-Alias), `07-functions.ps1` (inline helpers), `08-bindings.ps1` (PSReadLine key handlers), `09-plugins.ps1` (auto-install PSGallery modules), `10-uv.ps1` (uv helpers), `99-prompt.ps1` (starship init, loaded last). `modules/work/` contains Assurant-only modules sourced when `$env:PS_ASSURANT = '1'`. Every `Invoke-Expression`/`Import-Module` is wrapped in `try/catch` so a missing tool never breaks the shell.
 - `powershell/profile/User-Profile.ps1` is a deprecated stub. The modular profile now lives in `modules/`. Put new reusable commands in `powershell/functions/`, not in the generated loader or `User-Profile.ps1`.
 - Starship themes live at the repo root in `starship/` (e.g. `nova.toml`, `nordic.toml`). The zsh installer (`zsh/install.sh`) prompts for which one to copy to `~/.config/zsh/starship.toml`; the PowerShell `powershell/profile/Set-StarshipConfig.ps1` does the same for the Windows side (supports `-Theme <name>` and `$env:PS_STARSHIP_THEME` for non-interactive use).
-- `zsh/` is a copied XDG-style configuration. `zsh/install.sh` copies tracked config files into `~/.config/zsh`, manages a block in `/etc/zshenv` or `/etc/zsh/zshenv` to set `ZDOTDIR`, and excludes plugin/doc/meta files from the installed copy.
-- `zsh/zsh/.zshenv` owns non-interactive environment setup and work-mode environment modules. `zsh/zsh/.zshrc` sources modules in order, with work aliases/functions enabled only when `ZSH_WORK=1` is set by `./zsh/install.sh --work`.
+- `macos/install.zsh` is the Mac first-run installer: it installs Xcode CLT / Homebrew when missing, runs `mac-update.zsh --bootstrap` (brew formulae + official rustup with `--no-modify-path` + uv Python), then `zsh/install.sh --base`. `mac-update.zsh` remains the recurring Mac updater.
+- `linux/install.sh` is the Linux first-run installer. It detects Fedora-family (`dnf`) vs Debian/Ubuntu (`apt-get`), installs the curated CLI packages one-by-one (a missing package is a warning, not an abort), falls back to official user-level installers for mise/uv/starship/zoxide/rustup, then runs `zsh/install.sh` (personal profile by default; `--assurant` is opt-in).
+- `powershell/tools/Install-Workstation.ps1` is the Windows first-run orchestrator: repair/ensure winget, `Install-Essentials.ps1`, then `Install-Profile.ps1`. Drive-layout and env restore stay in `docs/FRESH-INSTALL.md`.
+- `zsh/` is a copied XDG-style configuration. `zsh/install.sh` copies tracked config files into `~/.config/zsh`, manages a block in `/etc/zshenv` or `/etc/zsh/zshenv` to set `ZDOTDIR`, and excludes plugin/doc/meta files from the installed copy. Cargo PATH is added only when `~/.cargo/bin/cargo` is executable.
+- `zsh/zsh/.zshenv` owns non-interactive environment setup and Assurant environment modules. `zsh/zsh/.zshrc` sources modules in order, with Assurant aliases/functions enabled only when `ZSH_ASSURANT=1` is set by `./zsh/install.sh --assurant`.
 - `zsh/zsh/plugins.zsh` auto-clones plugins on first shell launch into `~/.config/zsh/plugins/`; do not vendor plugin checkouts into the repo.
 - `er605-openwrt/` contains router-side BusyBox/POSIX shell helpers plus the guide. The flashing script locates UBI volumes named `kernel` and `kernel.b` and writes the initramfs image to both; the backup script writes MTD backups to an NTFS USB mount.
 - `fonts/`, `windows-terminal/`, `extensions/`, and root Starship theme files are payload/config assets consumed manually by the scripts or external tools.
@@ -74,8 +96,8 @@ zsh -n ./zsh/zsh/.zshenv ./zsh/zsh/.zprofile ./zsh/zsh/.zshrc ./zsh/zsh/*.zsh ./
 - Registry tweaks are paired `.reg` files under `registry-tweaks/dos/` and `registry-tweaks/undos/`; add matching do/undo entries when adding a tweak.
 - Zsh module order matters: history/exports/completion/fzf/tools load before aliases/functions/bindings/plugins, `fast-syntax-highlighting` stays last among plugins, and Starship is initialized after plugins.
 - PowerShell module order matters the same way: `modules/NN-name.ps1` files are sourced in numeric order (history → exports → completion → fzf → tools → aliases → functions → bindings → plugins → uv → prompt). Starship init (`99-prompt.ps1`) is loaded last, mirroring zsh's `prompt.zsh`.
-- Work-only zsh configuration belongs under `zsh/zsh/work/`. Real Azure IDs go in the installed, git-ignored `~/.config/zsh/work/az.env`, not in tracked files.
-- Work-only PowerShell configuration belongs under `powershell/profile/modules/work/`. Real Azure IDs go in the git-ignored `modules/work/04-az.env.ps1` (template is `04-az.env.ps1` tracked, real copy gitignored). Work modules are sourced only when `$env:PS_WORK = '1'`, set by `Install-Profile.ps1 -Work`.
+- Assurant-only zsh configuration belongs under `zsh/zsh/work/`. Real Azure IDs go in the installed, git-ignored `~/.config/zsh/work/az.env`, not in tracked files. Enabled only by `./zsh/install.sh --assurant`.
+- Assurant-only PowerShell configuration belongs under `powershell/profile/modules/work/`. Real Azure IDs go in the git-ignored `modules/work/04-az.env.ps1` (template is `04-az.env.ps1` tracked, real copy gitignored). Assurant modules are sourced only when `$env:PS_ASSURANT = '1'`, set by `Install-Profile.ps1 -Assurant`.
 - OpenWrt helpers should stay `/bin/sh` compatible for the router environment and avoid workstation-specific assumptions.
 
 ## PowerShell script naming

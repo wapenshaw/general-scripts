@@ -1,4 +1,4 @@
-# Work-specific environment — only sourced when installed with --work.
+# Assurant environment — only sourced when installed with --assurant.
 # Corporate CA trust, workspace paths, Kubernetes config, Node TLS hardening.
 
 # Workspace

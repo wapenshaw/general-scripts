@@ -9,8 +9,11 @@ Personal Windows 11 post-install + dev-environment toolbox. No build system, no 
 
 ## Layout
 
-- `powershell/` — runnable utilities: `profile/` (install + startup, modular `modules/` with ordered `NN-name.ps1` files + `work/` for work mode, `Register-ProfileFunctions.ps1` lazy-loads `functions/`), `system/` (registry/network/shutdown), `tools/` (daily helpers), `diagnostics/` (probes), `functions/` (profile-loaded helpers + short aliases)
-- `zsh/` — modular WSL zsh config (XDG-style, `install.sh` deploys)
+- `macos/install.zsh` — first-run Mac bootstrap: Homebrew (installed if missing) + `mac-update.zsh --bootstrap` + `zsh/install.sh --base`
+- `linux/install.sh` — first-run Linux bootstrap: Fedora `dnf` or Ubuntu `apt-get`, official user-level fallbacks (mise/uv/starship/rustup), then `zsh/install.sh`
+- `mac-update.zsh` — recurring Mac maintenance (Homebrew/mise/rustup/uv); `--bootstrap` also installs Homebrew when absent
+- `powershell/` — runnable utilities: `profile/` (install + startup, modular `modules/` with ordered `NN-name.ps1` files + `work/` for Assurant mode, `Register-ProfileFunctions.ps1` lazy-loads `functions/`), `system/` (registry/network/shutdown), `tools/` (daily helpers including `Install-Workstation.ps1` first-run orchestrator), `diagnostics/` (probes), `functions/` (profile-loaded helpers + short aliases)
+- `zsh/` — modular zsh config for macOS/Linux/WSL (XDG-style, `install.sh` deploys)
 - `config/env/` — captured Windows env vars (`user.json`, `system.json`, `paths.json`)
 - `starship/`, `fonts/`, `windows-terminal/`, `extensions/`, `icons/` — config/asset payloads
 - `registry-tweaks/` — paired `dos/` + `undos/` `.reg` files
@@ -25,7 +28,8 @@ pwsh -NoProfile -Command '$f=$false; Get-ChildItem ./powershell -Recurse -Filter
 
 ```bash
 sh -n ./er605-openwrt/*.sh
-bash -n ./zsh/install.sh
+bash -n ./zsh/install.sh ./linux/install.sh
+zsh -n ./macos/install.zsh ./mac-update.zsh
 zsh -n ./zsh/zsh/.zshenv ./zsh/zsh/.zprofile ./zsh/zsh/.zshrc ./zsh/zsh/*.zsh ./zsh/zsh/work/*.zsh
 ```
 

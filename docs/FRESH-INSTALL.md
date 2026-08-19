@@ -104,7 +104,14 @@ Pick User (no admin) or System scope (admin required). Creates the target direct
 
 ### 7. Apps via winget
 
-From an elevated PowerShell:
+From an elevated PowerShell 7 session, either run the one-shot workstation installer (packages **and** the profile from step 8.1):
+
+```powershell
+Z:\Personal\general-scripts\powershell\tools\Install-Workstation.ps1
+# optional: -Assurant    -SkipPackages    -SkipProfile    -StarshipTheme nordic
+```
+
+or install packages only:
 
 ```powershell
 Z:\Personal\general-scripts\powershell\tools\Install-Essentials.ps1
@@ -131,12 +138,12 @@ For a list of what would be installed: `Install-Essentials.ps1 -List`.
 
 These are the repo scripts that need to run once on a fresh box, in this order. Most require an elevated PowerShell (admin).
 
-1. **`Install-Profile.ps1`** - deploys the modular PowerShell profile: copies `modules/*.ps1` and `functions/*.ps1` to `~/.config/powershell/`, installs `Register-ProfileFunctions.ps1`, writes the full loader to `~/.config/powershell/profile.ps1`, and writes a thin stub into `$PROFILE` that dotsources that loader. Modules load in dependency order (history → exports → mise → completion → fzf → tools → aliases → functions → bindings → plugins → uv → vsdev → prompt). Function files are AST-lazy-autoloaded (short aliases like `rsb` are registered immediately; side-effect scripts with no functions still load eagerly). Runs `Set-StarshipConfig.ps1` to install the `nova` starship theme. *No admin required.* **Must run after step 7** — the profile modules invoke `starship init`, `zoxide init`, and `Microsoft.WinGet.CommandNotFound` on every shell start, all of which require binaries/modules installed in step 7 (and step 1). Every init is guarded by `try/catch` so a missing tool prints a warning but never breaks the shell. The `11-vsdev` module silently activates the Visual Studio Developer Shell (MSVC + Windows SDK on PATH/INCLUDE/LIB) when VS is installed and no-ops otherwise. The `02-mise` module activates [mise](https://mise.jdx.dev/) (runtime version manager for node/python/ruby/etc., replacing nvm/pyenv/rbenv) when installed and no-ops otherwise.
+1. **`Install-Profile.ps1`** — skip this step if you ran `Install-Workstation.ps1` in step 7 (it already deploys the profile). Otherwise it deploys the modular PowerShell profile: copies `modules/*.ps1` and `functions/*.ps1` to `~/.config/powershell/`, installs `Register-ProfileFunctions.ps1`, writes the full loader to `~/.config/powershell/profile.ps1`, and writes a thin stub into `$PROFILE` that dotsources that loader. Modules load in dependency order (history → exports → mise → completion → fzf → tools → aliases → functions → bindings → plugins → uv → vsdev → prompt). Function files are AST-lazy-autoloaded (short aliases like `rsb` are registered immediately; side-effect scripts with no functions still load eagerly). Runs `Set-StarshipConfig.ps1` to install the `nova` starship theme. *No admin required.* **Must run after step 7** — the profile modules invoke `starship init`, `zoxide init`, and `Microsoft.WinGet.CommandNotFound` on every shell start, all of which require binaries/modules installed in step 7 (and step 1). Every init is guarded by `try/catch` so a missing tool prints a warning but never breaks the shell. The `11-vsdev` module silently activates the Visual Studio Developer Shell (MSVC + Windows SDK on PATH/INCLUDE/LIB) when VS is installed and no-ops otherwise. The `02-mise` module activates [mise](https://mise.jdx.dev/) (runtime version manager for node/python/ruby/etc., replacing nvm/pyenv/rbenv) when installed and no-ops otherwise.
    ```powershell
    Z:\Personal\general-scripts\powershell\profile\Install-Profile.ps1
    ```
    **Flags:**
-   - `-Work` — also installs `modules/work/` and sets `$env:PS_WORK = '1'` in the loader so work-only aliases, exports, and functions are sourced on every shell start. Mirrors `zsh/install.sh --work`.
+   - `-Assurant` — also installs `modules/work/` and sets `$env:PS_ASSURANT = '1'` in the loader so Assurant aliases, exports, and functions are sourced on every shell start. The default is the personal profile. Mirrors `zsh/install.sh --assurant`.
    - `-StarshipTheme <name>` — override the starship theme (defaults to `nova`; e.g. `-StarshipTheme nordic`). Also settable via `$env:PS_STARSHIP_THEME`.
    - `-Uninstall` — back up `~/.config/powershell/` to `~/.config/powershell.uninstalled.<timestamp>`, restore `$PROFILE` from pre-install backup. Mutually exclusive with all other flags.
    - `-ExcludeModules <names>` — skip specific module files (e.g. `-ExcludeModules '10-uv.ps1'`).

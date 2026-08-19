@@ -1,7 +1,7 @@
 # Shell Cheatsheet
 
 > Config lives in `~/.config/zsh/` — edit the relevant module file and run `reload`.
-> Profiles: Linux defaults to base + work; macOS defaults to base only. Work covers Assurant/Astra/Common Automation.
+> Profiles: personal by default on every OS. Assurant/Astra/Common Automation modules are installed only with `--assurant`.
 
 ---
 
