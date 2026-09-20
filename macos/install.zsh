@@ -80,6 +80,32 @@ section() {
 	print
 }
 
+verify_zsh_layout() {
+	local target="$HOME/.zsh"
+	local name path
+
+	[[ -d "$target" ]] || {
+		warning "Canonical zsh directory is missing: $target"
+		return 1
+	}
+
+	for name in .zshenv .zprofile .zshrc; do
+		path="$HOME/$name"
+		if [[ ! -L "$path" || "$(readlink "$path")" != "$target/$name" ]]; then
+			warning "$path is not linked to $target/$name"
+			return 1
+		fi
+	done
+
+	for name in zsh starship.toml; do
+		path="$HOME/.config/$name"
+		if [[ ! -L "$path" || "$(readlink "$path")" != "$target/$name" ]]; then
+			warning "$path is not linked to $target/$name"
+			return 1
+		fi
+	done
+}
+
 section "macOS first-run bootstrap"
 
 info "Repo:     $REPO"
@@ -134,7 +160,12 @@ if [[ "$SKIP_ZSH" -eq 0 ]]; then
 		print
 	elif [[ -x "$REPO/zsh/install.sh" || -f "$REPO/zsh/install.sh" ]]; then
 		if bash "$REPO/zsh/install.sh" "${ZSH_ARGS[@]}"; then
-			success "zsh config deployed to ~/.zsh"
+			if verify_zsh_layout; then
+				success "zsh config deployed with ~/.zsh as the single source of truth"
+			else
+				warning "zsh config was copied, but the compatibility links are incomplete"
+				exit 1
+			fi
 		else
 			warning "zsh/install.sh exited nonzero"
 			exit 1
