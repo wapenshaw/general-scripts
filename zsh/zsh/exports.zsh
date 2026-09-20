@@ -20,8 +20,8 @@ export BUN_INSTALL="$HOME/.bun"
 path=("$BUN_INSTALL/bin" "$HOME/.tfenv/bin" $path)
 
 # Editor
-export EDITOR="nvim"
-export VISUAL="nvim"
+export EDITOR="code --wait"
+export VISUAL="code --wait"
 
 # uv
 export UV_LINK_MODE=clone

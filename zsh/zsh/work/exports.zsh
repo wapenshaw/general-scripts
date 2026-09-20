@@ -30,7 +30,7 @@ fi
 
 # Node.js — NODE_USE_SYSTEM_CA covers CA trust; ipv4first avoids WSL DNS hangs
 export NODE_USE_SYSTEM_CA=1
-[[ "$OSTYPE" != darwin* ]] && export NODE_OPTIONS="--dns-result-order=ipv4first"
+[[ "$OSTYPE" != darwin* ]] && export NODE_OPTIONS="--use-system-ca --dns-result-order=ipv4first"
 
 # npm
 export npm_config_strict_ssl=true

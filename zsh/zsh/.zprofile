@@ -1,6 +1,6 @@
 # Login-shell setup — runs once per session, before .zshrc.
 # Homebrew's shellenv used to live in ~/.zprofile. Once ZDOTDIR points at
-# ~/.config/zsh, that file is no longer read, so initialize Homebrew here.
+# ~/.zsh, that file is no longer read, so initialize Homebrew here.
 if [[ "$OSTYPE" == darwin* ]]; then
   for _brew in /opt/homebrew/bin/brew /usr/local/bin/brew; do
     if [[ -x "$_brew" ]]; then

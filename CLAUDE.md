@@ -40,5 +40,5 @@ zsh -n ./zsh/zsh/.zshenv ./zsh/zsh/.zprofile ./zsh/zsh/.zshrc ./zsh/zsh/*.zsh ./
 - New reusable functions go in `powershell/functions/*.ps1`, not in `User-Profile.ps1`.
 - Registry tweaks: always add matching `dos/` + `undos/` pairs.
 - Zsh module order matters (history/exports/completion/fzf/tools → aliases/functions/bindings/plugins → `fast-syntax-highlighting` last → starship init).
-- No secrets in tracked files. Export/Import-Env strips `*TOKEN*`, `*SECRET*`, `*AUTH*`. Azure creds → gitignored `~/.config/zsh/work/az.env`.
+- No secrets in tracked files. Export/Import-Env strips `*TOKEN*`, `*SECRET*`, `*AUTH*`. Azure creds → gitignored `~/.zsh/work/az.env`.
 - Conventional commits, Angular-style scope (`feat(powershell):`, `fix(zsh):`, `docs:`).

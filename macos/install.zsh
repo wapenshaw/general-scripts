@@ -134,7 +134,7 @@ if [[ "$SKIP_ZSH" -eq 0 ]]; then
 		print
 	elif [[ -x "$REPO/zsh/install.sh" || -f "$REPO/zsh/install.sh" ]]; then
 		if bash "$REPO/zsh/install.sh" "${ZSH_ARGS[@]}"; then
-			success "zsh config deployed to ~/.config/zsh"
+			success "zsh config deployed to ~/.zsh"
 		else
 			warning "zsh/install.sh exited nonzero"
 			exit 1

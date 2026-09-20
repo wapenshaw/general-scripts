@@ -7,6 +7,7 @@ source "$ZDOTDIR/exports.zsh"
 source "$ZDOTDIR/completion.zsh"
 source "$ZDOTDIR/fzf.zsh"
 source "$ZDOTDIR/tools.zsh"
+source "$ZDOTDIR/nvm.zsh"
 source "$ZDOTDIR/aliases.zsh"
 source "$ZDOTDIR/functions.zsh"
 if [[ "${ZSH_ASSURANT:-0}" == "1" && -f "$ZDOTDIR/uv.zsh" ]]; then

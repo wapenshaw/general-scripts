@@ -3,6 +3,9 @@
 # Either ~/.zshenv sources us explicitly, or zsh sources us directly
 # if ZDOTDIR is already set in the environment at startup.
 
+export ZDOTDIR="$HOME/.zsh"
+export skip_global_compinit=1
+
 # XDG Base Directories — centralizes config/cache/data/state locations.
 # Defaults match the freedesktop spec; users can override by exporting before
 # the shell starts (e.g. in /etc/environment).

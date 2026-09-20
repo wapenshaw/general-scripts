@@ -131,7 +131,7 @@ This PowerShell script checks if it is running with administrator privileges. If
 
 ## 3. [Zsh configuration](./zsh/) (macOS, Linux, WSL)
 
-Modular XDG zsh config (`~/.config/zsh`). `zsh/install.sh` copies the payload; it does **not** install packages. Use `./macos/install.zsh` or `./linux/install.sh` for first-run tool bootstrap.
+Modular zsh config (`~/.zsh`). `zsh/install.sh` copies the payload; it does **not** install packages. Use `./macos/install.zsh` or `./linux/install.sh` for first-run tool bootstrap.
 
 See [zsh/README.md](./zsh/README.md) and [zsh/CHEATSHEET.md](./zsh/CHEATSHEET.md).
 

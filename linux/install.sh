@@ -618,7 +618,7 @@ deploy_zsh() {
   fi
 
   if bash "$REPO/zsh/install.sh" "${zsh_args[@]}"; then
-    green "zsh config deployed to ~/.config/zsh"
+    green "zsh config deployed to ~/.zsh"
   else
     yellow "zsh/install.sh exited nonzero"
     add_failure "zsh/install.sh"
