@@ -10,6 +10,6 @@
     "debug.saveBeforeStart": "nonUntitledEditorsInActiveGroup",
     "editor.semanticHighlighting.enabled": false,
     "editor.wordSeparators": "`~!@#$%^&*()=+[{]}\\|;:'\",.<>/?",
-    "editor.defaultFormatter": "ms-vscode.powershell"
+    // "editor.defaultFormatter": "ms-vscode.powershell"
   }
 }

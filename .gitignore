@@ -11,3 +11,4 @@ ai/.env.*
 **/.env.local
 **/*.bak-*
 **/__pycache__/
+.DS_Store

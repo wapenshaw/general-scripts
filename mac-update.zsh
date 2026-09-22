@@ -35,11 +35,11 @@ DRY_RUN=false
 #
 #   ~/.local/bin/python
 #   ~/.local/bin/python3
-#   ~/.local/bin/python3.13
+#   ~/.local/bin/python3.14
 #
-# Python 3.13 is used because some AI/transcription tools do not yet
+# Python 3.14 is used because some AI/transcription tools do not yet
 # support Python 3.14.
-UV_DEFAULT_PYTHON_VERSION="3.13"
+UV_DEFAULT_PYTHON_VERSION="3.14"
 
 # Native command-line tools managed by Homebrew.
 #
@@ -278,7 +278,7 @@ Bootstrap behavior:
   - Installs native developer tools through Homebrew (including starship, mise, neovim).
   - Installs the uv executable through Homebrew.
   - Installs rustup via the official installer without mutating shell rc files.
-  - Installs Python 3.13 through uv as the global/default Python.
+  - Installs Python 3.14 through uv as the global/default Python.
   - Installs Python CLI tools such as pre-commit and ruff through uv.
 
 Tool ownership:
