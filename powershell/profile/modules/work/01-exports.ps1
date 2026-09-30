@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-  Work-only environment variables. Only sourced when $env:PS_WORK = '1'.
+  Assurant environment variables. Only sourced when $env:PS_ASSURANT = '1'.
 .DESCRIPTION
   Work module 01. Mirrors zsh's work/exports.zsh.
 #>

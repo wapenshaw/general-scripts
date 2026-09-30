@@ -107,7 +107,14 @@ See [the shell setup guide](../powershell/profile/README.md).
 
 ### 7. Apps via winget
 
-From an elevated PowerShell:
+From an elevated PowerShell 7 session, either run the one-shot workstation installer (packages **and** the profile from step 8.1):
+
+```powershell
+Z:\Personal\general-scripts\powershell\tools\Install-Workstation.ps1
+# optional: -Assurant    -SkipPackages    -SkipProfile    -StarshipTheme nordic
+```
+
+or install packages only:
 
 ```powershell
 Z:\Personal\general-scripts\powershell\tools\Install-Essentials.ps1
@@ -135,6 +142,7 @@ For a list of what would be installed: `Install-Essentials.ps1 -List`.
 These are the repo scripts that need to run once on a fresh box, in this order. Most require an elevated PowerShell (admin).
 
 1. **`Install-Profile.ps1`** deploys a local PowerShell 7 profile and dependencies.
+   Skip this step if `Install-Workstation.ps1` already deployed it in step 7.
    It backs up the live setup, installs configuration under `~/.config/powershell`,
    deploys plugins to `~/.local/share/powershell/Modules`, and writes a thin AllHosts
    entry point. `installed-profile.json` selects modules explicitly; excluded or
@@ -142,7 +150,7 @@ These are the repo scripts that need to run once on a fresh box, in this order. 
    ```powershell
    pwsh -NoProfile -File ./powershell/profile/Install-Profile.ps1
    ```
-   **Flags:** `-Work` enables work settings while preserving private installed
+   **Flags:** `-Work` (alias `-Assurant`) enables work settings while preserving private installed
    files; `-Plugins PSFzf,posh-git` adds Git completion; `-SkipPlugins` skips
    dependency deployment; `-StarshipTheme <name>` explicitly replaces the theme;
    `-ExcludeModules <names>` changes the load manifest; `-InstallDir` and

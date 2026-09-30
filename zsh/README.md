@@ -1,6 +1,6 @@
 # zsh config
 
-Modular personal zsh setup. The repo is copied into `~/.config/zsh/` on install — no symlinks. Linux uses a managed system-zshenv block; macOS uses a managed `~/.zshenv` bootstrap.
+Modular personal zsh setup. The repo is copied into `~/.zsh/` on install. Linux uses a managed system-zshenv block; macOS uses compatibility links.
 
 **Stack:** starship · eza · bat · fd · ripgrep · fzf · zoxide · mise · direnv · nvim · lf · uv · ssh-agent (work)
 
@@ -10,20 +10,33 @@ See [CHEATSHEET.md](./CHEATSHEET.md) for the full alias and keybinding reference
 
 ## Install
 
+On a new machine, run the **platform bootstrap** from the repo root first so the package manager and CLI tools exist. `zsh/install.sh` only deploys config.
+
 ```bash
-cd /path/to/general-scripts
-./zsh/install.sh           # Linux: base + work; macOS: base only
-./zsh/install.sh --work    # explicitly enable work modules
-./zsh/install.sh --base    # explicitly disable work modules
+# macOS — installs Homebrew if needed, then tools, then this config
+./macos/install.zsh
+
+# Fedora (dnf) or Ubuntu (apt-get) — native packages + official fallbacks
+./linux/install.sh                   # personal profile (default)
+./linux/install.sh --assurant        # Assurant/Astra modules
 ```
 
-On Linux, install.sh appends a small block to the active system zshenv (`/etc/zsh/zshenv` on Debian/Ubuntu/WSL/Arch, `/etc/zshenv` on Fedora/upstream builds), so it may prompt for sudo once. On macOS, it writes a managed bootstrap block to `~/.zshenv` and does not modify system files.
+Config-only (tools already installed):
 
-The default profile is platform-aware: Linux gets **base + work**; macOS gets **base only**. Work means the Assurant/Astra/Common Automation environment—corporate CA settings, Azure/Kubernetes/Docker helpers, Astra navigation, and the work SSH agent. Use `--work` only on a machine that needs those modules.
+```bash
+cd /path/to/general-scripts
+./zsh/install.sh              # personal profile (default on every OS)
+./zsh/install.sh --assurant   # Assurant/Astra modules
+./zsh/install.sh --base       # explicit personal profile
+```
+
+On Linux, install.sh appends a small block to the active system zshenv (`/etc/zsh/zshenv` on Debian/Ubuntu/WSL/Arch, `/etc/zshenv` on Fedora/upstream builds), so it may prompt for sudo once. On macOS, it creates compatibility links and does not modify system files.
+
+The default is always the **personal** profile. `--assurant` adds the Assurant/Astra/Common Automation environment—corporate CA settings, Azure/Kubernetes/Docker helpers, Astra navigation, and the Assurant SSH agent. Use it only on a machine that needs those modules.
 
 To remove: `./zsh/install.sh --uninstall`.
 
-To sync changes from the repo: re-run `./install.sh [--work|--base]`.
+To sync changes from the repo: re-run `./install.sh [--assurant|--base]`.
 
 ---
 
@@ -39,29 +52,29 @@ if [[ -z "$XDG_CONFIG_HOME" ]]; then
     export XDG_CONFIG_HOME="$HOME/.config"
 fi
 if [[ -d "$XDG_CONFIG_HOME/zsh" ]]; then
-    export ZDOTDIR="$XDG_CONFIG_HOME/zsh"
+    export ZDOTDIR="$HOME/.zsh"
 fi
 ```
 
-On Linux, zsh reads the system file on every invocation. On macOS, the managed `~/.zshenv` sets `ZDOTDIR` and explicitly sources the installed `.zshenv`; later login and interactive files then resolve from `~/.config/zsh/`.
+On Linux, zsh reads the system file on every invocation. On macOS, the compatibility `~/.zshenv` link points at the canonical file, which sets `ZDOTDIR`; later login and interactive files then resolve from `~/.zsh/`.
 
-**2. A copy of the repo's `zsh/` files** at `~/.config/zsh/`. Every subsequent zsh file (`.zshenv`, `.zshrc`, `.zprofile`) is read from there.
+**2. A copy of the repo's `zsh/` files** at `~/.zsh/`. Every subsequent zsh file (`.zshenv`, `.zshrc`, `.zprofile`) is read from there.
 
 **Why this design:**
-- `~/.config/zsh/` is the standard XDG location. Nothing in `$HOME` references the repo path.
-- No symlinks at all — repo and config dir are independent.
-- macOS only gets a small managed `~/.zshenv` bootstrap; any pre-existing file is backed up on first install.
-- Re-running `install.sh` re-syncs the copy from the repo. The repo is the source of truth; `~/.config/zsh/` is the installed snapshot.
-- Plugins still auto-clone on first launch into `~/.config/zsh/plugins/`. They survive re-runs of install.sh (the copy step skips `plugins/`).
-- Work modules toggle via `$ZSH_WORK=1` in the installed `.zshenv` — install.sh adds or removes that line based on the selected profile.
-- Work mode reuses a fixed OpenSSH agent socket at `~/.ssh/agent.sock` and auto-loads `~/.ssh/id_ed25519_assurant` in interactive shells. Base macOS does not start or configure this agent.
+- `~/.zsh/` is the single runtime source of truth. Nothing in `$HOME` references the repo path.
+- The repository is the versioned source; `~/.zsh/` is its installed working copy.
+- `~/.zshenv`, `~/.zprofile`, `~/.zshrc`, `~/.config/zsh`, and `~/.config/starship.toml` are compatibility links into `~/.zsh`, so applications that append to conventional paths update the canonical files.
+- Re-running `install.sh` re-syncs the copy from the repo.
+- Plugins still auto-clone on first launch into `~/.zsh/plugins/`. They survive re-runs of install.sh (the copy step skips `plugins/`).
+- Assurant modules toggle via `$ZSH_ASSURANT=1` in the installed `.zshenv` — install.sh adds or removes that line based on `--assurant`.
+- The Assurant profile reuses a fixed OpenSSH agent socket at `~/.ssh/agent.sock` and auto-loads `~/.ssh/id_ed25519_assurant` in interactive shells. The personal profile does not start or configure this agent.
 
 ### Sourcing order
 
 1. Managed zshenv bootstrap (system zshenv on Linux, `~/.zshenv` on macOS) — sets `ZDOTDIR`
-2. `~/.config/zsh/.zshenv` — sets `XDG_*_HOME`, `STARSHIP_CONFIG`, sources work env
-3. `~/.config/zsh/.zprofile` (login shells) — Homebrew initialization on macOS; work-only SSH agent
-4. `~/.config/zsh/.zshrc` — sources every module in order, then starship
+2. `~/.zsh/.zshenv` — sets `XDG_*_HOME`, `STARSHIP_CONFIG`, sources Assurant env when enabled
+3. `~/.zsh/.zprofile` (login shells) — Homebrew initialization on macOS; Assurant-only SSH agent
+4. `~/.zsh/.zshrc` — sources every module in order, then starship
 
 ---
 
@@ -96,9 +109,9 @@ If you let mise manage Python too, you'll get duplicate Python installs and `pyt
 
 The `uv.zsh` module provides `uvdev`, `uvci`, `uvtst` shortcuts for the common work flows (`uv lock --upgrade && uv sync --dev` etc.).
 
-### Why `~/.config/zsh` instead of `~/.zsh`
+### Why `~/.zsh`
 
-XDG Base Directory spec. See the [How it works](#how-it-works--copy--zshenv-bootstrap) section above for the bootstrap chain.
+The runtime path is intentionally explicit so shells and applications cannot silently diverge between multiple configuration trees. See the [How it works](#how-it-works--copy--zshenv-bootstrap) section above for the bootstrap chain.
 
 ---
 
@@ -106,7 +119,7 @@ XDG Base Directory spec. See the [How it works](#how-it-works--copy--zshenv-boot
 
 | File | Owns |
 |------|------|
-| `.zshenv` | XDG dirs, Starship path, Cargo, work env |
+| `.zshenv` | XDG dirs, Starship path, failsafe Cargo PATH (only if `~/.cargo/bin/cargo` exists), Assurant env |
 | `.zprofile` | Login-shell SSH agent (fixed socket at `~/.ssh/agent.sock`) |
 | `.zshrc` | Orchestrator — sources all modules in order |
 | `aliases.zsh` | Aliases + dirstack shortcuts |
@@ -119,7 +132,7 @@ XDG Base Directory spec. See the [How it works](#how-it-works--copy--zshenv-boot
 | `plugins.zsh` | Plugin manager + auto-install |
 | `prompt.zsh` | Starship init |
 | `tools.zsh` | mise, direnv, zoxide |
-| `uv.zsh` | Work-only Astra/Common Automation uvdev / uvci / uvtst helpers |
+| `uv.zsh` | Assurant-only Astra/Common Automation uvdev / uvci / uvtst helpers |
 | `starship.toml` | (no longer in zsh/ — selected at install time from the repo-root `starship/` folder; see [Starship themes](#starship-themes) below) |
 | `work/` | Assurant/Astra/Common Automation modules (aliases, functions, exports, uv, ssh-agent, az.env template) |
 
@@ -153,13 +166,13 @@ Available starship themes:
 Pick a theme [1-6] (default: nova):
 ```
 
-The chosen file is copied to `~/.config/zsh/starship.toml`. To skip the prompt (e.g. for scripted installs), set `ZSH_STARSHIP_THEME` before running install:
+The chosen file is copied to `~/.zsh/starship.toml`, and the installer maintains `~/.config/starship.toml` as a compatibility link to that canonical file. To skip the prompt (e.g. for scripted installs), set `ZSH_STARSHIP_THEME` before running install:
 
 ```bash
 ZSH_STARSHIP_THEME=nordic ./zsh/install.sh
 ```
 
-The `~/.config/zsh/.zshenv` already sets `STARSHIP_CONFIG=$ZDOTDIR/starship.toml` so the new file is picked up automatically.
+The `~/.zsh/.zshenv` already sets `STARSHIP_CONFIG=$ZDOTDIR/starship.toml` so the new file is picked up automatically.
 
 To add a new theme: drop a `.toml` in `starship/`, commit, re-run `install.sh`.
 
@@ -183,6 +196,8 @@ This config uses: `zsh` `eza` `bat` `fd` `ripgrep` `fzf` `zoxide` `starship` `mi
 
 ### macOS (Homebrew)
 
+Prefer `./macos/install.zsh` from the repo root (installs Homebrew if needed). Manual equivalent:
+
 ```bash
 brew install eza bat fd ripgrep fzf zoxide starship mise direnv neovim lf uv bun
 ```
@@ -190,6 +205,8 @@ brew install eza bat fd ripgrep fzf zoxide starship mise direnv neovim lf uv bun
 The installed `.zprofile` initializes Homebrew for login shells. The base config also uses macOS `open`, `pbcopy`, and `pbpaste` for platform integration.
 
 ### Fedora
+
+Prefer `./linux/install.sh` from the repo root. Manual equivalent:
 
 ```bash
 # System packages — Fedora names fd as 'fd-find' (binary is `fd`), so no symlink needed
@@ -219,9 +236,11 @@ Add `export PATH="$HOME/.local/bin:$HOME/go/bin:$PATH"` to your environment (in 
 
 ### Ubuntu / WSL
 
+Prefer `./linux/install.sh` from the repo root. Manual equivalent:
+
 ```bash
 # System packages. NOTE: Ubuntu's `bat` package installs `batcat`; `fd-find` installs `fdfind`.
-sudo apt install -y zsh eza bat fd-find ripgrep fzf direnv neovim
+sudo apt-get install -y zsh eza bat fd-find ripgrep fzf direnv neovim
 
 # Make ~/.local/bin exist before symlinking into it (CRITICAL on fresh WSL)
 mkdir -p ~/.local/bin
@@ -350,7 +369,7 @@ echo "=== Config ==="
 echo "ZDOTDIR=$ZDOTDIR"
 echo "STARSHIP_CONFIG=$STARSHIP_CONFIG"
 echo "XDG_STATE_HOME=$XDG_STATE_HOME"
-[[ "$ZDOTDIR" == "$HOME/.config/zsh" ]] && echo "  ✓ ZDOTDIR points to XDG location" || echo "  ✗ ZDOTDIR wrong: $ZDOTDIR"
+[[ "$ZDOTDIR" == "$HOME/.zsh" ]] && echo "  ✓ ZDOTDIR points to ~/.zsh" || echo "  ✗ ZDOTDIR wrong: $ZDOTDIR"
 [[ "$STARSHIP_CONFIG" == "$ZDOTDIR/starship.toml" ]] && echo "  ✓ starship config wired" || echo "  ✗ starship config wrong"
 
 echo ""

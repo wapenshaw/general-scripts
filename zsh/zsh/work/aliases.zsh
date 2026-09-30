@@ -1,4 +1,4 @@
-# Work-specific aliases — only sourced when installed with --work.
+# Assurant aliases — only sourced when installed with --assurant.
 
 # Astra workspace navigation
 alias cda='cd "$ASTRA_HOME"'

@@ -6,7 +6,8 @@
     entry point. Only selected modules load. Dependencies use an explicit local
     store and are never installed at startup. Existing Starship config is retained.
 .PARAMETER Work
-    Enable work modules, preserving installed private work configuration.
+    Enable Assurant work modules, preserving installed private work configuration.
+    -Assurant is an alias, matching the cross-platform workstation bootstraps.
 .PARAMETER Plugins
     Modules to deploy/import. Default PSFzf; add posh-git for Git completion.
 .PARAMETER SkipPlugins
@@ -23,6 +24,7 @@
 #requires -Version 7.0
 [CmdletBinding()]
 param(
+    [Alias('Assurant')]
     [switch]$Work,
     [switch]$Uninstall,
     [string]$StarshipTheme,

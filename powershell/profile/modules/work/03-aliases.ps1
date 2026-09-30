@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-  Work-only aliases. Only sourced when $env:PS_WORK = '1'.
+  Assurant aliases. Only sourced when $env:PS_ASSURANT = '1'.
 .DESCRIPTION
   Work module 03. Mirrors zsh's work/aliases.zsh.
 #>

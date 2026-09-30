@@ -10,7 +10,8 @@ Personal Windows 11 post-install + dev-environment toolbox. No build system, no 
 ## Layout
 
 - `powershell/` — runnable utilities: `profile/` (install + startup, modular `modules/` with ordered `NN-name.ps1` files + `work/` for work mode, `Register-ProfileFunctions.ps1` lazy-loads `functions/`), `system/` (registry/network/shutdown), `tools/` (daily helpers), `diagnostics/` (probes), `functions/` (profile-loaded helpers + short aliases)
-- `zsh/` — modular WSL zsh config (XDG-style, `install.sh` deploys)
+- `zsh/` — modular macOS/Linux/WSL zsh config; `install.sh` deploys to `~/.zsh`
+- `macos/`, `linux/`, `mac-update.zsh` — platform bootstraps and Mac maintenance; Windows bootstrap is `powershell/tools/Install-Workstation.ps1`
 - `config/env/` — desired development storage manifest (`development.json`), directory documentation and historical environment snapshots
 - `starship/`, `fonts/`, `windows-terminal/`, `extensions/`, `icons/` — config/asset payloads
 - `opencode/` — portable OpenCode setup: `config/` payloads (secrets via env vars), `skills/` + `agent-skills/`, cross-platform installers (`Install-OpenCodeConfig.ps1`, `install.sh`)
@@ -26,7 +27,8 @@ pwsh -NoProfile -Command '$f=$false; Get-ChildItem ./powershell -Recurse -Filter
 
 ```bash
 sh -n ./er605-openwrt/*.sh
-bash -n ./zsh/install.sh
+bash -n ./zsh/install.sh ./linux/install.sh
+zsh -n ./macos/install.zsh ./mac-update.zsh
 zsh -n ./zsh/zsh/.zshenv ./zsh/zsh/.zprofile ./zsh/zsh/.zshrc ./zsh/zsh/*.zsh ./zsh/zsh/work/*.zsh
 ```
 
@@ -37,5 +39,5 @@ zsh -n ./zsh/zsh/.zshenv ./zsh/zsh/.zprofile ./zsh/zsh/.zshrc ./zsh/zsh/*.zsh ./
 - New reusable functions go in `powershell/functions/*.ps1`; startup configuration goes in ordered `powershell/profile/modules/` files. Both ConsoleHost and VS Code use AllHosts.
 - Registry tweaks: always add matching `dos/` + `undos/` pairs.
 - Zsh module order matters (history/exports/completion/fzf/tools → aliases/functions/bindings/plugins → `fast-syntax-highlighting` last → starship init).
-- No secrets in tracked files. Export/Import-Env strips `*TOKEN*`, `*SECRET*`, `*AUTH*`. Azure creds → gitignored `~/.config/zsh/work/az.env`.
+- No secrets in tracked files. Export/Import-Env strips `*TOKEN*`, `*SECRET*`, `*AUTH*`. Azure creds → gitignored `~/.zsh/work/az.env`.
 - Conventional commits, Angular-style scope (`feat(powershell):`, `fix(zsh):`, `docs:`).

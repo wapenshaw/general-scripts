@@ -43,6 +43,8 @@ the installer does not infer the intended JDK from PATH.
 - `-SkipPlugins` supports offline deployment; startup never installs modules.
 - Disable plugins with `PS_DISABLE_PLUGINS=1` or `PS_PLUGINS=none`.
 - `-Work` retains private installed work settings; prompt initialization is last.
+  `-Assurant` is an alias for `-Work`, matching the workstation bootstraps. Both
+  `PS_WORK` and `PS_ASSURANT` reflect the selected mode.
 - Existing Starship config is retained unless `-StarshipTheme` is specified.
 - Command/script invocations skip interactive startup. Opt in with `PS_PROFILE_IN_SCRIPTS=1`.
   Interactive `-NoExit -Command` launches (including VS Code shell integration) and

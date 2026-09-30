@@ -6,16 +6,22 @@ if [[ "$OSTYPE" == darwin* ]]; then
   path=(/opt/homebrew/bin /opt/homebrew/sbin /usr/local/bin $path)
 fi
 
-# Local user binaries first
-path=("$HOME/.local/bin" $path)
+# Local user binaries first, then rustup cargo if installed. Re-apply after
+# Homebrew so rustup wins over a Homebrew rustc. rustup self uninstall removes
+# the binary and this block becomes a no-op.
+if [[ -x "$HOME/.cargo/bin/cargo" ]]; then
+  path=("$HOME/.local/bin" "$HOME/.cargo/bin" $path)
+else
+  path=("$HOME/.local/bin" $path)
+fi
 
 # Bun and tfenv
 export BUN_INSTALL="$HOME/.bun"
 path=("$BUN_INSTALL/bin" "$HOME/.tfenv/bin" $path)
 
 # Editor
-export EDITOR="nvim"
-export VISUAL="nvim"
+export EDITOR="code --wait"
+export VISUAL="code --wait"
 
 # uv
 export UV_LINK_MODE=clone

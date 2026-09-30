@@ -1,26 +1,24 @@
 #!/usr/bin/env bash
-# install.sh — copy this repo's zsh config into ~/.config/zsh/
+# install.sh — copy this repo's zsh config into ~/.zsh/
 #
-# No symlinks. The repo's zsh/ is copied into ~/.config/zsh/ (the XDG
-# location). Linux uses the system zshenv; macOS uses a managed per-user
-# ~/.zshenv bootstrap because macOS does not ship a writable zshenv location.
+# The repo's zsh/ is copied into ~/.zsh/. Linux uses the system zshenv;
+# macOS uses compatibility links because it does not ship a writable system
+# zshenv location.
 #
 # Usage:
-#   ./install.sh          # Linux: base + work; macOS: base only
-#   ./install.sh --work   # explicitly enable Assurant/Astra work modules
-#   ./install.sh --base   # explicitly disable work modules
+#   ./install.sh              # personal profile (default on every OS)
+#   ./install.sh --assurant   # Assurant/Astra modules
+#   ./install.sh --base       # explicit personal profile
 #   ./install.sh --uninstall
 #
 # Safe to re-run; managed bootstrap blocks are replaced in place.
 set -euo pipefail
 
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-SOURCE_DIR="$REPO/zsh"         # the dir copied into ~/.config/zsh
-TARGET_DIR="$HOME/.config/zsh"
+SOURCE_DIR="$REPO/zsh"         # the dir copied into ~/.zsh
+TARGET_DIR="$HOME/.zsh"
 OS="$(uname -s)"
 USER_ZSHENV="$HOME/.zshenv"
-USER_MARKER_BEGIN="# >>> zsh/install.sh managed user block >>>"
-USER_MARKER_END="# <<< zsh/install.sh managed user block <<<"
 # System zshenv locations to try, in order. First existing file wins, then
 # first directory that exists. Debian/Ubuntu/WSL and Arch use /etc/zsh/zshenv;
 # Fedora and upstream/default builds use /etc/zshenv.
@@ -30,18 +28,18 @@ SYS_ZSHENV_CANDIDATES=(
 )
 MARKER_BEGIN="# >>> zsh/install.sh managed block >>>"
 MARKER_END="# <<< zsh/install.sh managed block <<<"
+MALFORMED_MARKER_LINE='nstall.sh managed block >>>/,/# <<< zsh/install.sh managed block <<</d'
 TS="$(date +%Y%m%d%H%M%S)"
 
-# macOS has no /etc/zshenv or /etc/zsh/zshenv. Setting ZDOTDIR in a managed
-# user zshenv is sufficient for the later .zprofile/.zshrc files and avoids
-# changing the operating system's shell configuration.
+# macOS has no /etc/zshenv or /etc/zsh/zshenv. Compatibility links provide
+# the standard startup paths while the canonical files remain under ~/.zsh.
 if [[ "$OS" == "Darwin" ]]; then
   USE_USER_ZSHENV=1
 else
   USE_USER_ZSHENV=0
 fi
 
-# Files inside the repo that should never be copied to ~/.config/zsh.
+# Files inside the repo that should never be copied to ~/.zsh.
 # - plugins/ is auto-cloned on first launch by _zplugin_load
 # - install.sh is a meta file, not config
 # - README/CHEATSHEET are docs, optional
@@ -80,18 +78,20 @@ sed_in_place() {
   fi
 }
 
-case "$OS" in
-  Linux) WORK=1 ;;  # Linux box: base + work by default
-  *)      WORK=0 ;;  # macOS and other platforms: base only by default
-esac
+# Personal profile is the default on every OS. Assurant modules are opt-in.
+ASSURANT=0
 UNINSTALL=0
 for arg in "$@"; do
   case "$arg" in
-    --work) WORK=1 ;;
-    --base|--no-work) WORK=0 ;;
+    --assurant)
+      ASSURANT=1
+      ;;
+    --base)
+      ASSURANT=0
+      ;;
     --uninstall) UNINSTALL=1 ;;
     -h|--help)
-      sed -n '2,12p' "$0"
+      sed -n '2,13p' "$0"
       exit 0
       ;;
     *)
@@ -104,6 +104,17 @@ done
 green()  { printf '\033[32m✓\033[0m %s\n' "$1"; }
 yellow() { printf '\033[33m!\033[0m %s\n' "$1"; }
 bold()   { printf '\033[1m%s\033[0m\n' "$1"; }
+
+clean_malformed_managed_lines() {
+  local target="$1" cleaned
+  if ! grep -qF "$MALFORMED_MARKER_LINE" "$target"; then
+    return 0
+  fi
+
+  cleaned="$(mktemp)"
+  grep -vF "$MALFORMED_MARKER_LINE" "$target" > "$cleaned" || true
+  mv "$cleaned" "$target"
+}
 
 if [[ "$USE_USER_ZSHENV" -eq 1 ]]; then
   SYS_ZSHENV="$USER_ZSHENV"
@@ -145,8 +156,8 @@ write_system_zshenv() {
     yellow '    if [[ -z "$XDG_CONFIG_HOME" ]]; then'
     yellow '        export XDG_CONFIG_HOME="$HOME/.config"'
     yellow '    fi'
-    yellow '    if [[ -d "$XDG_CONFIG_HOME/zsh" ]]; then'
-    yellow '        export ZDOTDIR="$XDG_CONFIG_HOME/zsh"'
+    yellow '    if [[ -d "$HOME/.zsh" ]]; then'
+    yellow '        export ZDOTDIR="$HOME/.zsh"'
     yellow '    fi'
     return 0
   fi
@@ -158,8 +169,9 @@ write_system_zshenv() {
 
   if [[ -f "$SYS_ZSHENV" ]]; then
     $SUDO cp "$SYS_ZSHENV" "$tmp"
+    clean_malformed_managed_lines "$tmp"
     if grep -qF "$MARKER_BEGIN" "$tmp"; then
-      sed_in_place "\\|$MARKER_BEGIN|,\\|$MARKER_END|d" "$tmp"
+      sed_in_place "/$MARKER_BEGIN/,/$MARKER_END/d" "$tmp"
     fi
   fi
 
@@ -170,8 +182,8 @@ write_system_zshenv() {
     printf 'if [[ -z "$XDG_CONFIG_HOME" ]]; then\n'
     printf '    export XDG_CONFIG_HOME="$HOME/.config"\n'
     printf 'fi\n'
-    printf 'if [[ -d "$XDG_CONFIG_HOME/zsh" ]]; then\n'
-    printf '    export ZDOTDIR="$XDG_CONFIG_HOME/zsh"\n'
+    printf 'if [[ -d "$HOME/.zsh" ]]; then\n'
+    printf '    export ZDOTDIR="$HOME/.zsh"\n'
     printf 'fi\n'
     printf '%s\n' "$MARKER_END"
   } > "$tmp"
@@ -180,47 +192,13 @@ write_system_zshenv() {
   green "Updated $SYS_ZSHENV (ZDOTDIR=$TARGET_DIR)"
 }
 
-write_user_zshenv() {
-  local tmp
-  tmp="$(mktemp)"
-
-  if [[ -L "$USER_ZSHENV" ]]; then
-    mv "$USER_ZSHENV" "$USER_ZSHENV.bak.$TS"
-    yellow "Backed up existing ~/.zshenv symlink → ~/.zshenv.bak.$TS"
-  elif [[ -f "$USER_ZSHENV" ]]; then
-    if grep -qF "$USER_MARKER_BEGIN" "$USER_ZSHENV"; then
-      cp "$USER_ZSHENV" "$tmp"
-      sed_in_place "\\|$USER_MARKER_BEGIN|,\\|$USER_MARKER_END|d" "$tmp"
-    else
-      cp -p "$USER_ZSHENV" "$USER_ZSHENV.bak.$TS"
-      cp "$USER_ZSHENV" "$tmp"
-      yellow "Backed up existing ~/.zshenv → ~/.zshenv.bak.$TS"
-    fi
-  fi
-
-  {
-    [[ -s "$tmp" ]] && cat "$tmp"
-    printf '\n%s\n' "$USER_MARKER_BEGIN"
-    printf '# Auto-generated by zsh/install.sh on %s. Safe to remove manually.\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
-    printf 'if [[ -z "${XDG_CONFIG_HOME:-}" ]]; then\n'
-    printf '    export XDG_CONFIG_HOME="$HOME/.config"\n'
-    printf 'fi\n'
-    printf 'if [[ -d "$XDG_CONFIG_HOME/zsh" ]]; then\n'
-    printf '    export ZDOTDIR="$XDG_CONFIG_HOME/zsh"\n'
-    printf '    [[ -f "$ZDOTDIR/.zshenv" ]] && source "$ZDOTDIR/.zshenv"\n'
-    printf 'fi\n'
-    printf '%s\n' "$USER_MARKER_END"
-  } > "$tmp.new"
-
-  install -m 644 "$tmp.new" "$USER_ZSHENV"
-  rm -f "$tmp" "$tmp.new"
-  green "Updated $USER_ZSHENV (ZDOTDIR=$TARGET_DIR)"
-}
-
 remove_managed_block_from_zshenv() {
   local target="$1"
   if [[ ! -f "$target" ]]; then return 0; fi
-  if ! grep -qF "$MARKER_BEGIN" "$target"; then return 0; fi
+  if ! grep -qF "$MARKER_BEGIN" "$target" &&
+    ! grep -qF "$MALFORMED_MARKER_LINE" "$target"; then
+    return 0
+  fi
 
   if [[ "$SUDO_OK" -ne 1 ]]; then
     yellow "Cannot remove managed block from $target (no sudo)."
@@ -230,23 +208,11 @@ remove_managed_block_from_zshenv() {
   local tmp
   tmp="$(mktemp)"
   $SUDO cp "$target" "$tmp"
-  sed_in_place "\\|$MARKER_BEGIN|,\\|$MARKER_END|d" "$tmp"
+  clean_malformed_managed_lines "$tmp"
+  sed_in_place "/$MARKER_BEGIN/,/$MARKER_END/d" "$tmp"
   $SUDO install -m 644 "$tmp" "$target"
   rm -f "$tmp"
   yellow "Removed managed block from $target"
-}
-
-remove_user_managed_block() {
-  [[ -f "$USER_ZSHENV" ]] || return 0
-  grep -qF "$USER_MARKER_BEGIN" "$USER_ZSHENV" || return 0
-
-  local tmp
-  tmp="$(mktemp)"
-  cp "$USER_ZSHENV" "$tmp"
-  sed_in_place "\\|$USER_MARKER_BEGIN|,\\|$USER_MARKER_END|d" "$tmp"
-  install -m 644 "$tmp" "$USER_ZSHENV"
-  rm -f "$tmp"
-  yellow "Removed managed block from $USER_ZSHENV"
 }
 
 cleanup_inactive_zshenvs() {
@@ -269,7 +235,7 @@ remove_system_zshenv() {
   return "$failed"
 }
 
-# ---- copy repo → ~/.config/zsh ------------------------------------------
+# ---- copy repo → ~/.zsh -------------------------------------------------
 should_exclude() {
   local rel="$1"
   for pat in "${EXCLUDE_PATTERNS[@]}"; do
@@ -277,15 +243,15 @@ should_exclude() {
       return 0
     fi
   done
-  # SSH agent support belongs to the work profile (Assurant/Astra).
-  if [[ "$rel" == "ssh-agent.zsh" && "$WORK" -ne 1 ]]; then
+  # SSH agent support belongs to the Assurant profile.
+  if [[ "$rel" == "ssh-agent.zsh" && "$ASSURANT" -ne 1 ]]; then
     return 0
   fi
-  if [[ "$rel" == "uv.zsh" && "$WORK" -ne 1 ]]; then
+  if [[ "$rel" == "uv.zsh" && "$ASSURANT" -ne 1 ]]; then
     return 0
   fi
-  # Work files are only included with --work
-  if [[ "$rel" == work/* && "$WORK" -ne 1 ]]; then
+  # Assurant files are only included with --assurant
+  if [[ "$rel" == work/* && "$ASSURANT" -ne 1 ]]; then
     return 0
   fi
   return 1
@@ -314,9 +280,11 @@ copy_repo() {
     expected["$rel"]=1
   done <<< "$files"
 
-  # CHEATSHEET.md contains work commands, so install it only with the work
-  # profile. The base macOS profile should contain no work-facing material.
-  [[ "$WORK" -eq 1 && -f "$REPO/CHEATSHEET.md" ]] && expected["CHEATSHEET.md"]=1
+  # Keep newly added local modules available before their first commit.
+  [[ -f "$SOURCE_DIR/nvm.zsh" ]] && expected["nvm.zsh"]=1
+
+  # CHEATSHEET.md contains Assurant commands; personal profile stays clean.
+  [[ "$ASSURANT" -eq 1 && -f "$REPO/CHEATSHEET.md" ]] && expected["CHEATSHEET.md"]=1
 
   # Copy each tracked file in.
   local copied=0
@@ -355,24 +323,33 @@ copy_repo() {
   fi
 }
 
-# Append ZSH_WORK=1 to the installed .zshenv if --work was passed.
-apply_work_flag() {
+# Append ZSH_ASSURANT=1 to the installed .zshenv if --assurant was passed.
+apply_assurant_flag() {
   local zshenv="$TARGET_DIR/.zshenv"
-  if [[ "$WORK" -ne 1 ]]; then
-    # Remove the line if it's there (in case of a re-run without --work)
-    if [[ -f "$zshenv" ]] && grep -qF 'export ZSH_WORK=1' "$zshenv"; then
-      sed_in_place '/^export ZSH_WORK=1$/d' "$zshenv"
-      yellow "Removed ZSH_WORK=1 from installed .zshenv"
+  if [[ ! -f "$zshenv" ]]; then
+    [[ "$ASSURANT" -eq 1 ]] && yellow "Cannot enable --assurant: $zshenv not found"
+    return
+  fi
+
+  if [[ "$ASSURANT" -ne 1 ]]; then
+    if grep -qF 'export ZSH_ASSURANT=1' "$zshenv"; then
+      sed_in_place '/^export ZSH_ASSURANT=1$/d' "$zshenv"
+      yellow "Removed ZSH_ASSURANT=1 from installed .zshenv"
     fi
     return
   fi
-  if [[ ! -f "$zshenv" ]]; then
-    yellow "Cannot enable --work: $zshenv not found"
-    return
-  fi
-  if ! grep -qF 'export ZSH_WORK=1' "$zshenv"; then
-    printf '\n# Work modules enabled (Astra/Kubernetes/CA/SSH-agent).\nexport ZSH_WORK=1\n' >> "$zshenv"
-    green "Set ZSH_WORK=1 in installed .zshenv"
+
+  if ! grep -qF 'export ZSH_ASSURANT=1' "$zshenv"; then
+    local tmp
+    tmp="$(mktemp)"
+    {
+      printf '# Assurant modules enabled (Astra/Kubernetes/CA/SSH-agent).\n'
+      printf 'export ZSH_ASSURANT=1\n\n'
+      cat "$zshenv"
+    } > "$tmp"
+    install -m 644 "$tmp" "$zshenv"
+    rm -f "$tmp"
+    green "Set ZSH_ASSURANT=1 in installed .zshenv"
   fi
 }
 
@@ -450,21 +427,84 @@ install_starship_theme() {
   green "Installed starship theme: $theme"
 }
 
-# ---- remove old-style shim ---------------------------------------------
-cleanup_legacy_shim() {
-  [[ "$USE_USER_ZSHENV" -eq 0 ]] || return 0
-  if [[ -e "$HOME/.zshenv" && ! -L "$HOME/.zshenv" ]]; then
-    mv "$HOME/.zshenv" "$HOME/.zshenv.bak.$TS"
-    yellow "Backed up old ~/.zshenv → ~/.zshenv.bak.$TS (no longer needed)"
-  elif [[ -L "$HOME/.zshenv" ]]; then
-    rm "$HOME/.zshenv"
-    yellow "Removed old ~/.zshenv symlink"
+# ---- compatibility links -----------------------------------------------
+ensure_compatibility_links() {
+  local legacy target name current
+
+  mkdir -p "$HOME/.config"
+
+  for name in .zshenv .zprofile .zshrc; do
+    legacy="$HOME/$name"
+    target="$TARGET_DIR/$name"
+    [[ -f "$target" ]] || continue
+
+    if [[ -L "$legacy" ]]; then
+      current="$(readlink "$legacy")"
+      [[ "$current" == "$target" ]] && continue
+    elif [[ ! -e "$legacy" ]]; then
+      :
+    fi
+
+    if [[ -e "$legacy" || -L "$legacy" ]]; then
+      mv "$legacy" "$legacy.bak.$TS"
+      yellow "Backed up existing $legacy → $legacy.bak.$TS"
+    fi
+    ln -s "$target" "$legacy"
+    green "Linked $legacy → $target"
+  done
+
+  legacy="$HOME/.config/zsh"
+  target="$TARGET_DIR"
+  if [[ -L "$legacy" ]]; then
+    current="$(readlink "$legacy")"
+    [[ "$current" == "$target" ]] && legacy=""
   fi
+  if [[ -n "$legacy" ]]; then
+    if [[ -e "$legacy" || -L "$legacy" ]]; then
+      mv "$legacy" "$legacy.bak.$TS"
+      yellow "Backed up existing $legacy → $legacy.bak.$TS"
+    fi
+    ln -s "$target" "$legacy"
+    green "Linked $legacy → $target"
+  fi
+
+  legacy="$HOME/.config/starship.toml"
+  target="$TARGET_DIR/starship.toml"
+  [[ -f "$target" ]] || return 0
+  if [[ -L "$legacy" ]]; then
+    current="$(readlink "$legacy")"
+    [[ "$current" == "$target" ]] && return 0
+  elif [[ -e "$legacy" ]]; then
+    mv "$legacy" "$legacy.bak.$TS"
+    yellow "Backed up existing $legacy → $legacy.bak.$TS"
+  fi
+  ln -s "$target" "$legacy"
+  green "Linked $legacy → $target"
+}
+
+remove_compatibility_links() {
+  local legacy target name
+
+  for name in .zshenv .zprofile .zshrc; do
+    legacy="$HOME/$name"
+    target="$TARGET_DIR/$name"
+    [[ -L "$legacy" && "$(readlink "$legacy")" == "$target" ]] || continue
+    rm "$legacy"
+  done
+
+  legacy="$HOME/.config/zsh"
+  target="$TARGET_DIR"
+  [[ -L "$legacy" && "$(readlink "$legacy")" == "$target" ]] && rm "$legacy"
+
+  legacy="$HOME/.config/starship.toml"
+  target="$TARGET_DIR/starship.toml"
+  [[ -L "$legacy" && "$(readlink "$legacy")" == "$target" ]] && rm "$legacy"
 }
 
 # =========================================================================
 if [[ "$UNINSTALL" -eq 1 ]]; then
   bold "==> Uninstalling"
+  remove_compatibility_links
   if [[ -d "$TARGET_DIR" || -L "$TARGET_DIR" ]]; then
     if [[ -L "$TARGET_DIR" ]]; then
       rm "$TARGET_DIR"
@@ -475,27 +515,26 @@ if [[ "$UNINSTALL" -eq 1 ]]; then
     yellow "Removed $TARGET_DIR (backup at $TARGET_DIR.uninstalled.$TS if it was a dir)"
   fi
   remove_system_zshenv
-  remove_user_managed_block
   bold "==> Done"
   exit 0
 fi
 
 bold "==> Installing"
 if [[ "$USE_USER_ZSHENV" -eq 1 ]]; then
-  write_user_zshenv
+  :
 else
   write_system_zshenv
   cleanup_inactive_zshenvs
 fi
 copy_repo
 install_starship_theme
-apply_work_flag
-cleanup_legacy_shim
+apply_assurant_flag
+ensure_compatibility_links
 
-if [[ "$WORK" -eq 1 ]]; then
-  PROFILE="base + work"
+if [[ "$ASSURANT" -eq 1 ]]; then
+  PROFILE="personal + assurant"
 else
-  PROFILE="base"
+  PROFILE="personal"
 fi
 
 echo ""
@@ -503,26 +542,32 @@ bold "==> Done"
 echo "  Open a new terminal or run:  exec zsh -l"
 echo ""
 echo "  Layout:"
-echo "    Profile:              $PROFILE"
-echo "    $SYS_ZSHENV      → sets ZDOTDIR (managed)"
-echo "    $TARGET_DIR        → copied from the repo"
-echo "    $TARGET_DIR/.zshenv → XDG vars, starship, work env"
-echo "    $TARGET_DIR/.zshrc  → all modules + starship"
+echo "    Profile:                    $PROFILE"
+if [[ "$USE_USER_ZSHENV" -eq 1 ]]; then
+  echo "    ~/.zshenv/.zprofile/.zshrc → compatibility links"
+else
+  echo "    $SYS_ZSHENV            → sets ZDOTDIR (managed)"
+fi
+echo "    $TARGET_DIR              → copied from the repo"
+echo "    $TARGET_DIR/.zshenv     → XDG vars, starship, Assurant env (if enabled)"
+echo "    $TARGET_DIR/.zshrc      → all modules + starship"
+echo "    ~/.config/zsh           → compatibility link"
+echo "    ~/.config/starship.toml → compatibility link"
 echo ""
 echo "  First launch auto-installs missing plugins:"
 echo "    zsh-autosuggestions"
 echo "    zsh-history-substring-search"
 echo "    fast-syntax-highlighting"
 echo ""
-echo "  To re-sync after editing the repo:  ./install.sh [--work|--base]"
-echo "  To enable work modules:             ./install.sh --work"
-echo "  To disable work modules:            ./install.sh --base"
+echo "  To re-sync after editing the repo:  ./install.sh [--assurant|--base]"
+echo "  To enable Assurant modules:         ./install.sh --assurant"
+echo "  To keep the personal profile:       ./install.sh --base"
 echo "  To remove everything:               ./install.sh --uninstall"
 echo ""
 echo "  Recommended tools to install:"
 echo "    eza bat fd-find ripgrep fzf zoxide starship mise direnv lf nvim"
 
-if [[ "$WORK" -eq 1 ]]; then
+if [[ "$ASSURANT" -eq 1 ]]; then
   echo ""
   bold "==> Action required: Azure IDs"
   echo "  Copy the template and fill in the IDs:"

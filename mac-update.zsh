@@ -64,6 +64,11 @@ DEV_TOOLS=(
 	just
 	hyperfine
 	uv
+	starship
+	mise
+	neovim
+	lf
+	bun
 )
 
 # Python command-line applications managed by uv.
@@ -173,44 +178,113 @@ uv_is_homebrew_managed() {
     "$uv_path" == "$brew_uv_opt" ]]
 }
 
+activate_homebrew() {
+	local brew_bin
+
+	if command_exists brew; then
+		return 0
+	fi
+
+	for brew_bin in /opt/homebrew/bin/brew /usr/local/bin/brew; do
+		if [[ -x "$brew_bin" ]]; then
+			eval "$("$brew_bin" shellenv zsh)"
+			return 0
+		fi
+	done
+
+	return 1
+}
+
+xcode_clt_installed() {
+	xcode-select -p >/dev/null 2>&1
+}
+
+install_homebrew() {
+	if activate_homebrew; then
+		return 0
+	fi
+
+	if ! xcode_clt_installed; then
+		warning "Xcode Command Line Tools are required to install Homebrew"
+		if [[ "$DRY_RUN" == true ]]; then
+			print_command xcode-select --install
+			return 0
+		fi
+
+		info "Opening the Xcode Command Line Tools installer"
+		xcode-select --install >/dev/null 2>&1 || true
+		warning "Finish that installer, then re-run this script"
+		add_failure "Xcode Command Line Tools"
+		return 1
+	fi
+
+	info "Installing Homebrew"
+
+	if [[ "$DRY_RUN" == true ]]; then
+		print_command env NONINTERACTIVE=1 /bin/bash -c \
+			'$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)'
+		return 0
+	fi
+
+	if NONINTERACTIVE=1 /bin/bash -c \
+		"$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"; then
+		if activate_homebrew; then
+			success "Homebrew installed: $(command -v brew)"
+			return 0
+		fi
+
+		warning "Homebrew installer finished but brew is not on PATH yet"
+		add_failure "Homebrew PATH after install"
+		return 1
+	fi
+
+	warning "Homebrew installer failed"
+	add_failure "Install Homebrew"
+	return 1
+}
+
 usage() {
 	cat <<'HELP'
 Usage:
-  ~/mac-update.zsh [options]
+  ./mac-update.zsh [options]
+  ./macos/install.zsh          First-run Mac bootstrap (Homebrew + tools + zsh)
 
 Options:
   --macos       Install recommended macOS updates.
-  --bootstrap   Install missing developer tools and the default Python.
+  --bootstrap   Install Homebrew if missing, then the curated tool collection.
   --prune       Remove unused mise tool versions.
   --dry-run     Print mutating commands without running them.
   --help, -h    Show this help.
 
 Examples:
-  ~/mac-update.zsh
-  ~/mac-update.zsh --dry-run
-  ~/mac-update.zsh --bootstrap
-  ~/mac-update.zsh --macos
-  ~/mac-update.zsh --macos --bootstrap --prune
-  ~/mac-update.zsh --macos --bootstrap --prune --dry-run
+  ./mac-update.zsh
+  ./mac-update.zsh --dry-run
+  ./mac-update.zsh --bootstrap
+  ./macos/install.zsh
+  ./mac-update.zsh --macos --bootstrap --prune --dry-run
 
 Routine behavior:
   - Checks for available macOS updates.
   - Updates and upgrades Homebrew packages.
   - Updates tools managed by mise.
+  - Updates rustup and the installed Rust toolchain when rustup is present.
   - Verifies that uv is managed by Homebrew rather than mise.
   - Upgrades uv-managed Python installations.
   - Upgrades Python CLI applications managed by uv.
-  - Runs Homebrew, mise, uv, Python, and environment health checks.
+  - Runs Homebrew, mise, rustup, uv, Python, and environment health checks.
 
 Bootstrap behavior:
-  - Installs native developer tools through Homebrew.
+  - Installs Xcode Command Line Tools / Homebrew when they are missing.
+  - Installs native developer tools through Homebrew (including starship, mise, neovim).
   - Installs the uv executable through Homebrew.
+  - Installs rustup via the official installer without mutating shell rc files.
   - Installs Python 3.13 through uv as the global/default Python.
   - Installs Python CLI tools such as pre-commit and ruff through uv.
 
 Tool ownership:
-  Homebrew  Native command-line utilities and the uv executable
+  Homebrew  Native command-line utilities, uv, starship, mise, neovim
   mise      Node.js, Go, Java, Terraform, and other non-Python runtimes
+  rustup    Rust toolchain (rustc, cargo, rustfmt, clippy)
   uv        Python installations and Python CLI applications
   macOS     /usr/bin/python3; this is never modified
 HELP
@@ -303,6 +377,17 @@ fi
 #
 
 section "Homebrew"
+
+if ! activate_homebrew; then
+	if [[ "$BOOTSTRAP_TOOLS" == true ]]; then
+		install_homebrew || true
+	else
+		warning "Homebrew is not installed"
+		print "Install it with:"
+		print "  ./macos/install.zsh"
+		print "  ./mac-update.zsh --bootstrap"
+	fi
+fi
 
 if command_exists brew; then
 	info "Homebrew: $(brew --version | head -n 1)"
@@ -412,6 +497,8 @@ if command_exists brew; then
 		warning "Homebrew reported issues; review the messages above"
 		add_warning "Homebrew health check reported issues"
 	fi
+elif [[ "$DRY_RUN" == true && "$BOOTSTRAP_TOOLS" == true ]]; then
+	info "Dry-run: remaining Homebrew steps skipped until brew exists"
 else
 	failure "Homebrew is not installed or is unavailable in PATH"
 	add_failure "Homebrew unavailable"
@@ -499,6 +586,67 @@ if command_exists mise; then
 else
 	warning "mise is unavailable in PATH; skipping mise maintenance"
 	add_warning "mise unavailable"
+fi
+
+#
+# rustup / Cargo
+#
+
+section "rustup / Cargo"
+
+if command_exists rustup; then
+	info "rustup: $(rustup --version 2>/dev/null | head -n 1)"
+	info "rustup executable: $(command -v rustup)"
+
+	if [[ "$(command -v rustup)" == "$HOME/.cargo/bin/"* ]]; then
+		success "rustup is the official rustup-init installation"
+	elif [[ "$(command -v rustup)" == /opt/homebrew/* ||
+		"$(command -v rustup)" == /usr/local/* ]]; then
+		warning "rustup resolves to a Homebrew installation"
+		warning "This script expects the official rustup-init toolchain in ~/.cargo"
+		add_warning "rustup resolves to Homebrew"
+	else
+		warning "rustup resolves from an unexpected location"
+		print "  $(command -v rustup)"
+		add_warning "rustup executable location"
+	fi
+
+	if command_exists brew; then
+		if brew list --formula rustup >/dev/null 2>&1; then
+			warning "Homebrew rustup is installed"
+			warning "It can shadow the official rustup-init toolchain"
+			print "  brew uninstall rustup"
+			add_warning "Homebrew rustup is installed"
+		fi
+
+		if brew list --formula rust >/dev/null 2>&1; then
+			warning "Homebrew rust is installed"
+			warning "It can shadow rustup's rustc and cargo"
+			print "  brew uninstall rust"
+			add_warning "Homebrew rust is installed"
+		fi
+	fi
+
+	print
+	info "Active Rust toolchain"
+
+	if rustup show; then
+		success "Finished showing rustup toolchain"
+	else
+		warning "rustup could not show the active toolchain"
+		add_warning "Show rustup toolchain"
+	fi
+
+	print
+
+	run_step \
+		"Update rustup and installed toolchains" \
+		rustup update
+else
+	warning "rustup is unavailable in PATH; skipping Rust maintenance"
+	print "Install it with --bootstrap, or manually:"
+	print "  curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --no-modify-path"
+	add_warning "rustup unavailable"
 fi
 
 #
@@ -631,9 +779,13 @@ if command_exists uv; then
 else
 	warning "uv is unavailable in PATH"
 	warning "Skipping uv-managed Python and Python tool maintenance"
-	print "Install uv with:"
-	print "  brew install uv"
-	add_failure "uv unavailable"
+	if [[ "$BOOTSTRAP_TOOLS" == true ]]; then
+		warning "uv will be installed during the requested bootstrap"
+	else
+		print "Install uv with:"
+		print "  brew install uv"
+		add_failure "uv unavailable"
+	fi
 fi
 
 #
@@ -676,6 +828,48 @@ if [[ "$BOOTSTRAP_TOOLS" == true ]]; then
 	else
 		warning "Cannot bootstrap native tools because Homebrew is unavailable"
 		add_failure "Homebrew developer-tool bootstrap"
+	fi
+
+	#
+	# rustup-managed Rust toolchain
+	#
+
+	print
+
+	if command_exists rustup; then
+		success "rustup is already installed"
+
+		run_step \
+			"Update rustup and installed toolchains" \
+			rustup update
+	else
+		info "Installing rustup via the official installer"
+		info "Shell rc files are not modified; PATH is owned by the zsh config"
+
+		install_official_rustup() {
+			curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs |
+				sh -s -- -y --no-modify-path \
+					--default-toolchain stable \
+					--profile default
+		}
+
+		run_step \
+			"Install rustup (official installer, no PATH mutation)" \
+			install_official_rustup
+
+		if [[ -x "$HOME/.cargo/bin/cargo" && -f "$HOME/.cargo/env" ]]; then
+			. "$HOME/.cargo/env"
+		elif [[ -x "$HOME/.cargo/bin/cargo" ]]; then
+			path=("$HOME/.cargo/bin" $path)
+		fi
+
+		if command_exists rustup; then
+			success "rustup is now on PATH: $(command -v rustup)"
+		else
+			warning "rustup installed but is not yet on PATH in this session"
+			warning "Open a new shell after bootstrap finishes"
+			add_warning "rustup not on PATH after install"
+		fi
 	fi
 
 	#
@@ -744,6 +938,10 @@ else
 	print "  ${DEV_TOOLS[*]}"
 
 	print
+	info "Rust toolchain:"
+	print "  rustup (official installer → ~/.cargo)"
+
+	print
 	info "uv default Python:"
 	print "  Python $UV_DEFAULT_PYTHON_VERSION"
 
@@ -772,7 +970,9 @@ print
 
 typeset -i PATH_POSITION=0
 typeset -i LOCAL_BIN_POSITION=0
+typeset -i CARGO_BIN_POSITION=0
 typeset -i USR_BIN_POSITION=0
+typeset -i BREW_BIN_POSITION=0
 
 for path_entry in "${path[@]}"; do
 	((PATH_POSITION++))
@@ -780,6 +980,16 @@ for path_entry in "${path[@]}"; do
 	if [[ "$path_entry" == "$HOME/.local/bin" &&
 		"$LOCAL_BIN_POSITION" -eq 0 ]]; then
 		LOCAL_BIN_POSITION=$PATH_POSITION
+	fi
+
+	if [[ "$path_entry" == "$HOME/.cargo/bin" &&
+		"$CARGO_BIN_POSITION" -eq 0 ]]; then
+		CARGO_BIN_POSITION=$PATH_POSITION
+	fi
+
+	if [[ "$path_entry" == "/opt/homebrew/bin" &&
+		"$BREW_BIN_POSITION" -eq 0 ]]; then
+		BREW_BIN_POSITION=$PATH_POSITION
 	fi
 
 	if [[ "$path_entry" == "/usr/bin" &&
@@ -805,6 +1015,49 @@ else
 	print 'Add the following to ~/.zshrc:'
 	print '  export PATH="$HOME/.local/bin:$PATH"'
 	add_warning "~/.local/bin missing from PATH"
+fi
+
+print
+
+if [[ -x "$HOME/.cargo/bin/cargo" ]]; then
+	success "cargo is installed at ~/.cargo/bin/cargo"
+
+	if ((CARGO_BIN_POSITION > 0)); then
+		success "~/.cargo/bin is present in PATH"
+
+		if ((BREW_BIN_POSITION > 0 && CARGO_BIN_POSITION > BREW_BIN_POSITION)); then
+			warning "~/.cargo/bin should appear before Homebrew so rustup wins"
+			add_warning "~/.cargo/bin PATH ordering"
+		fi
+	else
+		warning "~/.cargo/bin is missing from PATH even though cargo is installed"
+		print "The zsh config only adds it when ~/.cargo/bin/cargo is executable."
+		add_warning "~/.cargo/bin missing from PATH"
+	fi
+
+	if command_exists cargo; then
+		success "cargo: $(cargo --version 2>&1)"
+		info "cargo executable: $(command -v cargo)"
+	else
+		warning "cargo is installed but is not resolving on PATH"
+		add_warning "cargo not resolving on PATH"
+	fi
+
+	if command_exists rustc; then
+		success "rustc: $(rustc --version 2>&1)"
+		info "rustc executable: $(command -v rustc)"
+	else
+		warning "rustc is unavailable"
+		add_warning "rustc unavailable"
+	fi
+else
+	if ((CARGO_BIN_POSITION > 0)); then
+		warning "~/.cargo/bin is on PATH but cargo is not installed"
+		warning "PATH should only include ~/.cargo/bin when cargo exists"
+		add_warning "~/.cargo/bin on PATH without cargo"
+	else
+		success "~/.cargo/bin is not on PATH (cargo is not installed)"
+	fi
 fi
 
 print

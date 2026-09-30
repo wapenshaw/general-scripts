@@ -1,7 +1,7 @@
-# History stored in XDG state dir
-HISTFILE="$XDG_STATE_HOME/zsh/history"
-HISTSIZE=100000
-SAVEHIST=100000
+# Keep the existing user history file as the canonical history store.
+HISTFILE="$HOME/.zsh_history"
+HISTSIZE=50000
+SAVEHIST=50000
 
 setopt APPEND_HISTORY
 setopt SHARE_HISTORY

@@ -21,6 +21,7 @@ $env:PSModulePath = (@($script:ProfileConfig.moduleDir) + @($env:PSModulePath -s
 try { Import-Module PSReadLine -ErrorAction Stop }
 catch { Write-Warning "PSReadLine: $($_.Exception.Message)" }
 $env:PS_WORK = if ($script:ProfileConfig.work) { '1' } else { '' }
+$env:PS_ASSURANT = $env:PS_WORK
 $script:ProfilePlugins = @($script:ProfileConfig.plugins)
 foreach ($relativePath in @($script:ProfileConfig.coreModules) + @($script:ProfileConfig.workModules)) {
     try { . (Join-Path $PSScriptRoot $relativePath) }
