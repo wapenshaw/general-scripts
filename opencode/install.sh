@@ -17,7 +17,7 @@
 set -euo pipefail
 
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-SOURCE_DIR="$REPO/opencode"
+SOURCE_DIR="$REPO"
 CONFIG_TARGET="$HOME/.config/opencode"
 SKILLS_TARGET="$HOME/.agents/skills"
 TS="$(date +%Y%m%d-%H%M%S)"
@@ -52,6 +52,11 @@ CONFIG_FILES=(
   "opencode-mem.jsonc"
   "quota-toast.json"
   "package.json"
+  "themes/ayu-dark.json"
+  "themes/lavi.json"
+  "themes/poimandres-accessible.json"
+  "themes/poimandres-turquoise-expanded.json"
+  "themes/poimandres.json"
 )
 AGENT_SKILLS_DIRS=(
   "api-security-hardening"
@@ -178,7 +183,11 @@ for f in package.json; do
 done
 for f in "${CONFIG_FILES[@]}"; do
   [[ "$f" == "package.json" ]] && continue
-  copy_file "$SOURCE_DIR/config/$f" "$CONFIG_TARGET/$f"
+  if [[ "$f" == themes/* ]]; then
+    copy_file "$SOURCE_DIR/$f" "$CONFIG_TARGET/$f"
+  else
+    copy_file "$SOURCE_DIR/config/$f" "$CONFIG_TARGET/$f"
+  fi
 done
 
 # Internal skills live under $CONFIG_TARGET/skills/

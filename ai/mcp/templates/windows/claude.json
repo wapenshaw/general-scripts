@@ -1,0 +1,23 @@
+{
+  "mcpServers": {
+    "context7": {
+      "url": "https://mcp.context7.com/mcp",
+      "type": "http",
+      "headers": {
+        "CONTEXT7_API_KEY": "${CONTEXT7_API_KEY}"
+      }
+    },
+    "microsoft-learn": {
+      "url": "https://learn.microsoft.com/api/mcp",
+      "type": "http"
+    },
+    "openai-docs": {
+      "url": "https://developers.openai.com/mcp",
+      "type": "http"
+    },
+    "xai-docs": {
+      "url": "https://docs.x.ai/api/mcp",
+      "type": "http"
+    }
+  }
+}

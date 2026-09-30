@@ -1,0 +1,16 @@
+[ui]
+max_thoughts_width = 120
+fork_secondary_model = "grok-build"
+yolo = false
+compact_mode = false
+permission_mode = "always-approve"
+theme = "tokyonight"
+
+[ui.status_line]
+type = "command"
+refresh_interval = 10
+command = "node \"__HOME__/.grok/statusline.js\""
+
+[models]
+default = "grok-4.6"
+default_reasoning_effort = "xhigh"

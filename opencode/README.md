@@ -2,9 +2,18 @@
 
 This folder packages the user's OpenCode configuration so it can be ported across Linux, macOS, and Windows. Run the matching installer for your OS once per machine; restart OpenCode afterwards.
 
+For shared MCPs across **Claude Code, Codex, Grok and OpenCode**, use
+[ai/README.md](../ai/README.md). Its installer reuses this payload and generates
+OpenCode's native definitions from one registry. These standalone installers
+deploy only this folder's OpenCode defaults.
+
 ## Purpose
 
-OpenCode keeps its config under `~/.config/opencode/` (config files + plugin metadata + skills) and the bundled `~/.agents/skills/` (user-level agent skills). This package mirrors both trees from the live machine into the repo, sanitizes one hardcoded API key, and ships OS-specific installers that deploy the payload back to the correct locations on a fresh box.
+OpenCode keeps its config under `~/.config/opencode/` and the bundled user-level
+skills under `~/.agents/skills/`. This package contains the reviewed plugin config
+and skill trees from the live machine. Credentials use environment references;
+login state and caches are excluded. The installers deploy this folder directly.
+The main config lets the target OS choose its shell instead of forcing `pwsh`.
 
 ## Folder map
 
@@ -17,6 +26,7 @@ OpenCode keeps its config under `~/.config/opencode/` (config files + plugin met
 | `skills/`                     | Internal skills (clonedeps, codemap, deepwork, oh-my-opencode-slim, etc.) — deploys to `~/.config/opencode/skills/` |
 | `agent-skills/`               | User-level agent skills (api-security-hardening, find-skills, frontend-design, understand-*, etc.) — deploys to `~/.agents/skills/` |
 | `package.json`                | Tracks `@opencode-ai/plugin` dependency used by `opencode package` |
+| `themes/`                     | Imported custom themes, deployed to `~/.config/opencode/themes/` |
 
 ## Quickstart
 
@@ -52,12 +62,17 @@ Set these in your shell profile (PowerShell, bash, zsh, fish — whatever launch
 
 | Variable                      | Purpose                                                              |
 | ----------------------------- | -------------------------------------------------------------------- |
-| `GITHUB_PERSONAL_ACCESS_TOKEN`| Auth for the bundled `@modelcontextprotocol/server-github` MCP        |
-| `CONTEXT7_API_KEY`            | Auth for the `mcp.context7.com` remote MCP                            |
+| `GITHUB_PERSONAL_ACCESS_TOKEN`| Auth for the official remote GitHub MCP; disabled until explicitly enabled |
+| `CONTEXT7_API_KEY`            | Optional Context7 key for higher limits                            |
 
 **Google provider** — the `google` provider block in `config/opencode.json` is shipped with the user's `projectId` baked in (`gen-lang-client-0968106005`). Google auth itself is handled out-of-band by running `opencode auth login` once on each machine; no env var is required for Google.
 
-Both `GITHUB_PERSONAL_ACCESS_TOKEN` and `CONTEXT7_API_KEY` are read via the `${...}` substitution that OpenCode supports natively, so the env vars can live in your shell profile and the config stays credential-free.
+Both variables use OpenCode's documented **`{env:NAME}`** substitution. The earlier
+`${NAME}` syntax was corrected during the September 2026 import. Keep values in
+private environment setup. GitHub uses `https://api.githubcopilot.com/mcp/`,
+replacing the legacy npm server. Enable it through the shared installer or change
+its `enabled` value after supplying the environment variable. The shared installer
+omits Context7's optional header when no key is set.
 
 ## Excluded files
 

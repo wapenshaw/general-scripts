@@ -1,0 +1,30 @@
+[mcp_servers]
+
+[mcp_servers.context7]
+url = "https://mcp.context7.com/mcp"
+enabled = true
+
+[mcp_servers.context7.env_http_headers]
+CONTEXT7_API_KEY = "CONTEXT7_API_KEY"
+
+[mcp_servers.microsoft-learn]
+url = "https://learn.microsoft.com/api/mcp"
+enabled = true
+
+[mcp_servers.openai-docs]
+url = "https://developers.openai.com/mcp"
+enabled = true
+
+[mcp_servers.xai-docs]
+url = "https://docs.x.ai/api/mcp"
+enabled = true
+
+[mcp_servers.playwright]
+command = "npx"
+args = ["-y", "@playwright/mcp@latest"]
+enabled = false
+
+[mcp_servers.github]
+url = "https://api.githubcopilot.com/mcp/"
+bearer_token_env_var = "GITHUB_PERSONAL_ACCESS_TOKEN"
+enabled = false

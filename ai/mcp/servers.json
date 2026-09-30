@@ -1,0 +1,45 @@
+{
+  "schemaVersion": 1,
+  "servers": {
+    "context7": {
+      "transport": "http",
+      "url": "https://mcp.context7.com/mcp",
+      "defaultEnabled": true,
+      "optionalHeaderEnv": {"CONTEXT7_API_KEY": "CONTEXT7_API_KEY"},
+      "observedIn": ["grok", "opencode"]
+    },
+    "microsoft-learn": {
+      "transport": "http",
+      "url": "https://learn.microsoft.com/api/mcp",
+      "defaultEnabled": true,
+      "observedIn": ["grok"]
+    },
+    "openai-docs": {
+      "transport": "http",
+      "url": "https://developers.openai.com/mcp",
+      "defaultEnabled": true,
+      "observedIn": []
+    },
+    "xai-docs": {
+      "transport": "http",
+      "url": "https://docs.x.ai/api/mcp",
+      "defaultEnabled": true,
+      "observedIn": ["grok"]
+    },
+    "playwright": {
+      "transport": "stdio",
+      "command": "npx",
+      "args": ["-y", "@playwright/mcp@latest"],
+      "defaultEnabled": false,
+      "observedIn": ["grok"]
+    },
+    "github": {
+      "transport": "http",
+      "url": "https://api.githubcopilot.com/mcp/",
+      "bearerTokenEnv": "GITHUB_PERSONAL_ACCESS_TOKEN",
+      "defaultEnabled": false,
+      "observedIn": ["opencode"],
+      "note": "Official remote server replaces the legacy npm GitHub server. Enable after supplying a PAT."
+    }
+  }
+}

@@ -1,0 +1,45 @@
+{
+  "mcp": {
+    "context7": {
+      "url": "https://mcp.context7.com/mcp",
+      "type": "remote",
+      "headers": {
+        "CONTEXT7_API_KEY": "{env:CONTEXT7_API_KEY}"
+      },
+      "enabled": true
+    },
+    "microsoft-learn": {
+      "url": "https://learn.microsoft.com/api/mcp",
+      "type": "remote",
+      "enabled": true
+    },
+    "openai-docs": {
+      "url": "https://developers.openai.com/mcp",
+      "type": "remote",
+      "enabled": true
+    },
+    "xai-docs": {
+      "url": "https://docs.x.ai/api/mcp",
+      "type": "remote",
+      "enabled": true
+    },
+    "playwright": {
+      "type": "local",
+      "command": [
+        "npx",
+        "-y",
+        "@playwright/mcp@latest"
+      ],
+      "enabled": false
+    },
+    "github": {
+      "url": "https://api.githubcopilot.com/mcp/",
+      "type": "remote",
+      "headers": {
+        "Authorization": "Bearer {env:GITHUB_PERSONAL_ACCESS_TOKEN}"
+      },
+      "oauth": false,
+      "enabled": false
+    }
+  }
+}

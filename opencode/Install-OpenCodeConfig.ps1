@@ -41,7 +41,8 @@
     Install into a custom config root.
 
 .NOTES
-    Required env vars after install: GITHUB_PERSONAL_ACCESS_TOKEN, CONTEXT7_API_KEY.
+    Optional Context7 key: CONTEXT7_API_KEY. The disabled GitHub MCP requires
+    GITHUB_PERSONAL_ACCESS_TOKEN when enabled. For shared MCPs, use ai/setup.py.
     Google provider auth is handled by 'opencode auth login' (projectId is baked
     into the shipped opencode.json).
 #>
@@ -57,7 +58,7 @@ $ErrorActionPreference = 'Stop'
 
 # --- Source layout (relative to this script) ---
 $ScriptRoot    = Split-Path -Parent $MyInvocation.MyCommand.Path
-$SourceRoot    = Join-Path $ScriptRoot 'opencode'
+$SourceRoot    = $ScriptRoot
 $SourceConfig  = Join-Path $SourceRoot 'config'
 $SourceSkills  = Join-Path $SourceRoot 'skills'
 $SourceAgent   = Join-Path $SourceRoot 'agent-skills'
@@ -71,7 +72,12 @@ $ConfigFiles = @(
     'dcp.jsonc',
     'opencode-mem.jsonc',
     'quota-toast.json',
-    'package.json'
+    'package.json',
+    'themes/ayu-dark.json',
+    'themes/lavi.json',
+    'themes/poimandres-accessible.json',
+    'themes/poimandres-turquoise-expanded.json',
+    'themes/poimandres.json'
 )
 
 $InternalSkillDirs = @(
@@ -222,6 +228,9 @@ if (-not (Test-Path -LiteralPath $AgentSkillsDir)) {
 foreach ($f in $ConfigFiles) {
     if ($f -eq 'package.json') {
         $src = $SourcePackage
+    }
+    elseif ($f -like 'themes/*') {
+        $src = Join-Path $SourceRoot $f
     }
     else {
         $src = Join-Path $SourceConfig $f

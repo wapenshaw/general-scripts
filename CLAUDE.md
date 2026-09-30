@@ -6,6 +6,7 @@ Personal Windows 11 post-install + dev-environment toolbox. No build system, no 
 
 - **Repo conventions & architecture**: [`.github/copilot-instructions.md`](.github/copilot-instructions.md) — read this first.
 - **Fresh install playbook**: [`docs/FRESH-INSTALL.md`](docs/FRESH-INSTALL.md) — 10-step ordered bootstrap.
+- **Portable AI clients and shared MCPs**: [`ai/README.md`](ai/README.md) — preferences, native config generation and private backup/install flow.
 
 ## Layout
 
@@ -13,6 +14,7 @@ Personal Windows 11 post-install + dev-environment toolbox. No build system, no 
 - `zsh/` — modular macOS/Linux/WSL zsh config; `install.sh` deploys to `~/.zsh`
 - `macos/`, `linux/`, `mac-update.zsh` — platform bootstraps and Mac maintenance; Windows bootstrap is `powershell/tools/Install-Workstation.ps1`
 - `config/env/` — desired development storage manifest (`development.json`), directory documentation and historical environment snapshots
+- `ai/` — allowlisted Claude/Codex/Grok preferences, status lines and shared MCP registry; uv-managed Python generates Windows/macOS client configs and reuses the OpenCode payload
 - `starship/`, `fonts/`, `windows-terminal/`, `extensions/`, `icons/` — config/asset payloads
 - `opencode/` — portable OpenCode setup: `config/` payloads (secrets via env vars), `skills/` + `agent-skills/`, cross-platform installers (`Install-OpenCodeConfig.ps1`, `install.sh`)
 - `registry-tweaks/` — paired `dos/` + `undos/` `.reg` files

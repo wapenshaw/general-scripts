@@ -32,6 +32,25 @@ On a brand-new Windows box, follow **[docs/FRESH-INSTALL.md](./docs/FRESH-INSTAL
 
 Cargo/rustup PATH is added only when the `cargo` binary exists (zsh: `~/.cargo/bin/cargo`; PowerShell: `$env:CARGO_HOME\bin\cargo.exe` or `~\.cargo\bin\cargo.exe`). `rustup self uninstall` therefore drops it off PATH.
 
+## AI client configuration
+
+[ai/README.md](./ai/README.md) provides portable **Claude Code, Codex, Grok and
+OpenCode** preferences, status lines and one shared MCP registry for Windows and
+macOS/Linux. It reuses the existing OpenCode plugin/skill payload. Render first;
+installation merges settings with private backups. Authentication is per machine.
+
+```powershell
+# Windows: render, then install
+./ai/Install-AIConfig.ps1
+./ai/Install-AIConfig.ps1 -Install
+```
+
+```bash
+# macOS / Linux: render, then install
+bash ./ai/install.sh
+bash ./ai/install.sh --install
+```
+
 ---
 
 > AI agents: See the project guide at [.github/copilot-instructions.md](.github/copilot-instructions.md) for repo structure, workflows, and conventions.

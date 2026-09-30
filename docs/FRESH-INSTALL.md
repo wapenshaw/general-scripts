@@ -137,6 +137,11 @@ For a list of what would be installed: `Install-Essentials.ps1 -List`.
 
 ## Post-install scripts
 
+After Node and uv are installed, optionally deploy the portable AI client settings
+using [ai/README.md](../ai/README.md). Its shared MCP registry generates native
+definitions for Claude Code, Codex, Grok and OpenCode. Install the CLI binaries and
+authenticate separately; existing account state is not imported into the repo.
+
 ### 8. Run these in order
 
 These are the repo scripts that need to run once on a fresh box, in this order. Most require an elevated PowerShell (admin).

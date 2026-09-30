@@ -1,0 +1,33 @@
+{
+  "captured": "2026-09-30",
+  "claudeUserMcpServers": [],
+  "codexMcpServers": [
+    "node_repl"
+  ],
+  "codexEnabledPlugins": [
+    "browser@openai-bundled",
+    "documents@openai-primary-runtime",
+    "pdf@openai-primary-runtime",
+    "presentations@openai-primary-runtime",
+    "spreadsheets@openai-primary-runtime",
+    "template-creator@openai-primary-runtime",
+    "visualize@openai-bundled"
+  ],
+  "grokMcpServers": [
+    "context7",
+    "microsoft-learn",
+    "playwright",
+    "xai-docs"
+  ],
+  "grokEnabledPlugins": [
+    "superpowers",
+    "user/d8526e0d/context7",
+    "user/7ea8476d/frontend-design",
+    "playwright",
+    "atlassian"
+  ],
+  "opencodeMcpServers": [
+    "context7",
+    "github"
+  ]
+}

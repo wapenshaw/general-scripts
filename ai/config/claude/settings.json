@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "cleanupPeriodDays": 90,
+  "model": "opus",
+  "effortLevel": "medium",
+  "modelSettings": {
+    "claude-opus-5-5": {
+      "effortLevel": "medium"
+    }
+  },
+  "autoCompactWindow": 350000,
+  "tui": "fullscreen",
+  "theme": "auto",
+  "editorMode": "normal",
+  "permissions": {
+    "defaultMode": "bypassPermissions"
+  },
+  "skipDangerousModePermissionPrompt": true,
+  "subagentPromptCacheTtl": "5m",
+  "env": {
+    "CLAUDE_CODE_SUBAGENT_MODEL": "sonnet",
+    "CLAUDE_CODE_SUBAGENT_MODEL_FORCE": "1",
+    "CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH": "1",
+    "CLAUDE_CODE_MAX_CONCURRENT_SUBAGENTS": "4",
+    "CLAUDE_CODE_FORK_SUBAGENT": "0",
+    "CLAUDE_CODE_ENABLE_PROMPT_SUGGESTION": "false",
+    "CLAUDE_CODE_DISABLE_TERMINAL_TITLE": "1",
+    "CLAUDE_CODE_GOAL_CHECKIN_MINUTES": "0",
+    "BASH_MAX_OUTPUT_LENGTH": "12000",
+    "MAX_MCP_OUTPUT_TOKENS": "10000"
+  },
+  "statusLine": {
+    "type": "command",
+    "padding": 0,
+    "refreshInterval": 5,
+    "command": "node \"__HOME__/.claude/statusline.js\""
+  }
+}

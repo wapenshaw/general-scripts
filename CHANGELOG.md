@@ -4,6 +4,15 @@ Notable changes to this personal workstation toolbox. Newest first.
 
 ## 2026-09-30
 
+- Fixed Grok's Windows status-line startup by generating a native `.cmd` launcher
+  and configuring its single path, avoiding inline command filename parsing.
+
+- Imported portable Claude Code, Codex and Grok preferences and status lines into
+  `ai/`, with one MCP registry generating native Windows/macOS definitions for
+  all four clients. Reused OpenCode's existing plugin/skill payload, corrected its
+  installer source paths and environment substitution, and switched its optional
+  GitHub MCP to the official remote server. Login/session state stays local.
+
 - Windows Node is managed by nvm v2 in link mode, pnpm is standalone, and uv owns
   Python interpreters and CLI environments. Removed mise from Windows setup.
 - Added the desired `Z:\Packages` storage manifest, User-scope environment setup,
