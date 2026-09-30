@@ -7,6 +7,7 @@
   functions set by earlier modules.
 #>
 
+if ($env:TERM -eq 'dumb' -or $env:PS_DISABLE_PROMPT -eq '1') { return }
 if (Get-Command starship -ErrorAction SilentlyContinue) {
     try {
         Invoke-Expression (&starship init powershell)

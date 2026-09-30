@@ -1,6 +1,6 @@
 {
-  "editor.fontFamily": "Jetbrains Mono",
-  "editor.fontSize": 20,
+  "editor.fontFamily": "JetBrains Mono, FiraCode Nerd Font, Cascadia Code, Menlo, Monaco, 'Courier New', monospace",
+  "editor.fontSize": 16,
   "editor.fontLigatures": true,
   "editor.codeLensFontFamily": "FiraCode Nerd Font",
   "terminal.integrated.fontFamily": "FiraCode Nerd Font",

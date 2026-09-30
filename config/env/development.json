@@ -1,0 +1,49 @@
+{
+  "schemaVersion": 1,
+  "root": "Z:\\Packages",
+  "variables": {
+    "CARGO_HOME": ".cargo",
+    "RUSTUP_HOME": ".rustup",
+    "GEM_HOME": ".gem",
+    "GEM_PATH": ".gem",
+    "GOPATH": ".go",
+    "GOBIN": ".go/bin",
+    "GOCACHE": ".go/cache",
+    "GOMODCACHE": ".go/pkg/mod",
+    "GRADLE_USER_HOME": ".gradle",
+    "NPM_CONFIG_CACHE": "npm_cache",
+    "NUGET_PACKAGES": ".nuget",
+    "NUGET_HTTP_CACHE_PATH": ".nuget-http-cache",
+    "NUGET_PLUGINS_CACHE_PATH": ".nuget-plugins-cache",
+    "PIP_CACHE_DIR": "python_cache",
+    "POETRY_CACHE_DIR": ".poetry/cache",
+    "BUN_INSTALL_CACHE_DIR": "bun/cache",
+    "TORCHINDUCTOR_CACHE_DIR": "torch/inductor",
+    "PNPM_HOME": "pnpm/bin",
+    "UV_CACHE_DIR": "uv_cache",
+    "UV_PYTHON_INSTALL_DIR": "uv_python",
+    "UV_PYTHON_BIN_DIR": "uv_python_bin",
+    "UV_TOOL_DIR": "uv_tools",
+    "UV_TOOL_BIN_DIR": "uv_tool_bin",
+    "YARN_CACHE_FOLDER": "yarn_cache"
+  },
+  "pnpm": {
+    "cacheDir": "pnpm/cache",
+    "globalBinDir": "pnpm/bin",
+    "globalDir": "pnpm/global",
+    "stateDir": "pnpm/state",
+    "storeDir": "pnpm/store"
+  },
+  "pathVariables": ["PNPM_HOME", "UV_PYTHON_BIN_DIR", "UV_TOOL_BIN_DIR", "GOBIN"],
+  "pathDirectories": [".cargo/bin", ".gem/bin"],
+  "mavenRepository": ".m2/repository",
+  "runtimes": {
+    "nvmVersion": "2.0.0",
+    "nvmMode": "link",
+    "nodeVersion": "26.8.2",
+    "globalNpmPackages": ["clerk@3.4.0", "npm@12.1.0"],
+    "pnpmVersion": "12.4.1",
+    "nvmRoot": "nvm/runtime",
+    "pnpmCli": "pnpm/cli"
+  }
+}

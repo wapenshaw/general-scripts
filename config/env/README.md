@@ -1,46 +1,51 @@
-# Environment Variables
+# Development environment
 
-This folder stores the Windows environment variables for the **TITAN** machine so they can be restored on a new system. The PowerShell scripts that read/write these files live in `../../powershell/`.
-
-## Files
-
-| File | Purpose | How to (re)generate |
-|---|---|---|
-| `user.json` | Captured user-scope env vars (HKCU\Environment). | `pwsh -File ../../powershell/tools/Export-Env.ps1` |
-| `system.json` | Captured system-scope env vars (HKLM\…\Session Manager\Environment). | `pwsh -File ../../powershell/tools/Export-Env.ps1 -IncludeMachine` (admin shell) |
-| `paths.json` | Custom directory layout this machine relies on (toolchain caches, portable apps, OneDrive). | Edit by hand when the layout changes. |
-
-## Filter (always stripped on export)
-
-The following patterns are never written to JSON. Edit `Export-Env.ps1`'s `$Filter` list to change.
-
-- **Secrets**: `*AUTH_COOKIE*`, `*_AUTH*`, `*TOKEN*`, `*SECRET*`, `*PASSWORD*`, `*PASSWD*`, `*APIKEY*`, `*API_KEY*`, `*PRIVATE_KEY*`
-- **Session**: `STARSHIP_SESSION_KEY`, `STARSHIP_SHELL`, `WT_SESSION`, `WT_PROFILE_ID`, `OPENCODE_*_WORKSPACE_ID`, `LOGONSERVER`, `SESSIONNAME`
-- **Runtime/process**: `npm_config_user_agent`, `PROCESSOR_*`, `NUMBER_OF_PROCESSORS`
-
-The list of stripped variables (with reason) is recorded under each JSON file's `filtered` array so the omission is auditable.
-
-## Restore on a new system
+`development.json` is the desired configuration. `paths.json` documents the layout;
+`snapshots/` contains historical recovery data and is not used by setup.
 
 ```powershell
-# User scope (no admin needed)
-pwsh -File ..\..\powershell\Import-Env.ps1
-
-# User + system scope (admin shell)
-pwsh -File ..\..\powershell\Import-Env.ps1 -IncludeMachine
-
-# Preview without writing
-pwsh -File ..\..\powershell\Import-Env.ps1 -IncludeMachine -DryRun
-
-# Preserve existing Path entries and append (rather than clobber)
-pwsh -File ..\..\powershell\Import-Env.ps1 -MergePath
+pwsh -NoProfile -File ./powershell/profile/Set-DevPackagePaths.ps1 -WhatIf
+pwsh -NoProfile -File ./powershell/profile/Set-DevPackagePaths.ps1
+pwsh -NoProfile -File ./powershell/profile/Install-NodeToolchain.ps1
 ```
 
-`Path` is normally replaced verbatim by the captured value. Use `-MergePath` to keep whatever is already on the target machine and append the captured entries (deduped).
+The default root is `Z:\Packages`. Override with `-Root` or edit the manifest.
+Settings use User scope; dependencies and caches are available to terminals, IDEs
+and scripts without running a shell profile. Node belongs to nvm v2, Python to uv,
+and pnpm uses a standalone binary and global `config.yaml`. Corepack is not enabled.
 
-## Notes on portability
+The manifest covers Cargo/Rustup, Go, Gradle, Maven, npm, pnpm, pip, uv, Poetry,
+NuGet, Bun and TorchInductor storage. Runtime directories and installed packages
+are persistent data; use each manager's cache command to clear disposable data.
+Vendor-managed IDEs and system SDKs retain their supported installation locations.
 
-- `Path` entries under `F:\Software\…` reference WinGet portable-install subdirs. Those subdir names are stable per machine but may differ if WinGet re-installs with a different package id. Review `Path` after `Import-Env.ps1` on a new system.
-- `Z:\Packages` and `E:\OneDrive` are machine-specific drives. On a new system, either preserve the same drive letters or rewrite the captured values accordingly.
-- `TEMP` / `TMP` are kept (`%USERPROFILE%\AppData\Local\Temp`).
-- Machine identity (`COMPUTERNAME`, `USERNAME`, `USERPROFILE`, `OneDrive`, etc.) is intentionally retained — overwrite on import if the new machine's identity differs.
+`-CleanPath` removes legacy pyenv/mise and persisted Visual Studio developer-shell
+PATH additions. `-RemoveMachineDuplicates` requires elevation and removes only
+matching or empty managed Machine variables and missing nvm paths. Other machine
+settings, secrets and application settings are retained. Changes and previous
+registry value types are saved under `%LOCALAPPDATA%\PowerShellSetup`.
+`JAVA_HOME` is preserved unless `-JavaHome <installed-JDK>` is provided explicitly.
+
+## Backups
+
+Export writes sanitized snapshots outside the repo by default:
+
+```powershell
+./powershell/tools/Export-Env.ps1
+./powershell/tools/Export-Env.ps1 -IncludeMachine  # elevated
+```
+
+Do not use historical captured PATH as fresh-install configuration. For deliberate
+recovery, supply a directory containing `user.json` and optionally `system.json`:
+
+```powershell
+./powershell/tools/Import-Env.ps1 -ConfigDir C:/path/to/export -MergePath
+./powershell/tools/Import-Env.ps1 -ConfigDir C:/path/to/export -MergePath -Apply
+```
+
+Import previews unless `-Apply` is passed and saves a pre-import snapshot before
+writing. Review exported data before sharing it: name-based secret filtering
+cannot identify credentials hidden inside an arbitrary value.
+
+See [the PowerShell setup guide](../../powershell/profile/README.md) for profile
+installation, plugin controls, developer-shell activation and connectivity diagnostics.

@@ -5,13 +5,13 @@
 .DESCRIPTION
     Reads from HKCU:\Environment and (when -IncludeMachine is set and the shell is elevated)
     from HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager\Environment. Writes the result
-    to user.json and/or system.json in the repo's config\env\ folder.
+    to user.json and/or system.json under LOCALAPPDATA/PowerShellSetup/exports.
 
     Secrets, session vars, and process vars are filtered out (see the $Filter block to change).
     The list of stripped variables is recorded in the JSON's "filtered" array.
 
 .PARAMETER OutputDir
-    Directory to write the JSON files into. Defaults to <repo>\config\env.
+    Directory to write the JSON files into. Defaults to a private local export directory.
 .PARAMETER IncludeMachine
     Also export machine-scope env vars. Requires an elevated PowerShell session.
 
@@ -20,14 +20,13 @@
     PS> pwsh -File .\Export-Env.ps1 -IncludeMachine
 
 .NOTES
-    Run the -IncludeMachine variant once on the source machine, then commit the resulting
-    user.json and system.json alongside this script. Use Import-Env.ps1 to restore on a
-    fresh system.
+    Exported files are recovery snapshots. Use development.json for fresh-install
+    storage settings. Review exported values before sharing them.
 #>
 
 [CmdletBinding()]
 param(
-    [string]$OutputDir = (Join-Path $PSScriptRoot "..\..\config\env"),
+    [string]$OutputDir = (Join-Path $env:LOCALAPPDATA ('PowerShellSetup/exports/' + (Get-Date -Format 'yyyyMMdd-HHmmss-fff'))),
     [switch]$IncludeMachine
 )
 

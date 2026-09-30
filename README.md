@@ -20,7 +20,7 @@ Install these **before** running the profile installer. The profile will still l
 | **PowerShell 7 (`pwsh`)** | **Manual MSI** from [PowerShell releases](https://github.com/PowerShell/PowerShell/releases/latest) — not via winget. Verify: `pwsh --version` | Yes |
 | **Git** | `winget` / [Install-Essentials.ps1](./powershell/tools/Install-Essentials.ps1) | Yes (clone + git helpers) |
 | **starship, zoxide, fzf** | `Install-Essentials.ps1` (Utilities list) | Strongly recommended — prompt, `cd` jumper, fuzzy find |
-| **eza, bat, ripgrep, mise, …** | Same essentials script | Optional; aliases/modules no-op if absent |
+| **eza, bat, ripgrep, nvm, …** | Same essentials script | Optional; aliases/modules no-op if absent |
 | **Windows Terminal** | Essentials list | Recommended host for `pwsh` |
 
 Minimal CLI path (after `pwsh` + `winget` work):
@@ -37,17 +37,18 @@ Utilities-only (shell tools without PowerToys/VS Code/etc.):
 .\powershell\tools\Install-Essentials.ps1 -Utilities
 ```
 
-See `Install-Essentials.ps1 -List` for package IDs. Full fresh-box order (OOBE → env restore → package paths → winget → profile) is in [docs/FRESH-INSTALL.md](./docs/FRESH-INSTALL.md).
+See `Install-Essentials.ps1 -List` for package IDs. Full fresh-box order (OOBE → storage manifest → runtimes and tools → profile) is in [docs/FRESH-INSTALL.md](./docs/FRESH-INSTALL.md).
 
 ### What the installer does
 
 1. Copies `powershell/profile/modules/*.ps1` → `~/.config/powershell/modules/`
 2. Copies `powershell/functions/*.ps1` → `~/.config/powershell/functions/`
 3. Installs `Register-ProfileFunctions.ps1` (lazy-loads functions; registers short aliases like `rsb` immediately)
-4. Writes the full loader to `~/.config/powershell/profile.ps1` and a thin stub into `$PROFILE`
-5. Runs `Set-StarshipConfig.ps1` (default theme: `nova`)
+4. Installs the loader and explicit module manifest under `~/.config/powershell/`, with a thin AllHosts entry point
+5. Removes separate ConsoleHost/VS Code profile files after backing them up; both hosts use AllHosts
+6. Keeps the existing Starship theme; installs `nova` only if missing, or replaces it with an explicit `-StarshipTheme`
 
-Re-running is idempotent. Does **not** install winget, PowerShell, starship, fonts, or other tools.
+Re-running backs up the live configuration and deploys selected dependencies to a local module store. Does **not** install winget, PowerShell, starship, fonts, or runtimes. See [the shell setup guide](./powershell/profile/README.md).
 
 ### Usage
 
@@ -60,7 +61,12 @@ pwsh -File .\powershell\profile\Install-Profile.ps1 -StarshipTheme nordic
 pwsh -File .\powershell\profile\Install-Profile.ps1 -Uninstall
 ```
 
-Restart PowerShell (or open a new tab) after running. First launch may auto-install PSGallery plugins (`Terminal-Icons`, `posh-git`, `PSFzf`) unless `$env:PS_PLUGINS` is set.
+Restart PowerShell after running. PSFzf is deployed by the installer; startup never downloads dependencies. Node uses nvm v2, Python uses uv, and pnpm is standalone without Corepack.
+
+Windows Terminal and VS Code share the same PowerShell 7 configuration. After
+environment changes, fully quit VS Code and reopen it from Start before creating
+a terminal. See [VS Code troubleshooting](./powershell/profile/README.md#vs-code-and-terminal-differences)
+and the [September 2026 cleanup record](./docs/POWERSHELL-SETUP-REVIEW.md).
 
 ---
 

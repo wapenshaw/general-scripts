@@ -1,388 +1,134 @@
 <#
 .SYNOPSIS
-    Installs the repo's modular PowerShell profile, helper functions, and Starship config.
-
+    Installs a local PowerShell 7 profile and its dependencies.
 .DESCRIPTION
-    Copies powershell\profile\modules\*.ps1 to $InstallDir\modules\, copies every
-    *.ps1 in powershell\functions\ to $InstallDir\functions\, installs
-    Register-ProfileFunctions.ps1 (AST-based lazy autoload for functions + aliases),
-    writes the full loader to $InstallDir\profile.ps1, writes a thin stub into
-    $PROFILE that dotsources that loader, and runs Set-StarshipConfig.ps1 to pick
-    a starship.toml.
-
-    Function files are not eager-dot-sourced: the loader registers global stubs and
-    pre-creates aliases (e.g. rsb) so short names work on first use. Side-effect
-    scripts with no functions (e.g. Register-AzCompleter.ps1) still load eagerly.
-
-    Re-running is idempotent. Existing files are overwritten in place and the
-    profile loader is regenerated from scratch.
-
+    Backs up deployment, writes an explicit module manifest and a thin AllHosts
+    entry point. Only selected modules load. Dependencies use an explicit local
+    store and are never installed at startup. Existing Starship config is retained.
 .PARAMETER Work
-    Also install the work modules from powershell\profile\modules\work\ and set
-    $env:PS_WORK = '1' in the generated loader. Re-run without -Work to clear.
-
-.PARAMETER Uninstall
-    Remove the installed profile: move $InstallDir to $InstallDir.uninstalled.<timestamp>
-    and restore $PROFILE from $PROFILE.preinstall.bak if present, otherwise strip the
-    generated loader. Mutually exclusive with all other flags.
-
+    Enable work modules, preserving installed private work configuration.
+.PARAMETER Plugins
+    Modules to deploy/import. Default PSFzf; add posh-git for Git completion.
+.PARAMETER SkipPlugins
+    Skip dependency deployment for offline installation.
 .PARAMETER StarshipTheme
-    Starship theme to install. Defaults to 'nova'. Pass a different theme name
-    (e.g. 'nordic') to override, or omit to use the default.
-
-.PARAMETER InstallDir
-    Override the destination directory. Defaults to $HOME\.config\powershell.
-
-.PARAMETER ExcludeModules
-    One or more module basenames (e.g. '10-uv.ps1') to skip when copying modules\.
-
+    Explicitly replace the theme; omission retains the current theme.
+.PARAMETER Uninstall
+    Restore entry points backed up on the first deployment with this installer.
 .EXAMPLE
-    PS> pwsh -File .\Install-Profile.ps1
-
-    Default install: core modules + functions + nova starship theme.
-
+    ./Install-Profile.ps1 -Work -Plugins PSFzf,posh-git
 .EXAMPLE
-    PS> pwsh -File .\Install-Profile.ps1 -Work
-
-    Install core + work modules; set $env:PS_WORK = '1'.
-
-.EXAMPLE
-    PS> pwsh -File .\Install-Profile.ps1 -StarshipTheme nordic
-
-    Install with a different starship theme instead of the default nova.
-
-.EXAMPLE
-    PS> pwsh -File .\Install-Profile.ps1 -Uninstall
-
-    Move installed files aside and restore the previous $PROFILE.
-
-.EXAMPLE
-    PS> pwsh -File .\Install-Profile.ps1 -ExcludeModules '10-uv.ps1','99-prompt.ps1'
-
-    Install core modules only, skipping uv and the prompt module.
-
-.NOTES
-    Does not require admin. Use -Uninstall to roll back a prior install.
+    ./Install-Profile.ps1 -Plugins PSFzf -SkipPlugins
 #>
-
+#requires -Version 7.0
 [CmdletBinding()]
 param(
     [switch]$Work,
     [switch]$Uninstall,
-    [string]$StarshipTheme = 'nova',
-    [string]$InstallDir = (Join-Path $HOME '.config\powershell'),
-    [string[]]$ExcludeModules = @()
+    [string]$StarshipTheme,
+    [string]$InstallDir = (Join-Path $HOME '.config/powershell'),
+    [string]$ModuleDir = (Join-Path $HOME '.local/share/powershell/Modules'),
+    [string[]]$ExcludeModules = @(),
+    [string[]]$Plugins = @('PSFzf'),
+    [switch]$SkipPlugins
 )
-
 $ErrorActionPreference = 'Stop'
-
-# --- Source layout (relative to this script) ---
-$SourceRoot       = $PSScriptRoot
-$SourceModules    = Join-Path $SourceRoot 'modules'
-$SourceWork       = Join-Path $SourceModules 'work'
-$SourceFunctions  = Join-Path (Join-Path $SourceRoot '..') 'functions'
-$SourceStarship   = Join-Path $SourceRoot 'Set-StarshipConfig.ps1'
-$SourceAutoload   = Join-Path $SourceRoot 'Register-ProfileFunctions.ps1'
-
-# --- Destination layout ---
-$DestModules   = Join-Path $InstallDir 'modules'
-$DestWork      = Join-Path $DestModules 'work'
-$DestFunctions = Join-Path $InstallDir 'functions'
-$DestAutoload  = Join-Path $InstallDir 'Register-ProfileFunctions.ps1'
-$DestLoader    = Join-Path $InstallDir 'profile.ps1'
-
-# --- Uninstall path ---
+$InstallDir = [IO.Path]::GetFullPath($InstallDir)
+$ModuleDir = [IO.Path]::GetFullPath($ModuleDir)
+$loader = Join-Path $InstallDir 'profile.ps1'
+$hostEntryPoints = @(
+    (Join-Path (Split-Path $PROFILE.CurrentUserAllHosts -Parent) 'Microsoft.PowerShell_profile.ps1'),
+    (Join-Path (Split-Path $PROFILE.CurrentUserAllHosts -Parent) 'Microsoft.VSCode_profile.ps1')
+)
+$entryPoints = @($PROFILE.CurrentUserAllHosts) + $hostEntryPoints
+$backup = Join-Path $env:LOCALAPPDATA ('PowerShellSetup/profile-backups/' + (Get-Date -Format 'yyyyMMdd-HHmmss-fff') + "-$PID")
+New-Item -ItemType Directory -Path $backup -Force | Out-Null
+$entryState = @()
+foreach ($entry in $entryPoints) {
+    $name = Split-Path $entry -Leaf
+    $exists = Test-Path -LiteralPath $entry
+    if ($exists) { Copy-Item -LiteralPath $entry -Destination (Join-Path $backup $name) }
+    $entryState += @{ path = $entry; exists = $exists; file = $name }
+}
+$entryState | ConvertTo-Json | Set-Content -LiteralPath (Join-Path $backup 'entry-points.json')
+if (Test-Path -LiteralPath $InstallDir) { Copy-Item -LiteralPath $InstallDir -Destination (Join-Path $backup 'config') -Recurse }
+Write-Host "Backup: $backup"
+$statePath = Join-Path $InstallDir 'installation-state.json'
 if ($Uninstall) {
-    $others = @()
-    if ($Work) { $others += '-Work' }
-    # -StarshipTheme has a default ('nova'); only treat it as conflicting when explicitly passed.
-    if ($PSBoundParameters.ContainsKey('StarshipTheme')) { $others += '-StarshipTheme' }
-    if ($PSBoundParameters.ContainsKey('InstallDir'))    { $others += '-InstallDir' }
-    if ($PSBoundParameters.ContainsKey('ExcludeModules')) { $others += '-ExcludeModules' }
-    if ($others.Count -gt 0) {
-        Write-Error "-Uninstall is mutually exclusive with: $($others -join ', ')"
-        return
-    }
-
-    $timestamp = (Get-Date).ToString('yyyyMMdd-HHmmss')
-
-    if (Test-Path -LiteralPath $InstallDir) {
-        $backupPath = "$InstallDir.uninstalled.$timestamp"
-        Move-Item -LiteralPath $InstallDir -Destination $backupPath -Force
-        Write-Host "[uninstall] Moved $InstallDir -> $backupPath" -ForegroundColor Yellow
-    }
-    else {
-        Write-Host "[uninstall] $InstallDir not present, nothing to move." -ForegroundColor DarkGray
-    }
-
-    $ProfileBak = "$PROFILE.preinstall.bak"
-    if (Test-Path -LiteralPath $ProfileBak) {
-        Move-Item -LiteralPath $ProfileBak -Destination $PROFILE -Force
-        Write-Host "[uninstall] Restored $PROFILE from $ProfileBak" -ForegroundColor Green
-    }
-    elseif (Test-Path -LiteralPath $PROFILE) {
-        $Existing = Get-Content -LiteralPath $PROFILE -Raw -ErrorAction SilentlyContinue
-        if ($Existing -and $Existing -match 'Generated by Install-Profile.ps1') {
-            Remove-Item -LiteralPath $PROFILE -Force
-            Write-Host "[uninstall] Removed generated loader at $PROFILE" -ForegroundColor Yellow
+    if (-not (Test-Path -LiteralPath $statePath)) { throw 'No installation state to restore.' }
+    $state = Get-Content -LiteralPath $statePath -Raw | ConvertFrom-Json
+    $prior = Get-Content -LiteralPath (Join-Path $state.originalBackup 'entry-points.json') -Raw | ConvertFrom-Json
+    foreach ($entry in $prior) {
+        if ((Test-Path -LiteralPath $entry.path) -and
+            (Get-Content -LiteralPath $entry.path -Raw) -notmatch 'Generated by Install-Profile.ps1') {
+            Write-Warning "Edited entry point retained: $($entry.path)"
+            continue
         }
-        else {
-            Write-Host "[uninstall] $PROFILE was not generated by this installer; left untouched." -ForegroundColor DarkGray
-        }
+        if ($entry.exists) { Copy-Item -LiteralPath (Join-Path $state.originalBackup $entry.file) -Destination $entry.path -Force }
+        elseif (Test-Path -LiteralPath $entry.path) { Remove-Item -LiteralPath $entry.path }
     }
-    else {
-        Write-Host "[uninstall] $PROFILE not present, nothing to restore." -ForegroundColor DarkGray
+    $priorConfig = Join-Path $state.originalBackup 'config'
+    if (Test-Path -LiteralPath $priorConfig) {
+        Get-ChildItem -LiteralPath $priorConfig -Force | Copy-Item -Destination $InstallDir -Recurse -Force
     }
+    Write-Host 'Restored prior entry points and configuration. New dependencies retained for recovery.'
     return
 }
-
-# --- Install path ---
-
-# Validate sources
-if (-not (Test-Path -LiteralPath $SourceModules)) {
-    Write-Error "Source modules dir not found: $SourceModules"
-    return
+foreach ($dir in @($InstallDir, $ModuleDir, (Join-Path $InstallDir 'modules'), (Join-Path $InstallDir 'functions'))) {
+    New-Item -ItemType Directory -Path $dir -Force | Out-Null
 }
-if (-not (Test-Path -LiteralPath $SourceFunctions)) {
-    Write-Error "Source functions dir not found: $SourceFunctions"
-    return
-}
-
-# Step 2: create $InstallDir
-if (-not (Test-Path -LiteralPath $InstallDir)) {
-    New-Item -ItemType Directory -Path $InstallDir -Force | Out-Null
-    Write-Host "[+] Created config dir: $InstallDir" -ForegroundColor Cyan
-}
-
-# Step 3: back up $PROFILE (only on the first install)
-$ProfileBak = "$PROFILE.preinstall.bak"
-if (-not (Test-Path -LiteralPath $ProfileBak)) {
-    if (Test-Path -LiteralPath $PROFILE) {
-        $ProfileDir = Split-Path -Parent $PROFILE
-        if (-not (Test-Path -LiteralPath $ProfileDir)) {
-            New-Item -ItemType Directory -Path $ProfileDir -Force | Out-Null
-        }
-        Copy-Item -LiteralPath $PROFILE -Destination $ProfileBak -Force
-        Write-Host "[+] Backed up $PROFILE -> $ProfileBak" -ForegroundColor Cyan
-    }
-    else {
-        $ProfileDir = Split-Path -Parent $PROFILE
-        if ($ProfileDir -and -not (Test-Path -LiteralPath $ProfileDir)) {
-            New-Item -ItemType Directory -Path $ProfileDir -Force | Out-Null
-        }
-    }
-}
-else {
-    Write-Host "[*] Pre-existing backup found, leaving it in place: $ProfileBak" -ForegroundColor DarkGray
-}
-
-# Step 4: copy core modules
-if (-not (Test-Path -LiteralPath $DestModules)) {
-    New-Item -ItemType Directory -Path $DestModules -Force | Out-Null
-}
-Write-Host "[*] Installing core modules..." -ForegroundColor Yellow
-$coreModules = Get-ChildItem -LiteralPath $SourceModules -Filter '*.ps1' -File |
-    Where-Object { $_.Name -match '^\d{2}-.*\.ps1$' }
-foreach ($m in $coreModules) {
-    if ($ExcludeModules -contains $m.Name) {
-        Write-Host "    - Skipped (excluded): $($m.Name)" -ForegroundColor DarkGray
-        continue
-    }
-    Copy-Item -LiteralPath $m.FullName -Destination $DestModules -Force
-    Write-Host "    - Copied module: $($m.Name)" -ForegroundColor Gray
-}
-
-# Step 5: copy work modules (only if -Work)
+if (-not (Test-Path -LiteralPath $statePath)) { @{ originalBackup = $backup } | ConvertTo-Json | Set-Content -LiteralPath $statePath }
+$core = @(Get-ChildItem -LiteralPath (Join-Path $PSScriptRoot 'modules') -Filter '*.ps1' -File |
+    Where-Object { $_.Name -match '^\d{2}-' -and $_.Name -notin $ExcludeModules } | Sort-Object Name)
+foreach ($file in $core) { Copy-Item -LiteralPath $file.FullName -Destination (Join-Path $InstallDir 'modules') -Force }
+$workModules = @()
 if ($Work) {
-    if (-not (Test-Path -LiteralPath $SourceWork)) {
-        Write-Warning "Work modules dir not found, skipping: $SourceWork"
-    }
-    else {
-        if (-not (Test-Path -LiteralPath $DestWork)) {
-            New-Item -ItemType Directory -Path $DestWork -Force | Out-Null
-        }
-        Write-Host "[*] Installing work modules..." -ForegroundColor Yellow
-        $workModules = Get-ChildItem -LiteralPath $SourceWork -Filter '*.ps1' -File |
-            Where-Object { $_.Name -match '^\d{2}-.*\.ps1$' }
-        foreach ($m in $workModules) {
-            if ($ExcludeModules -contains $m.Name) {
-                Write-Host "    - Skipped (excluded): $($m.Name)" -ForegroundColor DarkGray
-                continue
-            }
-            Copy-Item -LiteralPath $m.FullName -Destination $DestWork -Force
-            Write-Host "    - Copied work module: $($m.Name)" -ForegroundColor Gray
-        }
+    $workDest = Join-Path $InstallDir 'modules/work'
+    New-Item -ItemType Directory -Path $workDest -Force | Out-Null
+    foreach ($file in (Get-ChildItem -LiteralPath (Join-Path $PSScriptRoot 'modules/work') -Filter '*.ps1' -File | Sort-Object Name)) {
+        if ($file.Name -in $ExcludeModules) { continue }
+        $dest = Join-Path $workDest $file.Name
+        if (-not (Test-Path -LiteralPath $dest)) { Copy-Item -LiteralPath $file.FullName -Destination $dest }
+        $workModules += 'modules/work/' + $file.Name
     }
 }
-
-# Step 6: copy functions
-if (-not (Test-Path -LiteralPath $DestFunctions)) {
-    New-Item -ItemType Directory -Path $DestFunctions -Force | Out-Null
-}
-Write-Host "[*] Installing functions..." -ForegroundColor Yellow
-$funcFiles = Get-ChildItem -LiteralPath $SourceFunctions -Filter '*.ps1' -File
-foreach ($f in $funcFiles) {
-    Copy-Item -LiteralPath $f.FullName -Destination $DestFunctions -Force
-    Write-Host "    - Copied function: $($f.Name)" -ForegroundColor Gray
-}
-
-# Step 6b: install function autoload helper
-if (-not (Test-Path -LiteralPath $SourceAutoload)) {
-    Write-Error "Autoload helper not found: $SourceAutoload"
-    return
-}
-Copy-Item -LiteralPath $SourceAutoload -Destination $DestAutoload -Force
-Write-Host "[+] Installed autoload helper: $DestAutoload" -ForegroundColor Cyan
-
-# Step 7: write the generated loader (full file under InstallDir) + thin $PROFILE stub
-$timestamp   = (Get-Date).ToString('yyyy-MM-dd HH:mm:ss')
-$psWorkValue = if ($Work) { '1' } else { '' }
-
-# Escape single quotes for embedding paths in the generated stub/loader.
-$InstallDirLiteral = $InstallDir.Replace("'", "''")
-$DestLoaderLiteral = $DestLoader.Replace("'", "''")
-
-# Backtick-escape every `$` so PowerShell doesn't expand variables at write time.
-# `$timestamp`, `$InstallDirLiteral`, `$psWorkValue` are intentionally unescaped.
-$LoaderScript = @"
-# --- Generated by Install-Profile.ps1 on $timestamp ---
-# Modular PowerShell profile. Safe to delete to reset.
-# Sourced by the thin stub at `$PROFILE.
-
-`$ErrorActionPreference = 'Continue'
-`$script:ProfileLoadErrors = @()
-`$script:ProfileStart = Get-Date
-
-# Prefer a local (non-OneDrive) module store when present — avoids hydrate/locks.
-`$script:LocalPSHome = Join-Path `$HOME 'PowerShell'
-`$script:LocalPSModules = Join-Path `$script:LocalPSHome 'Modules'
-function script:Repair-LocalPSModulePath {
-    if (-not (Test-Path -LiteralPath `$script:LocalPSModules)) { return }
-    `$sep = [IO.Path]::PathSeparator
-    `$rest = `$env:PSModulePath -split [regex]::Escape(`$sep) | Where-Object {
-        `$_ -and
-        (`$_ -ne `$script:LocalPSModules) -and
-        (`$_ -notmatch '(?i)[\\/]OneDrive[\\/].*[\\/]PowerShell[\\/]Modules`$') -and
-        (`$_ -notmatch '(?i)[\\/]Documents[\\/]PowerShell[\\/]Modules`$')
-    }
-    `$env:PSModulePath = (@(`$script:LocalPSModules) + @(`$rest)) -join `$sep
-}
-Repair-LocalPSModulePath
-
-# Import PSReadLine up front — bindings module calls its cmdlets
-try {
-    Import-Module PSReadLine -ErrorAction Stop
-} catch {
-    Write-Warning "PSReadLine import failed: `$_"
-}
-
-`$ConfigDir    = '$InstallDirLiteral'
-`$ModulesDir   = Join-Path `$ConfigDir 'modules'
-`$WorkDir      = Join-Path `$ModulesDir 'work'
-`$FunctionsDir = Join-Path `$ConfigDir 'functions'
-`$AutoloadPs1  = Join-Path `$ConfigDir 'Register-ProfileFunctions.ps1'
-
-# Work mode — set by ``Install-Profile.ps1 -Work``. Re-run without -Work to clear.
-`$env:PS_WORK = '$psWorkValue'
-
-# 1. Core modules (numeric prefix, two-digit, sorted)
-if (Test-Path -LiteralPath `$ModulesDir) {
-    Get-ChildItem -LiteralPath `$ModulesDir -Filter '*.ps1' -File |
-        Where-Object { `$_.Name -match '^\d{2}-.*\.ps1$' } |
-        Sort-Object Name |
-        ForEach-Object {
-            try { . `$_.FullName }
-            catch { Write-Warning "Module `$(`$_.Name) failed: `$_"; `$script:ProfileLoadErrors += `$_.Name }
-        }
-}
-
-# 2. Work modules (conditional)
-if (`$env:PS_WORK -eq '1' -and (Test-Path -LiteralPath `$WorkDir)) {
-    Get-ChildItem -LiteralPath `$WorkDir -Filter '*.ps1' -File |
-        Where-Object { `$_.Name -match '^\d{2}-.*\.ps1$' } |
-        Sort-Object Name |
-        ForEach-Object {
-            try { . `$_.FullName }
-            catch { Write-Warning "Work module `$(`$_.Name) failed: `$_"; `$script:ProfileLoadErrors += `$_.Name }
-        }
-}
-
-# 3. Functions — lazy global autoload (aliases registered immediately)
-if (Test-Path -LiteralPath `$AutoloadPs1) {
-    try {
-        . `$AutoloadPs1
-        Register-ProfileFunctions -FunctionsDir `$FunctionsDir
-    }
-    catch {
-        Write-Warning "Function autoload registration failed: `$_"
-        `$script:ProfileLoadErrors += 'Register-ProfileFunctions'
-    }
-}
-elseif (Test-Path -LiteralPath `$FunctionsDir) {
-    # Fallback: eager load if helper is missing
-    Get-ChildItem -LiteralPath `$FunctionsDir -Filter '*.ps1' -File |
-        Sort-Object Name |
-        ForEach-Object {
-            try { . `$_.FullName }
-            catch { Write-Warning "Function file `$(`$_.Name) failed: `$_"; `$script:ProfileLoadErrors += `$_.Name }
-        }
-}
-
-# Re-assert local module path after plugins that mutate PSModulePath
-Repair-LocalPSModulePath
-
-# 4. Diagnostics (opt in with `$env:PS_PROFILE_DEBUG = '1')
-if (`$env:PS_PROFILE_DEBUG -eq '1') {
-    `$elapsed = `$((Get-Date) - `$script:ProfileStart).TotalMilliseconds
-    Write-Host "[profile] loaded in `$elapsed ms" -ForegroundColor DarkGray
-    Write-Host "[profile] PSModulePath[0]=`$((`$env:PSModulePath -split [IO.Path]::PathSeparator)[0])" -ForegroundColor DarkGray
-    if (`$script:ProfileLoadErrors) {
-        Write-Warning "Profile modules with errors: `$(`$script:ProfileLoadErrors -join ', ')"
-    }
-}
-
-# --- end generated loader ---
-"@
-
-Set-Content -LiteralPath $DestLoader -Value $LoaderScript -Force
-Write-Host "[+] Wrote full loader to $DestLoader" -ForegroundColor Green
-
-# Thin $PROFILE stub — keeps OneDrive Documents profile tiny and fast.
-$ProfileStub = @"
-# Thin stub only — real profile lives off Documents/OneDrive for fast startup.
-# Generated by Install-Profile.ps1 on $timestamp
-# Edit: $DestLoaderLiteral
-. '$DestLoaderLiteral'
-"@
-
-$ProfileDir = Split-Path -Parent $PROFILE
-if ($ProfileDir -and -not (Test-Path -LiteralPath $ProfileDir)) {
-    New-Item -ItemType Directory -Path $ProfileDir -Force | Out-Null
-}
-Set-Content -LiteralPath $PROFILE -Value $ProfileStub -Force
-Write-Host "[+] Wrote thin stub to $PROFILE" -ForegroundColor Green
-
-
-# Step 8: starship setup
-if (Test-Path -LiteralPath $SourceStarship) {
-    Write-Host "`n[*] Running Starship setup..." -ForegroundColor Yellow
-    try {
-        if ($StarshipTheme) {
-            & $SourceStarship -Theme $StarshipTheme
-        }
-        else {
-            & $SourceStarship
+Copy-Item -Path (Join-Path $PSScriptRoot '../functions/*.ps1') -Destination (Join-Path $InstallDir 'functions') -Force
+Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'Register-ProfileFunctions.ps1') -Destination $InstallDir -Force
+if (-not $SkipPlugins) {
+    foreach ($name in $Plugins) {
+        if ($name -notmatch '^[A-Za-z0-9_.-]+$') { throw "Invalid plugin name: $name" }
+        if (Get-ChildItem -LiteralPath $ModuleDir -Filter "$name.psd1" -Recurse -ErrorAction SilentlyContinue) { continue }
+        $existing = Get-Module -ListAvailable -Name $name | Sort-Object Version -Descending | Select-Object -First 1
+        if ($existing) {
+            $dest = Join-Path $ModuleDir "$name/$($existing.Version)"
+            New-Item -ItemType Directory -Path $dest -Force | Out-Null
+            Get-ChildItem -LiteralPath $existing.ModuleBase -Force | Copy-Item -Destination $dest -Recurse -Force
+            Write-Host "Copied installed $name to $dest"
+        } else {
+            Save-Module -Name $name -Repository PSGallery -Path $ModuleDir -ErrorAction Stop
+            Write-Host "Saved $name to $ModuleDir"
         }
     }
-    catch {
-        Write-Warning "Starship setup failed: $_"
-    }
 }
-else {
-    Write-Warning "Starship script not found at $SourceStarship"
+[ordered]@{
+    schemaVersion = 1; moduleDir = $ModuleDir; work = [bool]$Work; plugins = @($Plugins)
+    coreModules = @($core | Where-Object Name -NotMatch '^99-' | ForEach-Object { 'modules/' + $_.Name })
+    workModules = @($workModules)
+    promptModules = @($core | Where-Object Name -Match '^99-' | ForEach-Object { 'modules/' + $_.Name })
+} | ConvertTo-Json -Depth 4 | Set-Content -LiteralPath (Join-Path $InstallDir 'installed-profile.json')
+Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'Profile.ps1') -Destination $loader -Force
+$escapedLoader = $loader.Replace("'", "''")
+New-Item -ItemType Directory -Path (Split-Path $PROFILE.CurrentUserAllHosts -Parent) -Force | Out-Null
+@"
+# Generated by Install-Profile.ps1. Local configuration: $InstallDir
+if (Test-Path -LiteralPath '$escapedLoader') { . '$escapedLoader' }
+"@ | Set-Content -LiteralPath $PROFILE.CurrentUserAllHosts
+foreach ($entry in $hostEntryPoints) {
+    # Already backed up above. Both hosts use the shared AllHosts entry point.
+    if (Test-Path -LiteralPath $entry) { Remove-Item -LiteralPath $entry }
 }
-
-Write-Host "`n==========================================" -ForegroundColor Cyan
-Write-Host "   PROFILE INSTALLATION COMPLETE" -ForegroundColor Green
-Write-Host "   Restart PowerShell to apply changes." -ForegroundColor Gray
-Write-Host "==========================================" -ForegroundColor Cyan
+if ($StarshipTheme -or -not (Test-Path -LiteralPath (Join-Path $HOME '.config/starship.toml'))) {
+    $theme = if ($StarshipTheme) { $StarshipTheme } else { 'nova' }
+    & (Join-Path $PSScriptRoot 'Set-StarshipConfig.ps1') -Theme $theme
+}
+Write-Host 'Profile installed. Open a new terminal to load it.'

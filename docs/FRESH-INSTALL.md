@@ -1,6 +1,6 @@
 # Fresh Windows Install Procedure
 
-Goal: go from a freshly-imaged Windows 11 box to the current setup, with `winget` and the PowerShell profile deployed and the captured env restored.
+Goal: go from a freshly-imaged Windows 11 box to the current setup, with development storage configured from the manifest, runtimes installed, and the shared PowerShell profile deployed.
 
 Total time: ~45 min on a fast link, mostly waiting on downloads.
 
@@ -51,7 +51,7 @@ Download and run the MSI from the GitHub release page:
 git clone https://github.com/<you>/general-scripts.git Z:\Personal\general-scripts
 ```
 
-The scripts use `$PSScriptRoot`-relative paths so the repo can live anywhere. `Set-DevPackagePaths.ps1` (step 6) requires the `Z:` drive to be mounted — it creates `Z:\Packages` and all its subfolders itself, so only the drive needs to exist. To use a different drive, edit the `$BasePath` in the script.
+The scripts use `$PSScriptRoot`-relative paths so the repo can live anywhere. `Set-DevPackagePaths.ps1` (step 5) requires the configured drive to be mounted and creates the storage folders. For a different drive during initial setup, edit `root` in `config/env/development.json` or pass `-Root`; this does not migrate existing runtime installations.
 
 ### 4. Set up OneDrive and move special folders
 
@@ -67,36 +67,39 @@ The script uses `robocopy /MOVE` to migrate existing contents, calls `SHSetKnown
 
 **Before running:** close all apps that have Desktop/Documents open (OneDrive, Outlook, etc.). **Pause OneDrive sync** before running the script to avoid sync conflicts while robocopy is moving files into `E:\OneDrive\Documents` — resume sync after the script finishes. Requires the `E:\` drive to exist and target parent folders (e.g. `E:\OneDrive`) to be present.
 
-### 5. Restore env vars from the captured snapshot
+### 5. Configure the Dev Drive storage manifest
 
-Run **before** the winget installs, so toolchain path env vars (CARGO_HOME, GOPATH, etc.) are in place when those toolchains first launch. The `OneDrive` env var in the snapshot points at `E:\OneDrive`, which is why step 4 (moving Desktop/Documents there) must come first.
-
-```powershell
-# Preview first
-Z:\Personal\general-scripts\powershell\tools\Import-Env.ps1 -DryRun
-
-# Then apply — use -MergePath to preserve the live PATH (recommended on a fresh box
-# where winget/App Installer have already injected shims into PATH)
-Z:\Personal\general-scripts\powershell\tools\Import-Env.ps1 -MergePath
-```
-
-The snapshot in `config/env/user.json` excludes secrets, session vars, and runtime vars (see `config/env/README.md` for the filter list). *No admin needed for the default `user.json` apply. Re-run with `-IncludeMachine` in an elevated shell to also restore the system-scope env vars from `system.json`.*
-
-> **`-MergePath` vs default:** without `-MergePath`, the captured `Path` from `user.json` **replaces** the live `PATH` entirely. On a fresh box this can clobber shims that App Installer / winget just added (e.g. `%LOCALAPPDATA%\Microsoft\WindowsApps`). Use `-MergePath` to merge the captured entries into the live `PATH` instead of replacing it. Run `Import-Env.ps1 -DryRun` first to preview the diff.
-
-> **Why before winget:** the env vars point toolchain caches at `Z:\Packages\*`. The toolchains installed in step 7 (Rustup, mise, Go, etc.) read these vars on first launch. If you skip ahead and run them before step 5/6, they'll write their first packages to `C:\Users\...` and you'll have to relocate them manually.
-
-### 6. Set dev package paths
-
-`Set-DevPackagePaths.ps1` redirects common toolchain caches (NuGet, Go, Cargo, npm, PyPI, Ruby, Maven) into `Z:\Packages\...`. Run **before** `winget install` for the same reason as step 5.
+`config/env/development.json` defines the desired User environment and package
+storage. Review its root (`Z:\Packages`) before applying it. Historical environment
+snapshots are recovery data; do not restore their PATH on a fresh machine.
 
 ```powershell
-Z:\Personal\general-scripts\powershell\profile\Set-DevPackagePaths.ps1
+pwsh -NoProfile -File ./powershell/profile/Set-DevPackagePaths.ps1 -WhatIf
+pwsh -NoProfile -File ./powershell/profile/Set-DevPackagePaths.ps1
 ```
 
-Pick User (no admin) or System scope (admin required). Creates the target directories and writes the registry env vars. **Restart your terminal or reboot** when done so subsequent processes inherit the new vars.
+This creates storage directories and backs up changes outside the repo. It writes
+pnpm storage settings to global `config.yaml`, keeps npm/pip cache configuration in
+User environment variables, and preserves credentials/unrelated tool settings.
 
-> **Why before winget:** same as step 5 — toolchains read these cache paths on first launch.
+### 6. Runtime ownership
+
+Use nvm v2 for Node, uv for Python, and standalone pnpm without Corepack. Runtime
+versions and nvm storage paths are pinned in the development manifest. Install the
+runtime tools after the winget utilities in step 7:
+
+```powershell
+pwsh -NoProfile -File ./powershell/profile/Install-NodeToolchain.ps1
+# Install uv if it is missing, then:
+uv python install 3.14 --default
+uv tool install --python 3.14 poetry
+uv tool install --python 3.14 deptry
+```
+
+Node/nvm data, Python installations and environments, Rust toolchains and package
+caches use Z:. Vendor-managed IDEs, .NET, Java, Go and CUDA retain their supported
+installation locations. Restart applications after environment changes.
+See [the shell setup guide](../powershell/profile/README.md).
 
 ---
 
@@ -131,18 +134,31 @@ For a list of what would be installed: `Install-Essentials.ps1 -List`.
 
 These are the repo scripts that need to run once on a fresh box, in this order. Most require an elevated PowerShell (admin).
 
-1. **`Install-Profile.ps1`** - deploys the modular PowerShell profile: copies `modules/*.ps1` and `functions/*.ps1` to `~/.config/powershell/`, installs `Register-ProfileFunctions.ps1`, writes the full loader to `~/.config/powershell/profile.ps1`, and writes a thin stub into `$PROFILE` that dotsources that loader. Modules load in dependency order (history → exports → mise → completion → fzf → tools → aliases → functions → bindings → plugins → uv → vsdev → prompt). Function files are AST-lazy-autoloaded (short aliases like `rsb` are registered immediately; side-effect scripts with no functions still load eagerly). Runs `Set-StarshipConfig.ps1` to install the `nova` starship theme. *No admin required.* **Must run after step 7** — the profile modules invoke `starship init`, `zoxide init`, and `Microsoft.WinGet.CommandNotFound` on every shell start, all of which require binaries/modules installed in step 7 (and step 1). Every init is guarded by `try/catch` so a missing tool prints a warning but never breaks the shell. The `11-vsdev` module silently activates the Visual Studio Developer Shell (MSVC + Windows SDK on PATH/INCLUDE/LIB) when VS is installed and no-ops otherwise. The `02-mise` module activates [mise](https://mise.jdx.dev/) (runtime version manager for node/python/ruby/etc., replacing nvm/pyenv/rbenv) when installed and no-ops otherwise.
+1. **`Install-Profile.ps1`** deploys a local PowerShell 7 profile and dependencies.
+   It backs up the live setup, installs configuration under `~/.config/powershell`,
+   deploys plugins to `~/.local/share/powershell/Modules`, and writes a thin AllHosts
+   entry point. `installed-profile.json` selects modules explicitly; excluded or
+   stale files never load. Work configuration loads before the prompt.
    ```powershell
-   Z:\Personal\general-scripts\powershell\profile\Install-Profile.ps1
+   pwsh -NoProfile -File ./powershell/profile/Install-Profile.ps1
    ```
-   **Flags:**
-   - `-Work` — also installs `modules/work/` and sets `$env:PS_WORK = '1'` in the loader so work-only aliases, exports, and functions are sourced on every shell start. Mirrors `zsh/install.sh --work`.
-   - `-StarshipTheme <name>` — override the starship theme (defaults to `nova`; e.g. `-StarshipTheme nordic`). Also settable via `$env:PS_STARSHIP_THEME`.
-   - `-Uninstall` — back up `~/.config/powershell/` to `~/.config/powershell.uninstalled.<timestamp>`, restore `$PROFILE` from pre-install backup. Mutually exclusive with all other flags.
-   - `-ExcludeModules <names>` — skip specific module files (e.g. `-ExcludeModules '10-uv.ps1'`).
-   - `-InstallDir <path>` — override the install destination (default: `$HOME\.config\powershell`).
+   **Flags:** `-Work` enables work settings while preserving private installed
+   files; `-Plugins PSFzf,posh-git` adds Git completion; `-SkipPlugins` skips
+   dependency deployment; `-StarshipTheme <name>` explicitly replaces the theme;
+   `-ExcludeModules <names>` changes the load manifest; `-InstallDir` and
+   `-ModuleDir` override local locations; `-Uninstall` restores the original setup.
 
-   **Auto-plugins:** the `09-plugins.ps1` module auto-installs `Terminal-Icons`, `posh-git`, and `PSFzf` from PSGallery on first shell launch (analogous to zsh's `plugins.zsh`). Override with `$env:PS_PLUGINS = 'Terminal-Icons,PSFzf'` or disable with `$env:PS_PLUGINS = ''`.
+   Startup imports PSFzf without installing packages or changing gallery trust.
+   Existing Starship configuration is retained. Script/command invocations skip
+   interactive setup; opt in with `PS_PROFILE_IN_SCRIPTS=1`. Use `vsdev` when MSVC
+   and Windows SDK variables are needed. Ordinary terminals have no automatic
+   developer-shell activation, mise activation, or conda initialization.
+
+   Windows Terminal, VS Code terminals and the PowerShell extension console share
+   the AllHosts profile. Separate ConsoleHost/VS Code profile files are backed up
+   and removed. Interactive VS Code `-NoExit -Command` launches load the profile.
+   After installation/environment changes, fully quit VS Code and reopen it from
+   Start, then open a fresh terminal. See [shell troubleshooting](../powershell/profile/README.md#vs-code-and-terminal-differences).
 
 2. **Set git identity** for future commits on this box. *No admin required.*
    ```powershell
@@ -206,8 +222,8 @@ Then follow `zsh/README.md`.
 | 2 | PowerShell 7 | MSI from github.com/PowerShell/PowerShell/releases |
 | 3 | Clone repo | `git clone ...` |
 | 4 | Move special folders | `Move-Special-Folders.ps1` (pause OneDrive sync first) |
-| 5 | Restore env vars | `Import-Env.ps1` (before winget; `-IncludeMachine` needs admin) |
-| 6 | Dev package paths | `Set-DevPackagePaths.ps1` (admin for System scope) |
+| 5 | Desired storage settings | `Set-DevPackagePaths.ps1` (User scope) |
+| 6 | Runtime ownership | `Install-NodeToolchain.ps1`, then uv Python/tools |
 | 7 | Apps via winget | `Install-Essentials.ps1` (installs starship + zoxide) |
 | 8 | Post-install scripts | Run the numbered scripts in order |
 | 9 | Restart PowerShell + reboot | close + reopen, then one full Windows reboot |

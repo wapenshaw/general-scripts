@@ -7,7 +7,7 @@
     - Essentials: PowerToys, Windows Terminal, Git, 7-Zip, VS Code, Notepad++
     - Utilities:  zoxide, fzf, starship, bat, eza, ripgrep, fd, lazygit, delta,
                   jq, yq, duf, fastfetch, hyperfine, gh, az, Sysinternals,
-                  btop4win, ffmpeg, Terraform, mise, Rustup, SQLite, Stripe
+                  btop4win, ffmpeg, Terraform, nvm, Rustup, SQLite, Stripe
 
     Idempotent. winget skips packages that are already installed at the requested
     version. Run from an elevated PowerShell session - some packages need admin
@@ -83,7 +83,7 @@ $UtilitiesList = @(
     "dandavison.delta"
     "GitHub.cli"
     "Hashicorp.Terraform"
-    "jdx.mise"
+    "CoreyButler.NVMforWindows"
     "Rustlang.Rustup"
     # Data / cloud CLIs
     "jqlang.jq"

@@ -12,11 +12,16 @@ $env:ASTRA_HOME = Join-Path $HOME 'astra'
 if (-not $env:KUBECONFIG) { $env:KUBECONFIG = Join-Path $HOME '.kube/config' }
 
 # Corporate CA compatibility
-$env:SSL_CERT_FILE      = 'C:\Program Files\Common Files\SSL\cert.pem'
-$env:REQUESTS_CA_BUNDLE = $env:SSL_CERT_FILE
-$env:CURL_CA_BUNDLE     = $env:SSL_CERT_FILE
+$workCaFile = 'C:\Program Files\Common Files\SSL\cert.pem'
+if (Test-Path -LiteralPath $workCaFile) {
+    $env:SSL_CERT_FILE = $workCaFile
+    $env:REQUESTS_CA_BUNDLE = $workCaFile
+    $env:CURL_CA_BUNDLE = $workCaFile
+    $env:NODE_EXTRA_CA_CERTS = $workCaFile
+}
 
 # Node.js — system CA + ipv4first to avoid WSL DNS hangs
 $env:NODE_USE_SYSTEM_CA  = '1'
-$env:NODE_EXTRA_CA_CERTS = $env:SSL_CERT_FILE
-$env:NODE_OPTIONS        = '--dns-result-order=ipv4first'
+if ($env:NODE_OPTIONS -notmatch '--dns-result-order=') {
+    $env:NODE_OPTIONS = ($env:NODE_OPTIONS + ' --dns-result-order=ipv4first').Trim()
+}

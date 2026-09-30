@@ -1,0 +1,156 @@
+{
+    "$schema": "https://unpkg.com/oh-my-opencode-slim@latest/oh-my-opencode-slim.schema.json",
+    "preset": "opencode-go",
+    "presets": {
+        "opencode-go": {
+            "orchestrator": {
+                "model": "opencode-go/ox-alpha-free",
+                "variant": "max",
+                "skills": [
+                    "*"
+                ],
+                "mcps": [
+                    "*"
+                ]
+            },
+            "oracle": {
+                "model": "opencode-go/glm-5.3",
+                "variant": "high",
+                "skills": [
+                    "*"
+                ],
+                "mcps": [
+                    "*"
+                ]
+            },
+            "council": {
+                "model": "opencode-go/ox-alpha-free",
+                "variant": "max",
+                "skills": [
+                    "*"
+                ],
+                "mcps": [
+                    "*"
+                ]
+            },
+            "librarian": {
+                "model": "google/gemini-3.7-flash",
+                "variant": "high",
+                "skills": [
+                    "*"
+                ],
+                "mcps": [
+                    "*"
+                ]
+            },
+            "explorer": {
+                "model": "google/gemini-3.7-flash",
+				"variant": "high",
+                "skills": [
+                    "*"
+                ],
+                "mcps": [
+                    "*"
+                ]
+            },
+            "designer": {
+                "model": "opencode-go/minimax-m3",
+                "variant": "thinking",
+                "skills": [
+                    "*"
+                ],
+                "mcps": [
+                    "*"
+                ]
+            },
+            "fixer": {
+                "model": "opencode-go/minimax-m3",
+                "variant": "thinking",
+                "skills": [
+                    "*"
+                ],
+                "mcps": [
+                    "*"
+                ]
+            },
+            "observer": {
+                "model": "opencode-go/mimo-v2.5",
+                "skills": [
+                    "*"
+                ],
+                "mcps": [
+                    "*"
+                ]
+            }
+        }
+    },
+    "disabled_agents": [],
+    "council": {
+        "presets": {
+            "swe-cloud": {
+                "reviewer": {
+                    "model": [
+                        {
+                            "id": "opencode-go/gpt-5.6-luna",
+                            "variant": "xhigh"
+                        },
+                        {
+                            "id": "opencode-go/minimax-m3",
+                            "variant": "thinking"
+                        }
+                    ],
+                    "prompt": "Focus on correctness: bugs, edge cases, race conditions, error handling, and unhandled failure modes in application and script code."
+                },
+                "architect": {
+                    "model": [
+                        {
+                            "id": "xai/grok-4.6",
+							"variant": "high"
+                        },
+                        {
+                            "id": "opencode-go/glm-5.3",
+                            "variant": "high"
+                        }
+                    ],
+                    "prompt": "Focus on software design: module boundaries, coupling and cohesion, API contracts, dependency direction, migration risk, and long-term maintainability."
+                },
+                "cloud": {
+                    "model": [
+                        {
+                            "id": "opencode-go/glm-5.3",
+                            "variant": "high"
+                        },
+                        {
+                            "id": "xai/grok-4.6",
+							"variant": "high"
+                        }
+                    ],
+                    "prompt": "Focus on cloud and infrastructure: networking, deployment topology, scalability and failure domains, infrastructure-as-code and configuration management, operability, and cost efficiency."
+                },
+                "optimizer": {
+                    "model": [
+                        {
+                            "id": "opencode-go/minimax-m3",
+                            "variant": "thinking"
+                        },
+                        {
+                            "id": "opencode-go/hy3",
+                            "variant": "high"
+                        }
+                    ],
+                    "prompt": "Focus on performance: latency, throughput, memory and resource usage, startup cost, and redundant work. Quantify trade-offs before recommending changes."
+                }
+            }
+        },
+        "default_preset": "swe-cloud"
+    },
+    "companion": {
+        "enabled": false,
+        "position": "bottom-right",
+        "size": "medium",
+        "gifPack": "default",
+        "loopStyle": "classic",
+        "speed": 1,
+        "debug": false
+    }
+}

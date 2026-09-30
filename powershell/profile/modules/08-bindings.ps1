@@ -17,7 +17,10 @@ try {
     Set-PSReadLineKeyHandler -Key Ctrl+LeftArrow -Function BackwardWord
     Set-PSReadLineKeyHandler -Key Ctrl+RightArrow -Function ForwardWord
 
-    # Up/Down arrows → history search based on current input
+    # Up/Down arrows → history search based on current input (zsh-like).
+    # Without HistorySearchCursorMovesToEnd, the cursor lands at column 0 on
+    # each match (feels broken vs default PreviousHistory, which ends at EOL).
+    try { Set-PSReadLineOption -HistorySearchCursorMovesToEnd } catch { }
     Set-PSReadLineKeyHandler -Key UpArrow -Function HistorySearchBackward
     Set-PSReadLineKeyHandler -Key DownArrow -Function HistorySearchForward
 } catch {
