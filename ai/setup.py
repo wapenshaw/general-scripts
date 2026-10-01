@@ -232,7 +232,7 @@ def main():
     for client in args.clients:
         client_root = client_roots[client]
         if client == "opencode":
-            source = REPO / "opencode/config/opencode.json"
+            source = ROOT / "opencode/config/opencode.json"
         else:
             source = ROOT / "config" / client / ("settings.json" if client == "claude" else "config.toml")
         preferences = load_config(source)
@@ -279,12 +279,12 @@ def main():
 
     if "opencode" in args.clients:
         opencode_root = client_roots["opencode"]
-        sources = [(REPO / "opencode/package.json", opencode_root / "package.json")]
-        sources += [(path, opencode_root / path.name) for path in (REPO / "opencode/config").iterdir() if path.is_file() and path.name != "opencode.json"]
+        sources = [(ROOT / "opencode/package.json", opencode_root / "package.json")]
+        sources += [(path, opencode_root / path.name) for path in (ROOT / "opencode/config").iterdir() if path.is_file() and path.name != "opencode.json"]
         for source_root, destination_root in (
-            (REPO / "opencode/skills", opencode_root / "skills"),
-            (REPO / "opencode/themes", opencode_root / "themes"),
-            (REPO / "opencode/agent-skills", home / ".agents/skills"),
+            (ROOT / "opencode/skills", opencode_root / "skills"),
+            (ROOT / "opencode/themes", opencode_root / "themes"),
+            (ROOT / "opencode/agent-skills", home / ".agents/skills"),
         ):
             sources += [(path, destination_root / path.relative_to(source_root)) for path in source_root.rglob("*") if path.is_file()]
         for source, destination in sources:

@@ -14,9 +14,8 @@ Personal Windows 11 post-install + dev-environment toolbox. No build system, no 
 - `zsh/` — modular macOS/Linux/WSL zsh config; `install.sh` deploys to `~/.zsh`
 - `macos/`, `linux/`, `mac-update.zsh` — platform bootstraps and Mac maintenance; Windows bootstrap is `powershell/tools/Install-Workstation.ps1`
 - `config/env/` — desired development storage manifest (`development.json`), directory documentation and historical environment snapshots
-- `ai/` — allowlisted Claude/Codex/Grok preferences, status lines and shared MCP registry; uv-managed Python generates Windows/macOS client configs and reuses the OpenCode payload
+- `ai/` — portable AI workspace and client configs: Claude, Codex, Grok, OpenCode (`ai/opencode/`), Herdr (`ai/herdr/`), status lines, and shared MCP registry; uv-managed Python generates Windows/macOS client configs
 - `starship/`, `fonts/`, `windows-terminal/`, `extensions/`, `icons/` — config/asset payloads
-- `opencode/` — portable OpenCode setup: `config/` payloads (secrets via env vars), `skills/` + `agent-skills/`, cross-platform installers (`Install-OpenCodeConfig.ps1`, `install.sh`)
 - `registry-tweaks/` — paired `dos/` + `undos/` `.reg` files
 - `er605-openwrt/` — TP-Link ER605 v2 OpenWrt flashing helpers (router-side)
 

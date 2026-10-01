@@ -2,8 +2,8 @@
 
 Claude Code, Codex, Grok CLI and OpenCode preferences are captured here for Windows,
 macOS and Linux. One [MCP registry](mcp/servers.json) produces each client's native
-configuration. The existing [OpenCode package](../opencode/README.md) remains the
-source for OpenCode preferences, plugin configuration and skills.
+configuration. The [OpenCode package](opencode/README.md) provides
+OpenCode preferences, plugin configuration and skills.
 
 ## New machine
 
@@ -61,8 +61,8 @@ rendering/installation. To preview macOS from Windows, use
 | `config/codex/config.toml` | `~/.codex/config.toml` | Merge portable preferences and registry MCP entries |
 | `config/codex/windows.toml` | Same Codex config, Windows only | Preserve imported Windows sandbox choice |
 | `config/grok/config.toml`, `statusline.js` | `~/.grok/` | Merge preferences and registry MCP entries |
-| `../opencode/config/`, `package.json`, `skills/`, `themes/` | `~/.config/opencode/` | Reuse existing payload, merge main config and generated MCP entries |
-| `../opencode/agent-skills/` | `~/.agents/skills/` | Deploy shared agent skills |
+| `opencode/config/`, `package.json`, `skills/`, `themes/` | `~/.config/opencode/` | Reuse existing payload, merge main config and generated MCP entries |
+| `opencode/agent-skills/` | `~/.agents/skills/` | Deploy shared agent skills |
 | `mcp/servers.json` | All four native MCP formats | One place to edit endpoint/command definitions |
 | `mcp/templates/windows/`, `macos/` | Reference fragments | Generated skeletons; macOS form also works on Linux |
 | `inventory.json` | Documentation only | MCP/plugin names from the original machine |

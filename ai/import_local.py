@@ -87,7 +87,7 @@ def main():
             for item in value:
                 inspect(item)
     inspect(opencode)
-    atomic_write(REPO / "opencode/config/opencode.json", json.dumps(opencode, indent=2) + "\n")
+    atomic_write(ROOT / "opencode/config/opencode.json", json.dumps(opencode, indent=2) + "\n")
 
     themes = home / ".config/opencode/themes"
     if themes.exists():
@@ -95,7 +95,7 @@ def main():
             theme = read_json(source)
             if set(theme) - {"$schema", "defs", "theme"}:
                 raise ValueError("Unexpected custom theme fields; review before importing")
-            atomic_write(REPO / "opencode/themes" / source.name, json.dumps(theme, indent=2) + "\n")
+            atomic_write(ROOT / "opencode/themes" / source.name, json.dumps(theme, indent=2) + "\n")
 
     for client in ("claude", "grok"):
         source = home / ("." + client) / "statusline.js"
