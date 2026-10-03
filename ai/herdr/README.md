@@ -8,8 +8,14 @@ This directory maintains personal preferences, plugin configurations, and setup 
 
 ```
 ai/herdr/
-├── config.toml                         # Herdr core configuration (UI, sidebar, session, toasts)
+├── backup.sh                           # Exports live Herdr & plugin configs to repository
+├── config.toml                         # Herdr core configuration (UI, theme, keybindings)
 ├── config.env                          # Auto Title plugin preferences
+├── plugins.json                        # Snapshot of installed Herdr plugins and versions
+├── plugins/                            # Plugin-specific configuration files
+│   └── config/
+│       ├── herdr.auto-title/           # Auto Title configuration
+│       └── usagebar/                   # Usagebar notification and threshold settings
 ├── Install-HerdrConfig.ps1             # PowerShell 7 installer and linker
 ├── install.sh                          # macOS / Linux installer and linker
 └── README.md                           # Documentation
@@ -30,30 +36,37 @@ pwsh -File ./ai/herdr/Install-HerdrConfig.ps1
 ### macOS / Linux
 
 ```bash
+# Deploy Herdr configuration, plugins, and integrations
 bash ./ai/herdr/install.sh
+
+# Backup live Herdr and plugin configs from your system into this repo
+bash ./ai/herdr/backup.sh
 ```
 
 ## Components
 
 ### 1. Herdr Configuration (`config.toml`)
 Deploys to `%APPDATA%\herdr\config.toml` (Windows) or `~/.config/herdr/config.toml` (Linux/macOS):
-* **UI**: Top tab bar position, visible tab bar even on single tabs, 30-column sidebar, and symbol status indicators.
-* **Session**: Restores agent state across session resumes.
-* **Terminal**: New panes follow the current working directory (`new_cwd = "follow"`).
-* **Toasts**: System notifications enabled with a 1-second delay.
+* **UI**: Catppuccin theme base, sound enabled, terminal toasts, space-sorted agent panels.
+* **Keybindings**: Binds `prefix+t` to `herdr-theme-picker.open` for interactive theme switching.
 
-### 2. Auto Title Configuration (`config.env`)
-Deploys to `~/.config/herdr-auto-title/config.env`:
-* `HERDR_AUTO_TITLE_POSITION=true`: Prefixes tabs with their 1-based index (`1 · `, `2 · `) matching keyboard shortcuts.
-* `HERDR_AUTO_TITLE_AGENT_NAME=true`: Shows the active agent name (e.g. `agy › `, `claude › `).
-* `HERDR_AUTO_TITLE_PREFER_AGENT=true`: Prioritizes agent task names over terminal shell titles.
-* `HERDR_AUTO_TITLE_TRANSCRIPT=true`: Reads agent session transcripts to report live tasks.
-* `HERDR_AUTO_TITLE_MAX_LENGTH=50`: Bounds title width to 50 characters.
-* `HERDR_AUTO_TITLE_BRANCH_MAX=0`: Hides Git branches from tab headers (set to `12` to re-enable).
+### 2. Plugins
+
+#### A. Theme Picker (`herdr-theme-picker`)
+Installed directly from GitHub (`qintmb/herdr-theme-picker`):
+* Press **`prefix+t`** to open an interactive fuzzy picker powered by [terminalcolors.com](https://terminalcolors.com).
+* Maps selected themes directly to Herdr's UI chrome and live-syncs terminal cell palettes via OSC sequences.
+
+#### B. Auto Title (`herdr.auto-title`)
+Built and linked from local checkout (`~/Code/herdr-auto-title`):
+* Managed via `config.env` (`HERDR_AUTO_TITLE_BRANCH_MAX=0`, `HERDR_AUTO_TITLE_POSITION=false`).
+
+#### C. Usagebar (`usagebar`)
+Configured in `plugins/config/usagebar/config.toml` for agent quota notifications and threshold warnings.
 
 ### 3. Auto Title Plugin Linking
-The scripts build and link the standalone `herdr-auto-title` repository (located at `Z:\Personal\herdr-auto-title` or `~/Personal/herdr-auto-title`, or custom `-PluginDir`).
-The plugin contains Windows-specific fixes that recognize shell executables (`pwsh.exe`, `powershell.exe`, `cmd.exe`) and full path strings with spaces (e.g. `C:\Program Files\PowerShell\7\pwsh.exe`), preventing idle shells from generating ugly path titles.
+The scripts build and link the standalone `herdr-auto-title` repository (located at `~/Code/herdr-auto-title`, `~/Personal/herdr-auto-title`, `Z:\Personal\herdr-auto-title`, or custom `-PluginDir`).
+The plugin contains platform fixes that recognize shell executables and full path strings, preventing idle shells from generating ugly path titles.
 
 * **Linked Mode**: The installer uses `herdr plugin link` to register the local repository with Herdr. This ensures Herdr runs your local build and will never silently overwrite it with remote commits.
 

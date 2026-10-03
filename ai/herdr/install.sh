@@ -6,7 +6,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 XDG_CONFIG="${XDG_CONFIG_HOME:-$HOME/.config}"
 
 HERDR_CONFIG_DIR="$XDG_CONFIG/herdr"
-if [[ "$(uname -s)" == "Darwin" ]]; then
+if [[ "$(uname -s)" == "Darwin" && ! -d "$XDG_CONFIG/herdr" && -d "$HOME/Library/Application Support/herdr" ]]; then
     HERDR_CONFIG_DIR="$HOME/Library/Application Support/herdr"
 fi
 AUTOTITLE_CONFIG_DIR="$XDG_CONFIG/herdr-auto-title"
@@ -37,10 +37,28 @@ fi
 cp "$SOURCE_ENV" "$AUTOTITLE_CONFIG_DIR/config.env"
 green "Deployed config.env to $AUTOTITLE_CONFIG_DIR"
 
+cyan "Deploying plugin-specific configs..."
+if [[ -d "$SCRIPT_DIR/plugins/config" ]]; then
+    mkdir -p "$HERDR_CONFIG_DIR/plugins/config"
+    cp -R "$SCRIPT_DIR/plugins/config/"* "$HERDR_CONFIG_DIR/plugins/config/" 2>/dev/null || true
+    # Ensure herdr-auto-title plugin config points to its canonical config.env
+    mkdir -p "$HERDR_CONFIG_DIR/plugins/config/herdr.auto-title"
+    ln -sf "$AUTOTITLE_CONFIG_DIR/config.env" "$HERDR_CONFIG_DIR/plugins/config/herdr.auto-title/config.env"
+    green "Deployed plugin configurations"
+fi
+
 if command -v herdr >/dev/null 2>&1; then
+    # 1. Install herdr-theme-picker from GitHub if not already present
+    if ! herdr plugin list 2>/dev/null | grep -q "herdr-theme-picker"; then
+        cyan "Installing herdr-theme-picker from GitHub (qintmb/herdr-theme-picker)..."
+        herdr plugin install qintmb/herdr-theme-picker --yes || yellow "Warning: Failed to install herdr-theme-picker"
+    fi
+    herdr plugin enable herdr-theme-picker >/dev/null 2>&1 || true
+
+    # 2. Build and link herdr-auto-title if repository is found
     PLUGIN_DIR="${1:-}"
     if [[ -z "$PLUGIN_DIR" ]]; then
-        for cand in "$HOME/Personal/herdr-auto-title" "Z:/Personal/herdr-auto-title" "$SCRIPT_DIR/../../herdr-auto-title"; do
+        for cand in "$HOME/Code/herdr-auto-title" "$HOME/Personal/herdr-auto-title" "Z:/Personal/herdr-auto-title" "$SCRIPT_DIR/../../herdr-auto-title"; do
             if [[ -f "$cand/herdr-plugin.toml" ]]; then
                 PLUGIN_DIR="$(cd "$cand" && pwd)"
                 break
@@ -59,7 +77,7 @@ if command -v herdr >/dev/null 2>&1; then
         herdr plugin link "$PLUGIN_DIR"
         green "Linked plugin"
     else
-        yellow "herdr-auto-title repository not found. Pass path or clone to ~/Personal/herdr-auto-title."
+        yellow "herdr-auto-title repository not found. Pass path or clone to ~/Code/herdr-auto-title."
     fi
 
     cyan "Configuring agent integrations..."
