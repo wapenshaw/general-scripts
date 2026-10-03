@@ -47,6 +47,13 @@ if [[ -d "$SCRIPT_DIR/plugins/config" ]]; then
     green "Deployed plugin configurations"
 fi
 
+if ! command -v herdr >/dev/null 2>&1; then
+    if command -v brew >/dev/null 2>&1; then
+        cyan "Herdr binary not found. Installing via Homebrew..."
+        brew install herdr || yellow "Warning: Failed to install herdr via Homebrew"
+    fi
+fi
+
 if command -v herdr >/dev/null 2>&1; then
     # 1. Install herdr-theme-picker from GitHub if not already present
     if ! herdr plugin list 2>/dev/null | grep -q "herdr-theme-picker"; then
@@ -55,7 +62,7 @@ if command -v herdr >/dev/null 2>&1; then
     fi
     herdr plugin enable herdr-theme-picker >/dev/null 2>&1 || true
 
-    # 2. Build and link herdr-auto-title if repository is found
+    # 2. Build and link herdr-auto-title (auto-cloning if missing on a new machine)
     PLUGIN_DIR="${1:-}"
     if [[ -z "$PLUGIN_DIR" ]]; then
         for cand in "$HOME/Code/herdr-auto-title" "$HOME/Personal/herdr-auto-title" "Z:/Personal/herdr-auto-title" "$SCRIPT_DIR/../../herdr-auto-title"; do
@@ -64,6 +71,17 @@ if command -v herdr >/dev/null 2>&1; then
                 break
             fi
         done
+    fi
+
+    if [[ -z "$PLUGIN_DIR" ]]; then
+        cyan "Cloning herdr-auto-title repository to ~/Code/herdr-auto-title..."
+        mkdir -p "$HOME/Code"
+        if git clone https://github.com/wapenshaw/herdr-auto-title.git "$HOME/Code/herdr-auto-title"; then
+            PLUGIN_DIR="$HOME/Code/herdr-auto-title"
+            green "Cloned herdr-auto-title"
+        else
+            yellow "Warning: Failed to clone herdr-auto-title repository"
+        fi
     fi
 
     if [[ -n "$PLUGIN_DIR" && -d "$PLUGIN_DIR" ]]; then

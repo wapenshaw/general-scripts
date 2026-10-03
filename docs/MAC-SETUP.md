@@ -125,10 +125,16 @@ Installs all curated applications defined in `macos/Brewfile`:
 * **Input Configurations**:
   - Deploys `~/.config/linearmouse/linearmouse.json`.
   - Deploys `~/.config/karabiner/karabiner.json`.
-* **AI Tool Configurations**:
+* **AI Tool & Agent Client Configurations**:
   - Deploys Claude Code settings with `"SHELL": "/bin/zsh"` and statusline script.
   - Deploys Codex `config.toml`.
-  - Runs Herdr and OpenCode configuration installers.
+  - Runs OpenCode configuration installer.
+* **Herdr Workspace Multiplexer & Plugins**:
+  - Deploys `~/.config/herdr/config.toml` (Catppuccin theme, symbol status indicators, `prefix+t` theme picker keybind).
+  - Deploys `~/.config/herdr-auto-title/config.env` and plugin configurations (`usagebar`, symlinks).
+  - Installs GitHub plugin `qintmb/herdr-theme-picker`.
+  - Auto-clones `https://github.com/wapenshaw/herdr-auto-title.git` to `~/Code/herdr-auto-title`, builds the Go binary, and links it via `herdr plugin link`.
+  - Configures agent integration lifecycle hooks (`antigravity-cli`, `claude`, `codex`, `copilot`, `opencode`).
 
 ```bash
 ./macos/install.zsh --stage=4
