@@ -4,16 +4,16 @@ macOS and Linux use **zsh**. Windows uses **PowerShell 7 + Windows Terminal**. F
 
 | OS | First-run | Later updates | Shell config |
 |----|-----------|---------------|--------------|
-| **macOS** | [`macos/install.zsh`](./macos/install.zsh) — installs Homebrew if needed, then CLI tools + rustup, then zsh | [`mac-update.zsh`](./mac-update.zsh) | [`zsh/install.sh --base`](./zsh/install.sh) |
+| **macOS** | [`macos/install.zsh`](./macos/install.zsh) — 4-stage workstation setup (env, runtimes, apps, data; see [`docs/MAC-SETUP.md`](./docs/MAC-SETUP.md)) | [`mac-update.zsh`](./mac-update.zsh) | [`zsh/install.sh --base`](./zsh/install.sh) |
 | **Fedora / Ubuntu / WSL** | [`linux/install.sh`](./linux/install.sh) — `dnf` or `apt-get`, official fallbacks, then zsh | re-run `linux/install.sh --update` | [`zsh/install.sh`](./zsh/install.sh) (personal by default) |
 | **Windows 11** | [`powershell/tools/Install-Workstation.ps1`](./powershell/tools/Install-Workstation.ps1) — App Installer/winget + profile | [`Update-WinGetPackages.ps1`](./powershell/tools/Update-WinGetPackages.ps1) | [`Install-Profile.ps1`](./powershell/profile/Install-Profile.ps1) |
 
 ```bash
-# macOS
-./macos/install.zsh                 # personal (default)
-./macos/install.zsh --assurant      # Assurant/Astra modules
-./mac-update.zsh                    # later Homebrew / rustup / uv updates
-./mac-update.zsh --bootstrap        # install Homebrew if missing + curated tools
+# macOS — full fresh setup or staged (see docs/MAC-SETUP.md)
+./macos/install.zsh                 # all 4 stages (env, runtimes, apps, data)
+./macos/install.zsh --stage=env     # stage 1: brew, zsh, fonts, defaults
+./macos/install.zsh --stage=apps    # stage 3: brew apps and casks
+./mac-update.zsh                    # ongoing routine maintenance
 
 # Fedora, Ubuntu, Debian, WSL
 ./linux/install.sh                  # personal (default)

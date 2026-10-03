@@ -1,185 +1,137 @@
-#!/bin/zsh
-# macos/install.zsh — first-run Mac bootstrap
+#!/usr/bin/env zsh
+# macos/install.zsh — Stage-wise macOS Setup & Bootstrap Orchestrator
 #
-# Installs Homebrew if it is missing, then the curated CLI tools (via
-# mac-update.zsh --bootstrap), then deploys the zsh config.
+# Recreates this exact Mac setup from scratch across 4 clean stages:
+#   Stage 1: Base Environment & Shell (Xcode CLI, Homebrew, Zsh, Fonts, macOS Defaults)
+#   Stage 2: Developer Runtimes (Node/NVM, Python/uv, Rust/rustup, Bun, Go)
+#   Stage 3: Applications & Packages (Brewfile CLI tools, Taps, GUI Casks, VS Code extensions)
+#   Stage 4: App Configurations & Data (Git, SSH, Ghostty, LinearMouse, Karabiner, AI Configs)
 #
 # Usage:
-#   ./macos/install.zsh              # Homebrew + tools + zsh (personal profile)
-#   ./macos/install.zsh --assurant   # same, with Assurant/Astra modules
-#   ./macos/install.zsh --dry-run    # print mutating commands
-#   ./macos/install.zsh --skip-zsh   # tools only
-#   ./macos/install.zsh --skip-tools # zsh config only
+#   ./macos/install.zsh                  # Run all stages (complete fresh setup)
+#   ./macos/install.zsh --stage=1        # Run Stage 1 only (env / zsh / fonts)
+#   ./macos/install.zsh --stage=2        # Run Stage 2 only (runtimes: node, python, rust)
+#   ./macos/install.zsh --stage=3        # Run Stage 3 only (apps / brew bundle)
+#   ./macos/install.zsh --stage=4        # Run Stage 4 only (data / configs / ai)
+#   ./macos/install.zsh --from=2         # Resume from Stage 2 through 4
+#   ./macos/install.zsh --assurant       # Enable Assurant / work modules
+#   ./macos/install.zsh --dry-run        # Print commands without modifying system
 #
-# Safe to re-run. A missing or failed package never aborts the rest.
-
-set -u
-set -o pipefail
-
-autoload -U colors && colors
+# Safe to re-run anytime. All stages are idempotent.
+set -euo pipefail
 
 SCRIPT_PATH="${0:A}"
 REPO="$(cd "$(dirname "$SCRIPT_PATH")/.." && pwd)"
 
-ASSURANT=0
-DRY_RUN=false
-SKIP_ZSH=0
-SKIP_TOOLS=0
-STARSHIP_THEME="${ZSH_STARSHIP_THEME:-}"
+source "$REPO/macos/lib/common.zsh"
+
+if [[ "$(uname -s)" != "Darwin" ]]; then
+    failure "This bootstrap installer is designed specifically for macOS."
+    failure "On Linux use ./linux/install.sh; on Windows follow docs/FRESH-INSTALL.md."
+    exit 2
+fi
+
+# Options & defaults
+export DRY_RUN=false
+export ASSURANT=0
+SELECTED_STAGE="all"
+START_FROM=1
 
 usage() {
-	sed -n '2,14p' "$SCRIPT_PATH"
+    sed -n '3,18p' "$SCRIPT_PATH"
 }
 
 for arg in "$@"; do
-	case "$arg" in
-	--assurant) ASSURANT=1 ;;
-	--base) ASSURANT=0 ;;
-	--dry-run) DRY_RUN=true ;;
-	--skip-zsh) SKIP_ZSH=1 ;;
-	--skip-tools) SKIP_TOOLS=1 ;;
-	--theme)
-		print -u2 "Pass the theme as --theme=NAME or ZSH_STARSHIP_THEME=NAME"
-		exit 2
-		;;
-	--theme=*)
-		STARSHIP_THEME="${arg#--theme=}"
-		;;
-	-h | --help)
-		usage
-		exit 0
-		;;
-	*)
-		print -u2 "Unknown argument: $arg"
-		usage
-		exit 2
-		;;
-	esac
+    case "$arg" in
+    --dry-run)
+        export DRY_RUN=true
+        ;;
+    --assurant)
+        export ASSURANT=1
+        ;;
+    --base)
+        export ASSURANT=0
+        ;;
+    --all)
+        SELECTED_STAGE="all"
+        ;;
+    --stage=*)
+        SELECTED_STAGE="${arg#--stage=}"
+        ;;
+    --stage)
+        print -u2 "Pass stage as --stage=1, --stage=env, etc."
+        exit 2
+        ;;
+    --from=*)
+        START_FROM="${arg#--from=}"
+        ;;
+    -h|--help)
+        usage
+        exit 0
+        ;;
+    *)
+        failure "Unknown argument: $arg"
+        usage
+        exit 2
+        ;;
+    esac
 done
 
-if [[ "$(uname -s)" != "Darwin" ]]; then
-	print -u2 "This installer is for macOS. On Linux use ./linux/install.sh"
-	exit 2
-fi
+# Normalize stage names
+case "$SELECTED_STAGE" in
+    1|env|environment)   SELECTED_STAGE=1 ;;
+    2|runtime|runtimes)  SELECTED_STAGE=2 ;;
+    3|app|apps|brew)     SELECTED_STAGE=3 ;;
+    4|data|config|configs) SELECTED_STAGE=4 ;;
+    all)                 SELECTED_STAGE="all" ;;
+    *)
+        failure "Invalid stage '$SELECTED_STAGE'. Valid options: 1 (env), 2 (runtimes), 3 (apps), 4 (data), all."
+        exit 2
+        ;;
+esac
 
-info() {
-	print -P "%F{cyan}==>%f $*"
-}
-
-success() {
-	print -P "%F{green}✓%f $*"
-}
-
-warning() {
-	print -P "%F{yellow}Warning:%f $*"
-}
-
-section() {
-	print
-	print -P "%B%F{blue}--- $* ---%f%b"
-	print
-}
-
-verify_zsh_layout() {
-	local target="$HOME/.zsh"
-	local name path
-
-	[[ -d "$target" ]] || {
-		warning "Canonical zsh directory is missing: $target"
-		return 1
-	}
-
-	for name in .zshenv .zprofile .zshrc; do
-		path="$HOME/$name"
-		if [[ ! -L "$path" || "$(readlink "$path")" != "$target/$name" ]]; then
-			warning "$path is not linked to $target/$name"
-			return 1
-		fi
-	done
-
-	for name in zsh starship.toml; do
-		path="$HOME/.config/$name"
-		if [[ ! -L "$path" || "$(readlink "$path")" != "$target/$name" ]]; then
-			warning "$path is not linked to $target/$name"
-			return 1
-		fi
-	done
-}
-
-section "macOS first-run bootstrap"
-
+section "macOS Workstation Bootstrap"
 info "Repo:     $REPO"
 info "Machine:  $(scutil --get ComputerName 2>/dev/null || hostname)"
-info "macOS:    $(sw_vers -productVersion)"
-info "Arch:     $(uname -m)"
-info "Profile:  $([[ "$ASSURANT" -eq 1 ]] && print assurant || print personal)"
+info "macOS:    $(sw_vers -productVersion) ($(uname -m))"
+info "Profile:  $([[ "$ASSURANT" -eq 1 ]] && print 'Assurant / Work' || print 'Personal')"
+info "Target:   $([[ "$SELECTED_STAGE" == "all" ]] && print "Stages $START_FROM through 4" || print "Stage $SELECTED_STAGE only")"
 
 if [[ "$DRY_RUN" == true ]]; then
-	warning "Dry-run: mutating commands will only be printed"
+    warning "Dry-run mode enabled: commands will be printed but not executed."
 fi
 
-if [[ "$SKIP_TOOLS" -eq 0 ]]; then
-	section "Homebrew + developer tools"
+run_stage() {
+    local num="$1"
+    local script="$REPO/macos/stages/$2"
+    if [[ ! -f "$script" ]]; then
+        failure "Stage script not found: $script"
+        exit 1
+    fi
+    zsh "$script"
+}
 
-	typeset -a UPDATE_ARGS
-	UPDATE_ARGS=(--bootstrap)
-	[[ "$DRY_RUN" == true ]] && UPDATE_ARGS+=(--dry-run)
-
-	if [[ -x "$REPO/mac-update.zsh" ]]; then
-		if "$REPO/mac-update.zsh" "${UPDATE_ARGS[@]}"; then
-			success "Tool bootstrap finished"
-		else
-			warning "mac-update.zsh exited nonzero; continuing with zsh config"
-		fi
-	else
-		warning "mac-update.zsh is missing at $REPO/mac-update.zsh"
-	fi
-else
-	info "Skipping Homebrew / tool bootstrap (--skip-tools)"
+# Execution planner
+if [[ "$SELECTED_STAGE" == "1" || ("$SELECTED_STAGE" == "all" && "$START_FROM" -le 1) ]]; then
+    run_stage 1 "01-environment.zsh"
 fi
 
-if [[ "$SKIP_ZSH" -eq 0 ]]; then
-	section "zsh config"
-
-	typeset -a ZSH_ARGS
-	if [[ "$ASSURANT" -eq 1 ]]; then
-		ZSH_ARGS=(--assurant)
-	else
-		ZSH_ARGS=(--base)
-	fi
-
-	if [[ -n "$STARSHIP_THEME" ]]; then
-		export ZSH_STARSHIP_THEME="$STARSHIP_THEME"
-	elif [[ ! -t 0 || ! -t 1 ]]; then
-		export ZSH_STARSHIP_THEME="${ZSH_STARSHIP_THEME:-nova}"
-	fi
-
-	if [[ "$DRY_RUN" == true ]]; then
-		print -n "  "
-		printf "%q " "$REPO/zsh/install.sh" "${ZSH_ARGS[@]}"
-		print
-	elif [[ -x "$REPO/zsh/install.sh" || -f "$REPO/zsh/install.sh" ]]; then
-		if bash "$REPO/zsh/install.sh" "${ZSH_ARGS[@]}"; then
-			if verify_zsh_layout; then
-				success "zsh config deployed with ~/.zsh as the single source of truth"
-			else
-				warning "zsh config was copied, but the compatibility links are incomplete"
-				exit 1
-			fi
-		else
-			warning "zsh/install.sh exited nonzero"
-			exit 1
-		fi
-	else
-		warning "zsh/install.sh is missing"
-		exit 1
-	fi
-else
-	info "Skipping zsh config (--skip-zsh)"
+if [[ "$SELECTED_STAGE" == "2" || ("$SELECTED_STAGE" == "all" && "$START_FROM" -le 2) ]]; then
+    run_stage 2 "02-runtimes.zsh"
 fi
 
+if [[ "$SELECTED_STAGE" == "3" || ("$SELECTED_STAGE" == "all" && "$START_FROM" -le 3) ]]; then
+    run_stage 3 "03-apps.zsh"
+fi
+
+if [[ "$SELECTED_STAGE" == "4" || ("$SELECTED_STAGE" == "all" && "$START_FROM" -le 4) ]]; then
+    run_stage 4 "04-data.zsh"
+fi
+
+section "Bootstrap Complete"
+success "All selected macOS setup stages completed successfully!"
+print "Next steps:"
+print "  1. Reload your shell:     exec zsh -l"
+print "  2. Authenticate GitHub:   gh auth login"
+print "  3. Routine maintenance:   ./mac-update.zsh"
 print
-success "macOS bootstrap finished"
-print "Open a new terminal or run:  exec zsh -l"
-print "Later updates:  $REPO/mac-update.zsh"
-print "Re-sync zsh:    $REPO/zsh/install.sh --base"
