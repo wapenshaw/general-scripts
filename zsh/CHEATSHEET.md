@@ -270,16 +270,15 @@ Plugins live in `~/.zsh/plugins/`. New ones auto-clone on next shell start if ad
 
 ---
 
-## mise (tool version manager)
+## nvm (Node version manager)
 
 | Command | Action |
 |---------|--------|
-| `mise list` | Show installed tools and versions |
-| `mise use node@lts` | Pin Node LTS for current directory |
-| `mise use -g python@3.14` | Set global default |
-| `mise ls-remote node` | List all available Node versions |
-| `mise install` | Install versions declared in `.mise.toml` |
-| `mise exec -- <cmd>` | Run command with mise environment |
+| `nvm ls` | Show installed Node versions |
+| `nvm install --lts` | Install latest LTS Node version |
+| `nvm use <version>` | Switch active Node version |
+| `nvm alias default <version>` | Set default Node version |
+| `node -v` / `pnpm -v` | Verify active Node/pnpm |
 
 ---
 
@@ -305,7 +304,8 @@ Auto-loads/unloads env vars when you enter/leave a directory with an `.envrc`.
 | `~/.zsh/exports.zsh` | Env vars, PATH, shell options, WORDCHARS |
 | `~/.zsh/fzf.zsh` | fzf UI and default commands |
 | `~/.zsh/functions.zsh` | Platform, Azure, k8s, git, navigation helpers |
-| `~/.zsh/tools.zsh` | mise, direnv, zoxide |
+| `~/.zsh/nvm.zsh` | Lazy-loaded NVM wrapper (node, npm, npx, pnpm) |
+| `~/.zsh/tools.zsh` | direnv, zoxide |
 | `~/.zsh/plugins.zsh` | Add/remove zsh plugins |
 | `~/.zsh/prompt.zsh` | Starship init |
 | `~/.zsh/starship.toml` | Selected prompt theme (copied from `starship/<name>.toml` at install time) |

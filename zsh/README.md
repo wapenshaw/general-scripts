@@ -2,7 +2,7 @@
 
 Modular personal zsh setup. The repo is copied into `~/.zsh/` on install. Linux uses a managed system-zshenv block; macOS uses compatibility links.
 
-**Stack:** starship · eza · bat · fd · ripgrep · fzf · zoxide · mise · direnv · nvim · lf · uv · ssh-agent (work)
+**Stack:** starship · eza · bat · fd · ripgrep · fzf · zoxide · direnv · nvim · lf · uv · bun · ssh-agent (work)
 
 See [CHEATSHEET.md](./CHEATSHEET.md) for the full alias and keybinding reference.
 
@@ -82,30 +82,13 @@ On Linux, zsh reads the system file on every invocation. On macOS, the compatibi
 
 These are decisions baked into the config that aren't obvious from reading the file names. If something doesn't match your workflow, edit the relevant file — every choice has a clear override point.
 
-### `mise` for Node (and everything except Python)
+### `nvm` for Node
 
-Use [mise](https://mise.jdx.dev/) for Node version management:
+Node version management is handled via [NVM](https://github.com/nvm-sh/nvm) (`~/.nvm`) and lazy-loaded on demand by `nvm.zsh`. Deferring startup overhead keeps shell launch instantaneous until `node`, `npm`, `npx`, or `pnpm` is first invoked.
 
-```bash
-# In any project directory
-echo 'node = "20"' > .mise.toml
-mise use node@20
-mise install
-```
+### `uv` for Python
 
-Mise handles Node, Ruby, Go, Java, and more from a single `~/.config/mise/config.toml` or per-project `.mise.toml`. The zsh environment initializes mise for both interactive and non-interactive shells; `tools.zsh` adds directory-change hooks for interactive shells. It's a single binary shim — no nvm or other Node manager is needed.
-
-### uv prevails over mise for Python
-
-Both `mise` and `uv` are in the config. They don't conflict, but the **division of labor is**:
-
-- **`mise` for everything except Python** — Node, Ruby, Go, etc. via `~/.config/mise/config.toml` and per-project `.mise.toml`.
-- **`uv` for Python exclusively** — `uv` is purpose-built for Python, faster than `pyenv`/`python-build`, and handles venvs, package installs, lockfiles, and Python version management in one tool. It uses `uv.lock` and `pyproject.toml` instead of `requirements.txt`.
-
-If you let mise manage Python too, you'll get duplicate Python installs and `python` resolving to whichever loaded first. Either:
-
-- Don't put `python = "..."` in your `mise.toml` — let `uv` handle Python versions via `uv python install 3.12` or `requires-python` in `pyproject.toml`.
-- Or tell mise to skip Python entirely: in `~/.config/mise/config.toml`, set `[env]` with `MISE_PYTHON=0` or use `mise settings set python_compile false`.
+`uv` is used for Python exclusively — `uv` is purpose-built for Python, faster than `pyenv`/`python-build`, and handles venvs, package installs, lockfiles, and Python version management in one tool. It uses `uv.lock` and `pyproject.toml` instead of `requirements.txt`.
 
 The `uv.zsh` module provides `uvdev`, `uvci`, `uvtst` shortcuts for the common work flows (`uv lock --upgrade && uv sync --dev` etc.).
 
@@ -129,9 +112,10 @@ The runtime path is intentionally explicit so shells and applications cannot sil
 | `fzf.zsh` | fzf UI, fd backend, bat preview |
 | `functions.zsh` | Platform helpers, git, navigation helpers (general) |
 | `history.zsh` | History options + XDG state path |
+| `nvm.zsh` | Lazy-loaded NVM wrapper (node, npm, npx, pnpm) |
 | `plugins.zsh` | Plugin manager + auto-install |
 | `prompt.zsh` | Starship init |
-| `tools.zsh` | mise, direnv, zoxide |
+| `tools.zsh` | direnv, zoxide |
 | `uv.zsh` | Assurant-only Astra/Common Automation uvdev / uvci / uvtst helpers |
 | `starship.toml` | (no longer in zsh/ — selected at install time from the repo-root `starship/` folder; see [Starship themes](#starship-themes) below) |
 | `work/` | Assurant/Astra/Common Automation modules (aliases, functions, exports, uv, ssh-agent, az.env template) |
@@ -192,14 +176,14 @@ Auto-cloned on first shell start via `_zplugin_load`. Update all with `zplugin-u
 
 ## Tool install
 
-This config uses: `zsh` `eza` `bat` `fd` `ripgrep` `fzf` `zoxide` `starship` `mise` `direnv` `neovim` `lf` `uv` `bun` (+ OpenSSH `ssh-agent` for work mode).
+This config uses: `zsh` `eza` `bat` `fd` `ripgrep` `fzf` `zoxide` `starship` `direnv` `neovim` `lf` `uv` `bun` (+ OpenSSH `ssh-agent` for work mode).
 
 ### macOS (Homebrew)
 
 Prefer `./macos/install.zsh` from the repo root (installs Homebrew if needed). Manual equivalent:
 
 ```bash
-brew install eza bat fd ripgrep fzf zoxide starship mise direnv neovim lf uv bun
+brew install eza bat fd ripgrep fzf zoxide starship direnv neovim lf uv bun
 ```
 
 The installed `.zprofile` initializes Homebrew for login shells. The base config also uses macOS `open`, `pbcopy`, and `pbpaste` for platform integration.
@@ -219,9 +203,8 @@ case ":$PATH:" in
   *) export PATH="$HOME/.local/bin:$PATH" ;;
 esac
 
-# Starship, mise, uv install to ~/.local/bin by default — no sudo
+# Starship, uv install to ~/.local/bin by default — no sudo
 curl -sS https://starship.rs/install.sh | sh
-curl https://mise.run | sh
 curl -LsSf https://astral.sh/uv/install.sh | sh
 
 # lf — Fedora doesn't ship it; use the Go install (one-time, needs Go)
@@ -253,9 +236,8 @@ esac
 ln -sf "$(command -v batcat)" ~/.local/bin/bat
 ln -sf "$(command -v fdfind)" ~/.local/bin/fd
 
-# Starship, mise, uv install to ~/.local/bin
+# Starship, uv install to ~/.local/bin
 curl -sS https://starship.rs/install.sh | sh
-curl https://mise.run | sh
 curl -LsSf https://astral.sh/uv/install.sh | sh
 
 # zoxide
@@ -275,7 +257,7 @@ Add `export PATH="$HOME/.local/bin:$HOME/go/bin:$PATH"` to your environment so t
 
 - **`~/.local/bin` does not exist on a fresh WSL install.** The rad-zsh README's `ln -s $(which batcat) ~/.local/bin/bat` fails silently if you skip the `mkdir -p`. The commands above always create it first.
 - **`~/.local/bin` is not always in `$PATH`** on fresh WSL. The `case` block above adds it for the current session; the export at the end of each section makes it persistent.
-- **starship/mise install to `~/.local/bin`**, which won't be on PATH until you put it there. New shells will work after that one-time export.
+- **starship/uv install to `~/.local/bin`**, which won't be on PATH until you put it there. New shells will work after that one-time export.
 - **Network access in WSL** — these installers all use `curl` over HTTPS. Works through WSL's NAT; no special config needed.
 - **Avoid `curl ... | sh` from `main` branches.** If you want reproducibility, pin to a tag (e.g. `https://github.com/ajeetdsouza/zoxide/releases/latest/download/install.sh`). The commands above use the official installer scripts which are stable enough for personal use.
 - **`fd-find` vs `fdfind` on Ubuntu** — the package is `fd-find`, the binary is `fdfind`. Fedora's package is `fd-find` but the binary is `fd`. Different naming, same problem solved differently.
@@ -360,7 +342,7 @@ Then from PowerShell: `wsl --shutdown`, reopen. Note: this also disables `explor
 Run this in a fresh `zsh -l` to confirm everything is wired up:
 
 ```bash
-for cmd in zsh eza bat fd rg fzf zoxide starship mise direnv nvim lf uv bun; do
+for cmd in zsh eza bat fd rg fzf zoxide starship direnv nvim lf uv bun; do
   command -v "$cmd" >/dev/null 2>&1 && echo "  ✓ $cmd" || echo "  ✗ $cmd"
 done
 

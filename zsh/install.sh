@@ -565,7 +565,7 @@ echo "  To keep the personal profile:       ./install.sh --base"
 echo "  To remove everything:               ./install.sh --uninstall"
 echo ""
 echo "  Recommended tools to install:"
-echo "    eza bat fd-find ripgrep fzf zoxide starship mise direnv lf nvim"
+echo "    eza bat fd-find ripgrep fzf zoxide starship direnv lf nvim"
 
 if [[ "$ASSURANT" -eq 1 ]]; then
   echo ""

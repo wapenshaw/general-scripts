@@ -25,7 +25,17 @@ if [[ "${ZSH_ASSURANT:-0}" == "1" ]]; then
   unset _f
 fi
 
+# Grok CLI
+if [[ -d "$HOME/.grok" ]]; then
+  export PATH="$HOME/.grok/bin:$PATH"
+  fpath=(~/.grok/completions/zsh $fpath)
+fi
+
+# oh-my-opencode-slim background subagents
+export OPENCODE_EXPERIMENTAL_BACKGROUND_SUBAGENTS=true
+
 source "$ZDOTDIR/prompt.zsh"    # starship after all plugins
 
 # Bun completions
 [ -s "$HOME/.bun/_bun" ] && source "$HOME/.bun/_bun"
+

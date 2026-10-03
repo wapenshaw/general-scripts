@@ -12,7 +12,7 @@ macOS and Linux use **zsh**. Windows uses **PowerShell 7 + Windows Terminal**. F
 # macOS
 ./macos/install.zsh                 # personal (default)
 ./macos/install.zsh --assurant      # Assurant/Astra modules
-./mac-update.zsh                    # later Homebrew / mise / rustup / uv updates
+./mac-update.zsh                    # later Homebrew / rustup / uv updates
 ./mac-update.zsh --bootstrap        # install Homebrew if missing + curated tools
 
 # Fedora, Ubuntu, Debian, WSL
