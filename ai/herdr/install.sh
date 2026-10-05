@@ -57,8 +57,17 @@ fi
 if command -v herdr >/dev/null 2>&1; then
     # 1. Install herdr-theme-picker from GitHub if not already present
     if ! herdr plugin list 2>/dev/null | grep -q "herdr-theme-picker"; then
-        cyan "Installing herdr-theme-picker from GitHub (qintmb/herdr-theme-picker)..."
-        herdr plugin install qintmb/herdr-theme-picker --yes || yellow "Warning: Failed to install herdr-theme-picker"
+        # The fork carries the Windows port, which is not in
+        # qintmb/herdr-theme-picker or the fork's main. Switch the default ref to
+        # main once the port is merged. (Homebrew on PATH for a server started
+        # over SSH is handled by zsh/zsh/.zshenv, not by the plugin.)
+        THEME_REPO="${HERDR_THEME_PICKER_REPO:-wapenshaw/herdr-theme-picker}"
+        THEME_REF="${HERDR_THEME_PICKER_REF:-go-side-by-side}"
+        cyan "Installing herdr-theme-picker from GitHub ($THEME_REPO @ $THEME_REF)..."
+        if ! herdr plugin install "$THEME_REPO" --ref "$THEME_REF" --yes; then
+            yellow "Ref $THEME_REF failed; retrying the default branch of $THEME_REPO..."
+            herdr plugin install "$THEME_REPO" --yes || yellow "Warning: Failed to install herdr-theme-picker"
+        fi
     fi
     herdr plugin enable herdr-theme-picker >/dev/null 2>&1 || true
 

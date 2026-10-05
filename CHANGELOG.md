@@ -2,6 +2,21 @@
 
 Notable changes to this personal workstation toolbox. Newest first.
 
+## 2026-10-05
+
+- Fixed "fzf is not installed" in Herdr plugins after a reboot: a server started
+  over SSH by a `herdr --remote` client runs a non-interactive `zsh -c`, which
+  never read the Homebrew setup that lived only in `.zprofile`. Homebrew
+  `shellenv` (Apple Silicon, Intel, Linuxbrew; guarded) now loads from
+  `zsh/zsh/.zshenv`, `.zprofile` re-applies it after macOS `path_helper`, and
+  `zsh/install.sh` verifies a minimal-environment `zsh -c` can find `brew`.
+- `zsh/install.sh` no longer needs bash 4: it failed on macOS's stock bash 3.2
+  (`local -A`), which is what a fresh Mac runs before Homebrew bash exists.
+- The Herdr installer now installs the theme picker from `wapenshaw/herdr-theme-picker`
+  (ref `go-side-by-side`, overridable via `HERDR_THEME_PICKER_REPO`/`_REF`) to get
+  the Windows port. The plugin itself no longer guesses tool directories; the
+  `.zshenv` change above is what keeps `fzf` visible.
+
 ## 2026-09-30
 
 - Fixed Grok's Windows status-line startup by generating a native `.cmd` launcher

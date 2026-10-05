@@ -53,7 +53,7 @@ Deploys to `%APPDATA%\herdr\config.toml` (Windows) or `~/.config/herdr/config.to
 ### 2. Plugins
 
 #### A. Theme Picker (`herdr-theme-picker`)
-Installed directly from GitHub (`qintmb/herdr-theme-picker`):
+Installed directly from GitHub (`wapenshaw/herdr-theme-picker`, ref `go-side-by-side`; override with `HERDR_THEME_PICKER_REPO` / `HERDR_THEME_PICKER_REF`). The fork adds the Windows port. Tools such as `fzf` are found because `zsh/zsh/.zshenv` puts Homebrew on `PATH` for non-interactive shells, so a server started over SSH still sees them:
 * Press **`prefix+t`** to open an interactive fuzzy picker powered by [terminalcolors.com](https://terminalcolors.com).
 * Maps selected themes directly to Herdr's UI chrome and live-syncs terminal cell palettes via OSC sequences.
 

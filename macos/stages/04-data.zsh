@@ -125,7 +125,7 @@ fi
 info "Deploying Herdr configuration and plugins (theme-picker, auto-title)..."
 if [[ -x "$REPO/ai/herdr/install.sh" ]]; then
     if [[ "${DRY_RUN:-false}" == true ]]; then
-        print_dry "$REPO/ai/herdr/install.sh (deploys config.toml, instals qintmb/herdr-theme-picker, links auto-title, sets agent hooks)"
+        print_dry "$REPO/ai/herdr/install.sh (deploys config.toml, installs wapenshaw/herdr-theme-picker, links auto-title, sets agent hooks)"
     else
         bash "$REPO/ai/herdr/install.sh" || warning "Herdr install script exited with warnings"
         success "Herdr workspace manager, plugins, and agent integrations configured"
