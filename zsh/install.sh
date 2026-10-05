@@ -272,30 +272,33 @@ copy_repo() {
   files=$(git -C "$REPO" ls-files zsh/)
 
   # Build the set of paths we expect to exist after the copy.
-  local -A expected
+  # Newline-separated list, not an associative array: macOS ships bash 3.2, and a
+  # fresh Mac has no Homebrew bash yet when the bootstrap runs this script.
+  local expected=""
   while IFS= read -r src; do
     local rel="${src#zsh/}"
     should_exclude "$rel" && continue
     [[ -f "$REPO/$src" ]] || continue
-    expected["$rel"]=1
+    expected+="$rel"$'\n'
   done <<< "$files"
 
   # Keep newly added local modules available before their first commit.
-  [[ -f "$SOURCE_DIR/nvm.zsh" ]] && expected["nvm.zsh"]=1
+  [[ -f "$SOURCE_DIR/nvm.zsh" ]] && expected+=$'nvm.zsh\n'
 
   # CHEATSHEET.md contains Assurant commands; personal profile stays clean.
-  [[ "$ASSURANT" -eq 1 && -f "$REPO/CHEATSHEET.md" ]] && expected["CHEATSHEET.md"]=1
+  [[ "$ASSURANT" -eq 1 && -f "$REPO/CHEATSHEET.md" ]] && expected+=$'CHEATSHEET.md\n'
 
   # Copy each tracked file in.
   local copied=0
-  for rel in "${!expected[@]}"; do
+  while IFS= read -r rel; do
+    [[ -n "$rel" ]] || continue
     local dst="$TARGET_DIR/$rel"
     mkdir -p "$(dirname "$dst")"
     local src_path="$REPO/zsh/$rel"
     [[ "$rel" == "CHEATSHEET.md" ]] && src_path="$REPO/$rel"
     cp "$src_path" "$dst"
     copied=$((copied + 1))
-  done
+  done <<< "$expected"
 
   # Remove files that USED to be tracked but no longer are. Walk the
   # installed tree and delete any regular file that isn't in $expected
@@ -311,7 +314,7 @@ copy_repo() {
       # Skip directories
       [[ -d "$f" ]] && continue
       # If it's in the expected set, keep it
-      [[ -n "${expected[$rel]:-}" ]] && continue
+      printf '%s' "$expected" | grep -qxF -- "$rel" && continue
       rm "$f"
       removed=$((removed + 1))
     done < <(find "$TARGET_DIR" -type f -print0 2>/dev/null)
@@ -536,6 +539,26 @@ if [[ "$ASSURANT" -eq 1 ]]; then
 else
   PROFILE="personal"
 fi
+
+# ---- post-install check ---------------------------------------------------
+# Non-interactive shells (SSH commands, launchd, a Herdr server started by a
+# remote client) read only .zshenv. If Homebrew is missing there, tools such as
+# fzf are "not installed" for plugins. Verify with a minimal environment.
+check_noninteractive_brew() {
+  local brew_bin="" cand seen
+  for cand in /opt/homebrew/bin/brew /usr/local/bin/brew /home/linuxbrew/.linuxbrew/bin/brew; do
+    [[ -x "$cand" ]] && { brew_bin="$cand"; break; }
+  done
+  [[ -n "$brew_bin" ]] || return 0
+  seen="$(env -i HOME="$HOME" PATH=/usr/bin:/bin:/usr/sbin:/sbin zsh -c 'command -v brew' 2>/dev/null || true)"
+  if [[ "$seen" == "$brew_bin" ]]; then
+    green "Non-interactive zsh sees Homebrew ($brew_bin)"
+  else
+    yellow "Non-interactive zsh cannot find Homebrew. Services started over SSH or by launchd"
+    yellow "(e.g. a Herdr server) will miss brew tools such as fzf. Check $TARGET_DIR/.zshenv."
+  fi
+}
+check_noninteractive_brew
 
 echo ""
 bold "==> Done"

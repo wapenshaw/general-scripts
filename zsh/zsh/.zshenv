@@ -6,6 +6,15 @@
 export ZDOTDIR="$HOME/.zsh"
 export skip_global_compinit=1
 
+# Homebrew — must be here (read by EVERY zsh, including non-interactive ones),
+# not only in .zprofile/.zshrc. A Herdr server started by a `herdr --remote`
+# client over SSH runs `zsh -c` and would otherwise have no Homebrew on PATH, so
+# plugins fail with "fzf is not installed". Guarded: no-op if brew is absent.
+for _brew in /opt/homebrew/bin/brew /usr/local/bin/brew /home/linuxbrew/.linuxbrew/bin/brew; do
+  if [ -x "$_brew" ]; then eval "$("$_brew" shellenv)"; break; fi
+done
+unset _brew
+
 # XDG Base Directories — centralizes config/cache/data/state locations.
 # Defaults match the freedesktop spec; users can override by exporting before
 # the shell starts (e.g. in /etc/environment).

@@ -72,8 +72,8 @@ On Linux, zsh reads the system file on every invocation. On macOS, the compatibi
 ### Sourcing order
 
 1. Managed zshenv bootstrap (system zshenv on Linux, `~/.zshenv` on macOS) — sets `ZDOTDIR`
-2. `~/.zsh/.zshenv` — sets `XDG_*_HOME`, `STARSHIP_CONFIG`, sources Assurant env when enabled
-3. `~/.zsh/.zprofile` (login shells) — Homebrew initialization on macOS; Assurant-only SSH agent
+2. `~/.zsh/.zshenv` — initializes Homebrew (every zsh, including non-interactive), sets `XDG_*_HOME`, `STARSHIP_CONFIG`, sources Assurant env when enabled
+3. `~/.zsh/.zprofile` (login shells) — re-applies Homebrew after macOS `path_helper`; Assurant-only SSH agent
 4. `~/.zsh/.zshrc` — sources every module in order, then starship
 
 ---
@@ -102,8 +102,8 @@ The runtime path is intentionally explicit so shells and applications cannot sil
 
 | File | Owns |
 |------|------|
-| `.zshenv` | XDG dirs, Starship path, failsafe Cargo PATH (only if `~/.cargo/bin/cargo` exists), Assurant env |
-| `.zprofile` | Login-shell SSH agent (fixed socket at `~/.ssh/agent.sock`) |
+| `.zshenv` | Homebrew `shellenv` (guarded), XDG dirs, Starship path, failsafe Cargo PATH (only if `~/.cargo/bin/cargo` exists), Assurant env |
+| `.zprofile` | Re-applies Homebrew for login shells (after `path_helper`); login-shell SSH agent (fixed socket at `~/.ssh/agent.sock`) |
 | `.zshrc` | Orchestrator — sources all modules in order |
 | `aliases.zsh` | Aliases + dirstack shortcuts |
 | `bindings.zsh` | Keybindings + ZLE widgets |
@@ -186,7 +186,7 @@ Prefer `./macos/install.zsh` from the repo root (installs Homebrew if needed). M
 brew install eza bat fd ripgrep fzf zoxide starship direnv neovim lf uv bun
 ```
 
-The installed `.zprofile` initializes Homebrew for login shells. The base config also uses macOS `open`, `pbcopy`, and `pbpaste` for platform integration.
+Homebrew is initialized in `.zshenv` so non-interactive shells see it too: a Herdr server started over SSH by a `herdr --remote` client, or by launchd, runs `zsh -c` and would otherwise lack `/opt/homebrew/bin`, making plugins report "fzf is not installed". `.zprofile` re-applies it for login shells because macOS `path_helper` reorders `PATH`. `install.sh` ends with a check that a minimal-environment `zsh -c` can find `brew`. A launchd-started service never reads zsh files and needs `PATH` set on the service itself. The base config also uses macOS `open`, `pbcopy`, and `pbpaste` for platform integration.
 
 ### Fedora
 

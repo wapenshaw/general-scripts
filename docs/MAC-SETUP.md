@@ -47,7 +47,7 @@ macos/
 ### Stage 1: Base Environment & Core Shell (`01-environment.zsh`)
 
 * **Xcode Command Line Tools**: Checks and prompts installation if missing.
-* **Homebrew**: Installs Homebrew if missing and initializes `eval $(brew shellenv)`.
+* **Homebrew**: Installs Homebrew if missing and initializes `eval $(brew shellenv)` for the bootstrap session. The deployed zsh config also does this in `~/.zsh/.zshenv`, so SSH-started services (such as a Herdr server) see Homebrew tools like `fzf`.
 * **Standard Directories**: Creates `~/.local/bin`, `~/.config`, `~/.local/share`, `~/.local/state`, and `~/.cache`.
 * **Developer Fonts**: Copies fonts from `fonts/` into `~/Library/Fonts/` (Hack Nerd Font, FiraCode, JetBrains Mono, Geist).
 * **Canonical Zsh**: Runs `zsh/install.sh --base` to deploy `~/.zsh/`, compatibility links for `.zshenv`, `.zshrc`, `.zprofile`, and Starship theme `nova`.
@@ -132,7 +132,7 @@ Installs all curated applications defined in `macos/Brewfile`:
 * **Herdr Workspace Multiplexer & Plugins**:
   - Deploys `~/.config/herdr/config.toml` (Catppuccin theme, symbol status indicators, `prefix+t` theme picker keybind).
   - Deploys `~/.config/herdr-auto-title/config.env` and plugin configurations (`usagebar`, symlinks).
-  - Installs GitHub plugin `qintmb/herdr-theme-picker`.
+  - Installs GitHub plugin `wapenshaw/herdr-theme-picker` (ref `go-side-by-side`).
   - Auto-clones `https://github.com/wapenshaw/herdr-auto-title.git` to `~/Code/herdr-auto-title`, builds the Go binary, and links it via `herdr plugin link`.
   - Configures agent integration lifecycle hooks (`antigravity-cli`, `claude`, `codex`, `copilot`, `opencode`).
 
