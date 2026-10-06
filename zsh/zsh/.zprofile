@@ -9,6 +9,13 @@ for _brew in /opt/homebrew/bin/brew /usr/local/bin/brew /home/linuxbrew/.linuxbr
 done
 unset _brew
 
+# Keep ~/.local/bin and rustup ahead of Homebrew even after macOS path_helper
+if [[ -x "$HOME/.cargo/bin/cargo" ]]; then
+  path=("$HOME/.local/bin" "$HOME/.cargo/bin" $path)
+else
+  path=("$HOME/.local/bin" $path)
+fi
+
 # Assurant profile only: stable SSH agent socket at ~/.ssh/agent.sock
 # so zsh, VS Code, and git share the same agent.
 if [[ "${ZSH_ASSURANT:-0}" == "1" && -f "$ZDOTDIR/ssh-agent.zsh" ]]; then

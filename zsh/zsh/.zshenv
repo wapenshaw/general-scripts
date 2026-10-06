@@ -5,6 +5,7 @@
 
 export ZDOTDIR="$HOME/.zsh"
 export skip_global_compinit=1
+typeset -U path PATH
 
 # Homebrew — must be here (read by EVERY zsh, including non-interactive ones),
 # not only in .zprofile/.zshrc. A Herdr server started by a `herdr --remote`
@@ -65,18 +66,13 @@ elif [[ -d "$HOME/.nvm/versions/node" ]]; then
   unset _target _default_node
 fi
 
-# Cargo (Rust) — available in non-interactive shells, but only when rustup's
-# cargo is actually installed. rustup self uninstall removes ~/.cargo/bin/cargo;
-# leftover env files must not keep a dead directory on PATH.
+# User binaries and Cargo (Rust) — available in non-interactive shells.
+# Re-apply after Homebrew so ~/.local/bin and rustup win over Homebrew binaries.
+# rustup self uninstall removes ~/.cargo/bin/cargo; leftover env files must not keep a dead dir.
 if [[ -x "$HOME/.cargo/bin/cargo" ]]; then
-  if [[ -f "$HOME/.cargo/env" ]]; then
-    . "$HOME/.cargo/env"
-  else
-    case ":${PATH}:" in
-      *:"$HOME/.cargo/bin":*) ;;
-      *) export PATH="$HOME/.cargo/bin:$PATH" ;;
-    esac
-  fi
+  path=("$HOME/.local/bin" "$HOME/.cargo/bin" $path)
+else
+  path=("$HOME/.local/bin" $path)
 fi
 
 # Assurant environment (sourced only when install.sh --assurant set ZSH_ASSURANT=1).
