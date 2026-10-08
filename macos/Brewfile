@@ -1,5 +1,7 @@
 # macos/Brewfile — Curated Homebrew bundle for macOS workstation
 # Run with: brew bundle --file=macos/Brewfile
+# NVM owns the shell's Node default. Formula dependencies may install a separate
+# Homebrew Node; the zsh config keeps NVM first without breaking those formulae.
 
 # Taps
 tap "abue-ammar/tinycast"

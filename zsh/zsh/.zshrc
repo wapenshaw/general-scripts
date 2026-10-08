@@ -39,3 +39,7 @@ source "$ZDOTDIR/prompt.zsh"    # starship after all plugins
 # Bun completions
 [ -s "$HOME/.bun/_bun" ] && source "$HOME/.bun/_bun"
 
+# Apply NVM priority after exports and all other interactive PATH setup.
+if (( $+functions[_nvm_path_first] )); then
+  _nvm_path_first
+fi

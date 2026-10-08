@@ -304,7 +304,7 @@ Auto-loads/unloads env vars when you enter/leave a directory with an `.envrc`.
 | `~/.zsh/exports.zsh` | Env vars, PATH, shell options, WORDCHARS |
 | `~/.zsh/fzf.zsh` | fzf UI and default commands |
 | `~/.zsh/functions.zsh` | Platform, Azure, k8s, git, navigation helpers |
-| `~/.zsh/nvm.zsh` | Lazy-loaded NVM wrapper (node, npm, npx, pnpm) |
+| `~/.zsh/nvm.zsh` | Loads `nvm.sh` on first `nvm` command |
 | `~/.zsh/tools.zsh` | direnv, zoxide |
 | `~/.zsh/plugins.zsh` | Add/remove zsh plugins |
 | `~/.zsh/prompt.zsh` | Starship init |

@@ -94,10 +94,9 @@ fi
 # 5. Canonical Zsh deployment
 info "Deploying canonical Zsh configuration..."
 typeset -a ZSH_ARGS
+ZSH_ARGS=()
 if [[ "${ASSURANT:-0}" -eq 1 ]]; then
     ZSH_ARGS=(--assurant)
-else
-    ZSH_ARGS=(--base)
 fi
 
 if [[ "${DRY_RUN:-false}" == true ]]; then

@@ -27,45 +27,6 @@ export XDG_STATE_HOME="${XDG_STATE_HOME:-$HOME/.local/state}"
 # Starship config lives alongside the zsh modules
 export STARSHIP_CONFIG="$ZDOTDIR/starship.toml"
 
-# Node (nvm) — available in non-interactive shells and background processes.
-# 1. If an active session already set NVM_BIN (via `nvm use`), preserve that active version.
-# 2. Otherwise, resolve the NVM default alias (following any alias chains e.g. lts/*)
-#    and match against installed versions without spawning slow nvm.sh subshells.
-if [[ -n "${NVM_BIN:-}" && -d "$NVM_BIN" ]]; then
-  case ":${PATH}:" in
-    *:"$NVM_BIN":*) ;;
-    *) export PATH="$NVM_BIN:$PATH" ;;
-  esac
-elif [[ -d "$HOME/.nvm/versions/node" ]]; then
-  _target=""
-  if [[ -f "$HOME/.nvm/alias/default" ]]; then
-    _target="$(<"$HOME/.nvm/alias/default")"
-    for _i in {1..5}; do
-      if [[ -f "$HOME/.nvm/alias/$_target" ]]; then
-        _target="$(<"$HOME/.nvm/alias/$_target")"
-      else
-        break
-      fi
-    done
-    unset _i
-  fi
-  _target="${_target#v}"
-  _default_node=""
-  if [[ -n "$_target" && "$_target" != "*" ]]; then
-    _default_node="$(print -l "$HOME/.nvm/versions/node"/v${_target}*/bin(NOn) 2>/dev/null | head -n 1)"
-  fi
-  if [[ -z "$_default_node" ]]; then
-    _default_node="$(print -l "$HOME/.nvm/versions/node"/v*/bin(NOn) 2>/dev/null | head -n 1)"
-  fi
-  if [[ -n "$_default_node" && -d "$_default_node" ]]; then
-    case ":${PATH}:" in
-      *:"$_default_node":*) ;;
-      *) export PATH="$_default_node:$PATH" ;;
-    esac
-  fi
-  unset _target _default_node
-fi
-
 # User binaries and Cargo (Rust) — available in non-interactive shells.
 # Re-apply after Homebrew so ~/.local/bin and rustup win over Homebrew binaries.
 # rustup self uninstall removes ~/.cargo/bin/cargo; leftover env files must not keep a dead dir.
@@ -82,3 +43,6 @@ if [[ "${ZSH_ASSURANT:-0}" == "1" ]]; then
   done
   unset _f
 fi
+
+# Run last so Homebrew, user-local binaries, and work exports cannot shadow NVM.
+[[ -f "$ZDOTDIR/nvm-path.zsh" ]] && source "$ZDOTDIR/nvm-path.zsh"

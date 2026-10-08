@@ -8,7 +8,7 @@
 #   Stage 4: App Configurations & Data (Git, SSH, Ghostty, LinearMouse, Karabiner, AI Configs)
 #
 # Usage:
-#   ./macos/install.zsh                  # Run all stages (complete fresh setup)
+#   ./macos/install.zsh                  # Run all stages with the default base profile
 #   ./macos/install.zsh --stage=1        # Run Stage 1 only (env / zsh / fonts)
 #   ./macos/install.zsh --stage=2        # Run Stage 2 only (runtimes: node, python, rust)
 #   ./macos/install.zsh --stage=3        # Run Stage 3 only (apps / brew bundle)
@@ -31,7 +31,7 @@ if [[ "$(uname -s)" != "Darwin" ]]; then
     exit 2
 fi
 
-# Options & defaults
+# Options & defaults: base/personal unless --assurant is passed.
 export DRY_RUN=false
 export ASSURANT=0
 SELECTED_STAGE="all"
@@ -94,7 +94,7 @@ section "macOS Workstation Bootstrap"
 info "Repo:     $REPO"
 info "Machine:  $(scutil --get ComputerName 2>/dev/null || hostname)"
 info "macOS:    $(sw_vers -productVersion) ($(uname -m))"
-info "Profile:  $([[ "$ASSURANT" -eq 1 ]] && print 'Assurant / Work' || print 'Personal')"
+info "Profile:  $([[ "$ASSURANT" -eq 1 ]] && print 'Assurant / Work' || print 'Base / Personal (default)')"
 info "Target:   $([[ "$SELECTED_STAGE" == "all" ]] && print "Stages $START_FROM through 4" || print "Stage $SELECTED_STAGE only")"
 
 if [[ "$DRY_RUN" == true ]]; then

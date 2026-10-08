@@ -4,7 +4,7 @@ macOS and Linux use **zsh**. Windows uses **PowerShell 7 + Windows Terminal**. F
 
 | OS | First-run | Later updates | Shell config |
 |----|-----------|---------------|--------------|
-| **macOS** | [`macos/install.zsh`](./macos/install.zsh) — 4-stage workstation setup (env, runtimes, apps, data; see [`docs/MAC-SETUP.md`](./docs/MAC-SETUP.md)) | [`mac-update.zsh`](./mac-update.zsh) | [`zsh/install.sh --base`](./zsh/install.sh) |
+| **macOS** | [`macos/install.zsh`](./macos/install.zsh) — 4-stage workstation setup (env, runtimes, apps, data; see [`docs/MAC-SETUP.md`](./docs/MAC-SETUP.md)) | [`mac-update.zsh`](./mac-update.zsh) | [`zsh/install.sh`](./zsh/install.sh) (base by default) |
 | **Fedora / Ubuntu / WSL** | [`linux/install.sh`](./linux/install.sh) — `dnf` or `apt-get`, official fallbacks, then zsh | re-run `linux/install.sh --update` | [`zsh/install.sh`](./zsh/install.sh) (personal by default) |
 | **Windows 11** | [`powershell/tools/Install-Workstation.ps1`](./powershell/tools/Install-Workstation.ps1) — App Installer/winget + profile | [`Update-WinGetPackages.ps1`](./powershell/tools/Update-WinGetPackages.ps1) | [`Install-Profile.ps1`](./powershell/profile/Install-Profile.ps1) |
 

@@ -21,3 +21,8 @@ fi
 if [[ "${ZSH_ASSURANT:-0}" == "1" && -f "$ZDOTDIR/ssh-agent.zsh" ]]; then
   source "$ZDOTDIR/ssh-agent.zsh"
 fi
+
+# Restore NVM priority after Homebrew shellenv and macOS path_helper.
+if (( $+functions[_nvm_path_first] )); then
+  _nvm_path_first
+fi

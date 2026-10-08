@@ -1,32 +1,10 @@
-export NVM_DIR="$HOME/.nvm"
+export NVM_DIR="${NVM_DIR:-$HOME/.nvm}"
 
-# Lazy-load NVM — defer startup cost until a Node command is first used.
+# nvm-path.zsh already puts the selected Node first on PATH, so node, npm, npx
+# and pnpm run directly. Load nvm.sh only when `nvm` itself is first used;
+# --no-use keeps the active version instead of re-selecting the default.
 nvm() {
-  unset -f nvm node npm npx pnpm
-  [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
+  unset -f nvm
+  [[ -s "$NVM_DIR/nvm.sh" ]] && source "$NVM_DIR/nvm.sh" --no-use
   nvm "$@"
-}
-
-node() {
-  unset -f nvm node npm npx pnpm
-  [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
-  node "$@"
-}
-
-npm() {
-  unset -f nvm node npm npx pnpm
-  [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
-  npm "$@"
-}
-
-npx() {
-  unset -f nvm node npm npx pnpm
-  [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
-  npx "$@"
-}
-
-pnpm() {
-  unset -f nvm node npm npx pnpm
-  [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
-  pnpm "$@"
 }

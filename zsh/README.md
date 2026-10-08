@@ -25,18 +25,20 @@ Config-only (tools already installed):
 
 ```bash
 cd /path/to/general-scripts
-./zsh/install.sh              # personal profile (default on every OS)
+./zsh/install.sh              # base/personal profile (default on every OS)
 ./zsh/install.sh --assurant   # Assurant/Astra modules
-./zsh/install.sh --base       # explicit personal profile
+./zsh/install.sh --base       # optional explicit base profile
 ```
 
 On Linux, install.sh appends a small block to the active system zshenv (`/etc/zsh/zshenv` on Debian/Ubuntu/WSL/Arch, `/etc/zshenv` on Fedora/upstream builds), so it may prompt for sudo once. On macOS, it creates compatibility links and does not modify system files.
 
-The default is always the **personal** profile. `--assurant` adds the Assurant/Astra/Common Automation environment—corporate CA settings, Azure/Kubernetes/Docker helpers, Astra navigation, and the Assurant SSH agent. Use it only on a machine that needs those modules.
+The default is always the **base (personal)** profile; no flag is required. `--base` is an optional explicit alias for that default. `--assurant` adds the Assurant/Astra/Common Automation environment—corporate CA settings, Azure/Kubernetes/Docker helpers, Astra navigation, and the Assurant SSH agent. Use it only on a machine that needs those modules.
 
 To remove: `./zsh/install.sh --uninstall`.
 
-To sync changes from the repo: re-run `./install.sh [--assurant|--base]`.
+To sync changes from the repo: re-run `./install.sh` for base, or `./install.sh --assurant` for the work profile.
+
+The installer records deployed files in `~/.zsh/.installed-files`. Subsequent runs remove stale files from that list and preserve custom files. The first run without a manifest conservatively keeps old files that are absent from the current payload.
 
 ---
 
@@ -72,9 +74,9 @@ On Linux, zsh reads the system file on every invocation. On macOS, the compatibi
 ### Sourcing order
 
 1. Managed zshenv bootstrap (system zshenv on Linux, `~/.zshenv` on macOS) — sets `ZDOTDIR`
-2. `~/.zsh/.zshenv` — initializes Homebrew (every zsh, including non-interactive), sets `XDG_*_HOME`, `STARSHIP_CONFIG`, sources Assurant env when enabled
-3. `~/.zsh/.zprofile` (login shells) — re-applies Homebrew after macOS `path_helper`; Assurant-only SSH agent
-4. `~/.zsh/.zshrc` — sources every module in order, then starship
+2. `~/.zsh/.zshenv` — initializes Homebrew (every zsh, including non-interactive), sets `XDG_*_HOME`, `STARSHIP_CONFIG`, sources Assurant env when enabled, then applies NVM priority
+3. `~/.zsh/.zprofile` (login shells) — re-applies Homebrew after macOS `path_helper`; Assurant-only SSH agent; restores NVM priority
+4. `~/.zsh/.zshrc` — sources every module in order, then starship, and restores NVM priority after interactive PATH changes
 
 ---
 
@@ -84,7 +86,11 @@ These are decisions baked into the config that aren't obvious from reading the f
 
 ### `nvm` for Node
 
-Node version management is handled via [NVM](https://github.com/nvm-sh/nvm) (`~/.nvm`) and lazy-loaded on demand by `nvm.zsh`. Deferring startup overhead keeps shell launch instantaneous until `node`, `npm`, `npx`, or `pnpm` is first invoked.
+Node version management is handled via [NVM](https://github.com/nvm-sh/nvm) (`~/.nvm`). `node`, `npm`, `npx`, and `pnpm` run straight from `PATH`; `nvm.zsh` loads `nvm.sh` only when `nvm` itself is first used, so shell launch stays instantaneous.
+
+`nvm-path.zsh` resolves the installed default without loading NVM, respects an active `NVM_BIN` from `nvm use`, and keeps that directory first on `PATH`. The rule runs after environment, login, and interactive setup so Homebrew's `shellenv`, macOS `path_helper`, and other PATH additions cannot override it. Aliases and numeric version ordering are supported, and a custom `NVM_DIR` is preserved.
+
+The Mac install and maintenance scripts remove legacy version-pinned `node`, `npm`, `npx`, and `pnpm` symlinks from `~/.local/bin`. Child processes inherit the NVM directory on PATH; services that do not launch zsh need their own PATH setting. Homebrew can retain Node for its formula dependencies while NVM remains the shell default.
 
 ### `uv` for Python
 
@@ -102,8 +108,8 @@ The runtime path is intentionally explicit so shells and applications cannot sil
 
 | File | Owns |
 |------|------|
-| `.zshenv` | Homebrew `shellenv` (guarded), XDG dirs, Starship path, failsafe Cargo PATH (only if `~/.cargo/bin/cargo` exists), Assurant env |
-| `.zprofile` | Re-applies Homebrew for login shells (after `path_helper`); login-shell SSH agent (fixed socket at `~/.ssh/agent.sock`) |
+| `.zshenv` | Homebrew `shellenv` (guarded), XDG dirs, Starship path, failsafe Cargo PATH (only if `~/.cargo/bin/cargo` exists), Assurant env, NVM priority |
+| `.zprofile` | Re-applies Homebrew for login shells (after `path_helper`), restores NVM priority; login-shell SSH agent (fixed socket at `~/.ssh/agent.sock`) |
 | `.zshrc` | Orchestrator — sources all modules in order |
 | `aliases.zsh` | Aliases + dirstack shortcuts |
 | `bindings.zsh` | Keybindings + ZLE widgets |
@@ -112,7 +118,8 @@ The runtime path is intentionally explicit so shells and applications cannot sil
 | `fzf.zsh` | fzf UI, fd backend, bat preview |
 | `functions.zsh` | Platform helpers, git, navigation helpers (general) |
 | `history.zsh` | History options + XDG state path |
-| `nvm.zsh` | Lazy-loaded NVM wrapper (node, npm, npx, pnpm) |
+| `nvm.zsh` | Loads `nvm.sh` on first `nvm` command |
+| `nvm-path.zsh` | Active/default NVM version selection and PATH priority, shared with Mac maintenance |
 | `plugins.zsh` | Plugin manager + auto-install |
 | `prompt.zsh` | Starship init |
 | `tools.zsh` | direnv, zoxide |

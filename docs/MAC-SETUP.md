@@ -50,7 +50,7 @@ macos/
 * **Homebrew**: Installs Homebrew if missing and initializes `eval $(brew shellenv)` for the bootstrap session. The deployed zsh config also does this in `~/.zsh/.zshenv`, so SSH-started services (such as a Herdr server) see Homebrew tools like `fzf`.
 * **Standard Directories**: Creates `~/.local/bin`, `~/.config`, `~/.local/share`, `~/.local/state`, and `~/.cache`.
 * **Developer Fonts**: Copies fonts from `fonts/` into `~/Library/Fonts/` (Hack Nerd Font, FiraCode, JetBrains Mono, Geist).
-* **Canonical Zsh**: Runs `zsh/install.sh --base` to deploy `~/.zsh/`, compatibility links for `.zshenv`, `.zshrc`, `.zprofile`, and Starship theme `nova`.
+* **Canonical Zsh**: Runs `zsh/install.sh` with the default base/personal profile to deploy `~/.zsh/`, compatibility links for `.zshenv`, `.zshrc`, `.zprofile`, and Starship theme `nova`. Work modules require `--assurant`.
 * **Developer macOS Defaults**:
   - Show file extensions and hidden files in Finder
   - Enable Finder pathbar and statusbar
@@ -70,9 +70,11 @@ macos/
 
 * **Node.js & pnpm (via NVM)**:
   - Installs NVM `v0.40.8` into `~/.nvm`.
-  - Installs Node.js 26 and sets it as the default alias.
-  - Installs global `pnpm`.
-  - Exposes `node`, `npm`, `npx`, and `pnpm` to `~/.local/bin` for POSIX shell (`/bin/sh`, `/bin/bash`) and tool compatibility.
+  - Installs Node.js 26 and sets it as the default alias when the default is missing or broken; a valid default you chose is kept on re-runs.
+  - Installs global `pnpm` under the preserved NVM default. An explicit system Node default is kept, but its global packages are left alone.
+  - Keeps the active or default NVM version first on `PATH` for all zsh shell modes; child processes inherit that path.
+  - Removes legacy version-pinned NVM links from `~/.local/bin`; unrelated executables and links are preserved. Dry runs only report removals.
+  - Homebrew may install its own Node for formula dependencies. It does not replace the NVM default; install Node CLI tools through NVM's `npm` when appropriate.
 * **Python (via uv)**:
   - Installs `uv` via Homebrew.
   - Installs Python 3.14 via `uv python install 3.14 --default`.
@@ -155,6 +157,7 @@ Installs all curated applications defined in `macos/Brewfile`:
 | `--stage=4` / `--stage=data` | Runs Stage 4 only |
 | `--from=2` | Resumes from Stage 2 through Stage 4 |
 | `--dry-run` | Prints all planned mutating commands without executing |
+| `--base` | Optional explicit base/personal profile; this is the default without a flag |
 | `--assurant` | Enables work/Assurant modules during shell deployment |
 
 ---
@@ -167,4 +170,14 @@ Once your Mac is set up, run the routine update script periodically:
 ./mac-update.zsh
 ```
 
-This keeps macOS updates checked, Homebrew packages & casks upgraded, uv Python runtimes updated, Rust toolchains updated, and ensures all Node & Python binaries remain properly exposed on `$PATH`.
+This keeps macOS updates checked, Homebrew packages & casks upgraded, uv Python runtimes updated, and Rust toolchains updated. It applies the shared NVM PATH rule, checks which Node executable is active, and removes legacy NVM links without changing your chosen Node version or default alias. Node upgrades remain explicit through `nvm install <version>` and `nvm alias default <version>`.
+
+To deploy updated shell configuration without running the full workstation setup:
+
+```bash
+./zsh/install.sh                   # base by default; --assurant enables work modules
+exec zsh -l
+node -p 'process.execPath'          # should point into ~/.nvm/versions/node/
+```
+
+Run `./macos/install.zsh --stage=runtimes --dry-run` or `./mac-update.zsh --dry-run` to review runtime setup and maintenance without applying changes.

@@ -497,27 +497,23 @@ fi
 # Node / NVM
 #
 
-if [[ -d "$HOME/.nvm" ]]; then
+export NVM_DIR="${NVM_DIR:-$HOME/.nvm}"
+if [[ -d "$NVM_DIR" ]]; then
 	section "Node / NVM"
 
-	export NVM_DIR="$HOME/.nvm"
-	[[ -s "$NVM_DIR/nvm.sh" ]] && source "$NVM_DIR/nvm.sh"
+	# Share the shell's version selection and PATH rule without loading nvm.sh.
+	source "${0:A:h}/zsh/zsh/nvm-path.zsh"
+	source "${0:A:h}/macos/lib/nvm.zsh"
+	remove_legacy_nvm_links || add_failure "Remove legacy NVM symlinks"
 
 	if command_exists node; then
-		success "node: $(node --version)"
-
-		# Expose default Node binaries in ~/.local/bin so non-zsh shells (/bin/sh, /bin/bash)
-		# and external tools (Claude Code, Codex, VS Code tasks, GUI apps) always find Node.
-		mkdir -p "$HOME/.local/bin"
-		local node_bin_dir
-		node_bin_dir="$(dirname "$(command -v node)")"
-		if [[ -d "$node_bin_dir" && "$node_bin_dir" == "$HOME/.nvm/"* ]]; then
-			for tool in node npm npx pnpm; do
-				if [[ -x "$node_bin_dir/$tool" ]]; then
-					ln -sf "$node_bin_dir/$tool" "$HOME/.local/bin/$tool"
-				fi
-			done
-			success "Exposed NVM binaries (node, npm, npx, pnpm) in ~/.local/bin"
+		typeset NODE_EXECUTABLE="$(node -p 'process.execPath')"
+		if [[ "$NODE_EXECUTABLE" == "$NVM_DIR"/versions/node/*/bin/node ]]; then
+			success "node: $(node --version) ($NODE_EXECUTABLE)"
+		else
+			warning "Node does not resolve to NVM: $NODE_EXECUTABLE"
+			warning "Select an installed version with nvm alias default <version>"
+			add_warning "Node does not resolve to NVM"
 		fi
 	else
 		info "Node is not yet installed in NVM"
@@ -1011,7 +1007,7 @@ else
 	add_warning "GitHub CLI unavailable"
 fi
 
-if [[ -d "$HOME/.nvm" ]]; then
+if [[ -d "$NVM_DIR" ]]; then
 	print
 	if command_exists node; then
 		success "node: $(node --version)"
