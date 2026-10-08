@@ -1,0 +1,35 @@
+{
+  "name": "cache-cold-compact",
+  "version": "0.1.0",
+  "description": "Compacts an idle session shortly before its prompt cache goes cold, so the next prompt re-caches a summary instead of the whole transcript",
+  "author": {
+    "name": "wapenshaw"
+  },
+  "types": "./types/index.d.ts",
+  "userConfig": {
+    "ttlMinutes": {
+      "type": "number",
+      "title": "Prompt cache TTL (minutes)",
+      "description": "How long the prompt cache stays warm after the last response: 60 for the 1-hour cache, 5 for the 5-minute cache",
+      "default": 60
+    },
+    "leadMinutes": {
+      "type": "number",
+      "title": "Compact this many minutes before the cache goes cold",
+      "description": "Lead time before the TTL lapses; never less than half the TTL of idle time",
+      "default": 5
+    },
+    "minContextTokens": {
+      "type": "number",
+      "title": "Minimum context to bother compacting (tokens)",
+      "description": "Smaller conversations are cheap to re-cache and are left alone",
+      "default": 50000
+    },
+    "showStatus": {
+      "type": "boolean",
+      "title": "Show the countdown in the status line",
+      "description": "Pins 'auto-compact in Nm' under the prompt while armed",
+      "default": true
+    }
+  }
+}

@@ -57,6 +57,7 @@ rendering/installation. To preview macOS from Windows, use
 | Repo source | Destination | Handling |
 | --- | --- | --- |
 | `config/claude/settings.json`, `statusline.js` | `~/.claude/` | Merge preferences; resolve status-line path on target |
+| `config/claude/plugins/<name>/` | `~/.claude/local-plugins/<name>/` | Copy; list in `env.CLAUDE_CODE_PLUGIN_DIRS`, keeping unmanaged entries |
 | Generated Claude MCP definitions | `~/.claude.json` → `mcpServers` | Preserve account metadata and unknown servers |
 | `config/codex/config.toml` | `~/.codex/config.toml` | Merge portable preferences and registry MCP entries |
 | `config/codex/windows.toml` | Same Codex config, Windows only | Preserve imported Windows sandbox choice |
@@ -85,6 +86,18 @@ destination, whether it existed and its numbered original copy. These are privat
 backups and may contain pre-existing credentials; keep them outside version control.
 Restore a numbered copy to its recorded path to undo an overwrite, or remove a file
 whose recorded `existed` value is false. Installation skips identical files.
+
+## Claude Code local plugins
+
+`config/claude/plugins/` holds function-hook plugins (Claude Code mods). Install
+copies each folder to `~/.claude/local-plugins/` and points
+`CLAUDE_CODE_PLUGIN_DIRS` in `settings.json` at them, so every new session loads
+them without a marketplace. Check one with `claude plugin validate <folder>`.
+Options go under `pluginConfigs.<name>.options` in `settings.json`.
+
+| Plugin | What it does |
+| --- | --- |
+| `cache-cold-compact` | Compacts an idle session shortly before its prompt cache goes cold, so the next prompt re-caches a summary instead of the whole transcript. `/cold-compact` shows state; `/cold-compact off` pauses it for the session. Options: `ttlMinutes` (60; set 5 on the 5-minute cache), `leadMinutes` (5), `minContextTokens` (50000), `showStatus` (true). |
 
 ## Shared MCPs
 

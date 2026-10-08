@@ -254,6 +254,22 @@ def main():
                     planned[client_root / "statusline.cmd"] = grok_windows_launcher(node)
                 desired.setdefault("ui", {}).setdefault("status_line", {})["command"] = status_cmd
             planned[client_root / "statusline.js"] = (ROOT / "config" / client / "statusline.js").read_text(encoding="utf-8-sig")
+        if client == "claude":
+            # Function-hook plugins load from CLAUDE_CODE_PLUGIN_DIRS. Replace the
+            # managed entries and keep any directory listed outside local-plugins.
+            plugins_root = client_root / "local-plugins"
+            plugin_dirs = []
+            for plugin in sorted(path for path in (ROOT / "config/claude/plugins").iterdir() if path.is_dir()):
+                plugin_dirs.append(str(plugins_root / plugin.name))
+                for path in plugin.rglob("*"):
+                    relative = path.relative_to(plugin)
+                    # .claude-plugin/types is written by Claude Code when it loads a plugin.
+                    if path.is_file() and relative.parts[:2] != (".claude-plugin", "types"):
+                        planned[plugins_root / plugin.name / relative] = path.read_text(encoding="utf-8-sig")
+            separator = ";" if platform == "windows" else ":"
+            env = desired.setdefault("env", {})
+            kept = [entry for entry in env.get("CLAUDE_CODE_PLUGIN_DIRS", "").split(separator) if entry and Path(entry).parent != plugins_root]
+            env["CLAUDE_CODE_PLUGIN_DIRS"] = separator.join(plugin_dirs + kept)
         if client == "opencode":
             desired.pop("shell", None)
             # Let the target OS select its shell instead of forcing pwsh on a Mac.
