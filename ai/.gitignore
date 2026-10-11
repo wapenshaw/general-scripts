@@ -1,0 +1,25 @@
+# Local credentials, work integrations and runtime data are not reference configs.
+.env
+.env.*
+!.env.example
+*.local.json
+*.local.toml
+*.bak*
+.credentials.json
+config.json
+permissions-config.json
+mcp-config.json
+mcp-oauth-config/
+mcp-secrets/
+session-state/
+session-store.db*
+history.jsonl
+logs/
+__pycache__/
+*.pyc
+*.sock
+*.pid
+SNAPSHOT.json
+herdr/plugins.json
+herdr/theme-picker-applied
+*.local.md

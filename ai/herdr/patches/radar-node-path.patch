@@ -1,0 +1,129 @@
+diff --git a/herdr-plugin.toml b/herdr-plugin.toml
+index b311161..271348e 100644
+--- a/herdr-plugin.toml
++++ b/herdr-plugin.toml
+@@ -23,43 +23,43 @@ platforms = ["linux", "macos", "windows"]
+ id = "configure"
+ title = "Configure: install the sidebar, tab-bar and theme blocks"
+ description = "Write (or repair) the three managed blocks in Herdr's config.toml and reload."
+-command = ["node", "bin/configure.js", "--apply", "--reload"]
++command = ["/home/heaton/.nvm/versions/node/v26.10.0/bin/node", "bin/configure.js", "--apply", "--reload"]
+ 
+ [[actions]]
+ id = "install-font"
+ title = "Font: install for this user and map codepoints in the terminal"
+ description = "Copy the icon font into your user font directory (no admin needed) and write the codepoint map into ghostty/kitty configs that exist; other terminals get instructions in the log."
+-command = ["node", "bin/install-font.js"]
++command = ["/home/heaton/.nvm/versions/node/v26.10.0/bin/node", "bin/install-font.js"]
+ 
+ [[actions]]
+ id = "uninstall-font"
+ title = "Font: remove"
+ description = "Remove the installed icon font and the terminal codepoint map this plugin wrote."
+-command = ["node", "bin/install-font.js", "--uninstall"]
++command = ["/home/heaton/.nvm/versions/node/v26.10.0/bin/node", "bin/install-font.js", "--uninstall"]
+ 
+ [[actions]]
+ id = "unconfigure"
+ title = "Configure: remove the managed blocks"
+ description = "Stop the daemon, clear every token it wrote, remove the three managed blocks from Herdr's config.toml and reload. Do this before uninstalling."
+-command = ["node", "bin/configure.js", "--uninstall", "--reload"]
++command = ["/home/heaton/.nvm/versions/node/v26.10.0/bin/node", "bin/configure.js", "--uninstall", "--reload"]
+ 
+ [[actions]]
+ id = "refresh"
+ title = "Agent icons: refresh"
+ description = "Reapply icon variants to all current panes."
+-command = ["node", "bin/agent-icons.js"]
++command = ["/home/heaton/.nvm/versions/node/v26.10.0/bin/node", "bin/agent-icons.js"]
+ 
+ [[actions]]
+ id = "state-start"
+ title = "Agent state: start animator"
+ description = "Start the lifecycle-state glyph animator."
+-command = ["node", "bin/agent-state.js"]
++command = ["/home/heaton/.nvm/versions/node/v26.10.0/bin/node", "bin/agent-state.js"]
+ 
+ [[actions]]
+ id = "state-stop"
+ title = "Agent state: stop animator"
+ description = "Stop the lifecycle-state glyph animator and clear its marks. Titles and sort keys stay so the list stays readable; unconfigure clears everything."
+-command = ["node", "bin/agent-state.js", "--stop"]
++command = ["/home/heaton/.nvm/versions/node/v26.10.0/bin/node", "bin/agent-state.js", "--stop"]
+ 
+ # Herdr disables the panel's own grouped/priority toggle while an agent-view
+ # override is active, so this action is both the way into the recent-first
+@@ -69,13 +69,13 @@ command = ["node", "bin/agent-state.js", "--stop"]
+ id = "view-toggle"
+ title = "Agents: cycle order (active / recent / off)"
+ description = "Cycle the Agents panel: grouped by activity, flat by activity, or the panel's own order."
+-command = ["node", "bin/agent-view.js"]
++command = ["/home/heaton/.nvm/versions/node/v26.10.0/bin/node", "bin/agent-view.js"]
+ 
+ [[actions]]
+ id = "view-flip"
+ title = "Agents: active <-> recent"
+ description = "Flip between grouped-by-activity and flat-by-activity without leaving the plugin's order."
+-command = ["node", "bin/agent-view.js", "--flip"]
++command = ["/home/heaton/.nvm/versions/node/v26.10.0/bin/node", "bin/agent-view.js", "--flip"]
+ 
+ # The other two-state door, cut across the cycle rather than along it: in and
+ # out of the plugin's Agents panel ENTIRELY — both the sort override and the
+@@ -91,7 +91,7 @@ command = ["node", "bin/agent-view.js", "--flip"]
+ id = "view-native"
+ title = "Agents: Herdr's panel <-> ours"
+ description = "Toggle the whole Agents panel — order and row colours — between Herdr's own and the plugin's."
+-command = ["node", "bin/agent-view.js", "--native"]
++command = ["/home/heaton/.nvm/versions/node/v26.10.0/bin/node", "bin/agent-view.js", "--native"]
+ 
+ # Runs when Herdr installs the plugin from GitHub (shown in the install
+ # preview): writes the managed blocks and installs the icon font. It must
+@@ -101,7 +101,7 @@ command = ["node", "bin/agent-view.js", "--native"]
+ # the daemon once the plugin is in place; a checkout linked with `plugin
+ # link` gets the same setup from the daemon launcher on its first start.
+ [[build]]
+-command = ["node", "bin/setup.js"]
++command = ["/home/heaton/.nvm/versions/node/v26.10.0/bin/node", "bin/setup.js"]
+ 
+ # The settings popup: every plugin config key, edited in place and applied by
+ # restarting the daemon. A popup rather than a split so it can sit over the
+@@ -110,7 +110,7 @@ command = ["node", "bin/setup.js"]
+ id = "settings"
+ title = "herdr-radar settings"
+ placement = "popup"
+-command = ["node", "bin/settings.js"]
++command = ["/home/heaton/.nvm/versions/node/v26.10.0/bin/node", "bin/settings.js"]
+ width = 84
+ height = "90%"
+ 
+@@ -118,17 +118,17 @@ height = "90%"
+ id = "settings"
+ title = "Settings"
+ description = "Open the settings popup."
+-command = ["node", "bin/settings.js", "--open"]
++command = ["/home/heaton/.nvm/versions/node/v26.10.0/bin/node", "bin/settings.js", "--open"]
+ 
+ [[startup]]
+-command = ["node", "bin/agent-icons.js"]
++command = ["/home/heaton/.nvm/versions/node/v26.10.0/bin/node", "bin/agent-icons.js"]
+ 
+ [[startup]]
+-command = ["node", "bin/agent-state.js"]
++command = ["/home/heaton/.nvm/versions/node/v26.10.0/bin/node", "bin/agent-state.js"]
+ 
+ # The recent-first view dies with the server; restore it if it was chosen.
+ [[startup]]
+-command = ["node", "bin/agent-view.js", "--reapply"]
++command = ["/home/heaton/.nvm/versions/node/v26.10.0/bin/node", "bin/agent-view.js", "--reapply"]
+ 
+ # The one remaining agent-state hook is a WATCHDOG, not the wake mechanism.
+ # The daemon wakes itself through its event subscription; this hook exists so
+@@ -138,7 +138,7 @@ command = ["node", "bin/agent-view.js", "--reapply"]
+ # the daemon publishes $harness_logo from its own snapshot.)
+ [[events]]
+ on = "pane.agent_detected"
+-command = ["node", "bin/agent-state.js"]
++command = ["/home/heaton/.nvm/versions/node/v26.10.0/bin/node", "bin/agent-state.js"]
+ 
+ # Appearance follow-up now lives on a timer inside the resident daemon
+ # (agent-state.js requires bin/theme-sync and calls sync() once a minute).

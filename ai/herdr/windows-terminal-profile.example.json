@@ -1,0 +1,7 @@
+{
+  "commandline": "wsl.exe -d Ubuntu --cd ~ --exec /usr/bin/zsh -lic \"exec herdr\"",
+  "font": {
+    "face": "JetBrains Mono Herdr"
+  },
+  "name": "Herdr"
+}

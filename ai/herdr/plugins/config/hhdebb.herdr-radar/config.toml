@@ -1,0 +1,2 @@
+follow_appearance = false
+render_hook = "/home/heaton/.config/herdr/plugins/config/hhdebb.herdr-radar/title-hook.cjs"

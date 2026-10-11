@@ -1,0 +1,4 @@
+toggle_placement = "split"
+toggle_direction = "right"
+index_on_startup = true
+web_listen = "127.0.0.1:6363"

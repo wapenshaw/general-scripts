@@ -36,6 +36,10 @@ Cargo/rustup PATH is added only when the `cargo` binary exists (zsh: `~/.cargo/b
 
 > AI agents: See the project guide at [.github/copilot-instructions.md](.github/copilot-instructions.md) for repo structure, workflows, and conventions.
 
+Personal **Claude, Copilot, Herdr and Memex reference configs** and agent setup
+instructions live in [`ai/`](./ai/README.md). Work integrations remain local and
+are configured only when requested.
+
 ## 1. [PowerShell Profile Installer](./powershell/profile/Install-Profile.ps1)
 
 Deploys the modular PowerShell profile (modules + functions + starship theme). For a brand-new Windows box, follow the ordered playbook in **[docs/FRESH-INSTALL.md](./docs/FRESH-INSTALL.md)** — do not start with this script alone.

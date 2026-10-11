@@ -1,0 +1,80 @@
+{
+  "contextTier": "default",
+  "disabledSkills": [],
+  "effortLevel": "medium",
+  "enabledPlugins": {},
+  "footer": {
+    "showAgent": true,
+    "showAiUsed": true,
+    "showBranch": true,
+    "showCiStatus": false,
+    "showCodeChanges": true,
+    "showContextWindow": true,
+    "showCustom": true,
+    "showDirectory": true,
+    "showModelEffort": true,
+    "showPullRequest": true,
+    "showQuota": true,
+    "showSandbox": true,
+    "showSchedules": true,
+    "showUsername": false,
+    "showYolo": true
+  },
+  "hooks": {
+    "SessionStart": [
+      {
+        "bash": "bash '/home/heaton/.copilot/hooks/herdr-agent-state.sh'",
+        "timeoutSec": 10,
+        "type": "command"
+      }
+    ]
+  },
+  "model": "gpt-5.6-luna",
+  "statusLine": {
+    "command": "/usr/bin/python3 /home/heaton/.copilot/scripts/session-statusline.py",
+    "type": "command",
+    "padding": 0,
+    "refreshInterval": 2
+  },
+  "subagents": {
+    "agents": {
+      "explore": {
+        "contextTier": "default",
+        "effortLevel": "low",
+        "model": "gpt-5.6-luna",
+        "modelPolicy": "required"
+      },
+      "general-purpose": {
+        "contextTier": "default",
+        "effortLevel": "medium",
+        "model": "gpt-5.6-luna",
+        "modelPolicy": "required"
+      },
+      "research": {
+        "contextTier": "default",
+        "effortLevel": "medium",
+        "model": "gpt-5.6-luna",
+        "modelPolicy": "required"
+      },
+      "rubber-duck": {
+        "contextTier": "default",
+        "effortLevel": "medium",
+        "model": "claude-opus-4.8",
+        "modelPolicy": "required"
+      },
+      "task": {
+        "contextTier": "default",
+        "effortLevel": "high",
+        "model": "gpt-5.6-luna",
+        "modelPolicy": "required"
+      }
+    },
+    "maxConcurrency": 3,
+    "maxDepth": 1
+  },
+  "theme": "github",
+  "toolSearch": true,
+  "tabs": {
+    "enabled": false
+  }
+}
