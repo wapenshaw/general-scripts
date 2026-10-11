@@ -35,6 +35,11 @@ export NODE_USE_SYSTEM_CA=1
 # npm
 export npm_config_strict_ssl=true
 
+# Terraform: share one provider copy across every IaC project instead of re-downloading
+# the ~700 MB azurerm provider into each .terraform/. Terraform fails if the dir is missing.
+export TF_PLUGIN_CACHE_DIR="$HOME/.terraform.d/plugin-cache"
+[[ -d "$TF_PLUGIN_CACHE_DIR" ]] || mkdir -p "$TF_PLUGIN_CACHE_DIR"
+
 # Remove Windows Node pollution from WSL PATH
 path=(${path:#/mnt/c/Program\ Files/nodejs/*})
 

@@ -49,7 +49,13 @@ setopt pushd_minus        # swap +/- for dirstack nav (cd -1, cd +1)
 setopt pushd_silent       # no output from pushd/popd
 setopt extended_glob      # enable #, ~, ^ in glob patterns
 setopt glob_dots          # dotfiles match globs without needing .*
-setopt NO_clobber         # > won't overwrite existing files; use >| to force
+if [[ -z "${CLAUDECODE:-}" ]]; then
+  setopt NO_clobber       # > won't overwrite existing files; use >| to force
+else
+  # Claude Code's Bash tool: keep it POSIX-predictable. Unmatched globs pass through
+  # literally (like bash) instead of aborting the whole command with "no matches found".
+  unsetopt nomatch
+fi
 setopt NO_rm_star_silent  # prompt for confirmation before rm *
 setopt multios            # allow writing to multiple descriptors simultaneously
 

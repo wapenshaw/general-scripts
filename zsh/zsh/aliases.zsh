@@ -68,15 +68,19 @@ sysup() {
   fi
 }
 
-# ls / eza (icons + git status)
-alias ls='eza --icons'
-alias ll='eza -lh --icons --git'
-alias la='eza -lah --icons --git'
-alias tree='eza --tree --icons'
-compdef eza=ls
+# Interactive-only conveniences. Claude Code's shell (CLAUDECODE=1) keeps the plain tools:
+# eza/bat change flags and output formats (eza -t is --time, not sort-by-mtime).
+if [[ -z "${CLAUDECODE:-}" ]]; then
+  # ls / eza (icons + git status)
+  alias ls='eza --icons'
+  alias ll='eza -lh --icons --git'
+  alias la='eza -lah --icons --git'
+  alias tree='eza --tree --icons'
 
-# Better cat and paging
-alias cat='bat'
+  # Better cat and paging
+  alias cat='bat'
+fi
+compdef eza=ls
 
 # Core utils
 alias grep='rg --color=auto'
@@ -85,10 +89,12 @@ if command diff --color=auto /dev/null /dev/null >/dev/null 2>&1; then
 fi
 alias df='df -h'
 
-# Safety prompts
-alias cp='cp -i'
-alias mv='mv -i'
-alias rm='rm -i'
+# Safety prompts (interactive only: under Claude Code -i silently skips with no TTY)
+if [[ -z "${CLAUDECODE:-}" ]]; then
+  alias cp='cp -i'
+  alias mv='mv -i'
+  alias rm='rm -i'
+fi
 
 # Git
 alias gb='git branch --show-current'
