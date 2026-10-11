@@ -1,105 +1,87 @@
-# Herdr configuration and setup
+# Herdr Workspace & Plugin Setup
 
-`config.toml` contains the preferred keybindings, Ayu Dark palette, login Zsh
-shells and Radar layout. `plugins/config/` contains user-owned Radar and Memex
-settings. These are reference configs, not a live plugin registry or a backup.
+Portable configuration and plugin setup for [Herdr](https://herdr.dev) — the terminal workspace manager for AI coding agents.
 
-## Plugins and dependencies
+This directory maintains personal preferences, plugin configurations, and setup scripts to deploy configs and link the `herdr-auto-title` plugin.
 
-| Plugin source | Reference version | Dependencies |
-|---|---|---|
-| `kryptamine/herdr-auto-title` | 0.13.1 | Go when building from source |
-| `qintmb/herdr-theme-picker` | 0.8.2 | Bash and fzf |
-| `hhdebb/herdr-radar` | 1.4.4 | Node.js; patched icon font on the rendering host |
-| `nicosuave/memex` | 0.27.1 | Memex executable, Bash, Git, curl, tar and jq |
+The customized WSL Ayu Dark profile, Radar/Memex settings, Copilot title filters
+and recovery patches are separate at [../wsl/herdr/](../wsl/herdr/README.md).
+The installers below deploy this directory's existing cross-platform defaults,
+not that WSL profile. Follow the WSL guide when applying those preferences.
+Read [../AGENTS.md](../AGENTS.md) first, and keep work-only configuration local.
 
-For the recorded versions, install with:
+## Layout
 
-```sh
-herdr plugin install kryptamine/herdr-auto-title --ref 67fa3e24f319e8c88d9a55b46563d341fb055e55
-herdr plugin install qintmb/herdr-theme-picker --ref 36d117d55dca91013e0519c5778397f9764428b4
-herdr plugin install hhdebb/herdr-radar --ref dd42772da4b8b9e18660d653d08149c7da1d2964
-herdr plugin install nicosuave/memex --ref v0.27.1
+```
+ai/herdr/
+├── backup.sh                           # Exports live Herdr & plugin configs to repository
+├── config.toml                         # Herdr core configuration (UI, theme, keybindings)
+├── config.env                          # Auto Title plugin preferences
+├── plugins.json                        # Snapshot of installed Herdr plugins and versions
+├── plugins/                            # Plugin-specific configuration files
+│   └── config/
+│       ├── herdr.auto-title/           # Auto Title configuration
+│       └── usagebar/                   # Usagebar notification and threshold settings
+├── Install-HerdrConfig.ps1             # PowerShell 7 installer and linker
+├── install.sh                          # macOS / Linux installer and linker
+└── README.md                           # Documentation
 ```
 
-Inspect the installed version first; do not downgrade a working newer plugin
-just to match this reference. Let Herdr manage its own registry and checkout
-paths. Installation does not restore local source changes.
+## Quick Start
 
-## Title behavior and recovery after updates
+### Windows (PowerShell 7)
 
-Remove only the exact trailing ` - GitHub Copilot` from Radar labels and Auto
-Title tab/pane/workspace-topic labels. Preserve Claude labels and product names
-within session names. Keep Copilot's native terminal-title updates enabled and
-Radar's `row_label` unset so it continues using native titles.
+```powershell
+# Preview changes
+pwsh -File ./ai/herdr/Install-HerdrConfig.ps1 -WhatIf
 
-The official Copilot SessionStart hook reports identity, not continuous titles;
-editing it is not a reliable suffix fix. Auto Title 0.13.1 has no replacement
-config or render hook. Recheck upstream capabilities before patching updates.
-
-`patches/auto-title-local-changes.patch` preserves two fixes and regression tests:
-Claude `custom-title` / `customTitle` transcript support, and Copilot-only suffix
-removal before activity formatting/truncation. Updates overwrite these source
-changes. Locate the current checkout, inspect upstream behavior, and check the
-patch there:
-
-```sh
-git apply --check /path/to/ai/herdr/patches/auto-title-local-changes.patch
+# Deploy configuration, build and link auto-title, and configure agent integrations
+pwsh -File ./ai/herdr/Install-HerdrConfig.ps1
 ```
 
-Only apply a compatible patch. If upstream changed, port missing behavior rather
-than forcing old files over new ones. After applying the relevant changes:
+### macOS / Linux
 
-```sh
-go test ./internal/resolver ./internal/app ./internal/claude
-go build -o herdr-auto-title ./cmd/herdr-auto-title
-herdr plugin action invoke herdr.auto-title.restart
+```bash
+# Deploy Herdr configuration, plugins, and integrations
+bash ./ai/herdr/install.sh
+
+# Backup live Herdr and plugin configs from your system into this repo
+bash ./ai/herdr/backup.sh
 ```
 
-Radar's supported suffix filter is
-`plugins/config/hhdebb.herdr-radar/title-hook.cjs`, referenced by its neighboring
-`config.toml`. It survives updates. Keep `follow_appearance = false` to preserve
-Ayu Dark.
+## Components
 
-`patches/radar-node-path.patch` records a workaround for a server started without
-NVM in its PATH. It hardcodes Node v26.10.0 under `/home/heaton`; adapt it only if
-the current server cannot find Node and the chosen executable exists. Updates
-replace this manifest change. Prefer correct login-shell exports for a new
-server; do not install system Node over an existing NVM setup.
+### 1. Herdr Configuration (`config.toml`)
+Deploys to `%APPDATA%\herdr\config.toml` (Windows) or `~/.config/herdr/config.toml` (Linux/macOS):
+* **UI**: Catppuccin theme base, sound enabled, terminal toasts, space-sorted agent panels.
+* **Keybindings**: Binds `prefix+t` to `herdr-theme-picker.open` for interactive theme switching.
 
-## Applying the configuration
+### 2. Plugins
 
-Preserve destination files first. Install missing dependencies/plugins and copy
-the requested user plugin configs to their matching Herdr config directories.
-Adapt absolute paths in the main config, Radar hook setting, and Memex resume
-templates. Deploy `../memex/config.toml` to `~/.memex/config.toml`; keep embeddings
-disabled and explicit working agent executable paths if the server PATH is
-minimal. Use `nicosuave.memex.toggle`, not its modal palette, for the M shortcut.
+#### A. Theme Picker (`herdr-theme-picker`)
+Installed directly from GitHub (`wapenshaw/herdr-theme-picker`, ref `go-side-by-side`; override with `HERDR_THEME_PICKER_REPO` / `HERDR_THEME_PICKER_REF`). The fork adds the Windows port. Tools such as `fzf` are found because `zsh/zsh/.zshenv` puts Homebrew on `PATH` for non-interactive shells, so a server started over SSH still sees them:
+* Press **`prefix+t`** to open an interactive fuzzy picker powered by [terminalcolors.com](https://terminalcolors.com).
+* Maps selected themes directly to Herdr's UI chrome and live-syncs terminal cell palettes via OSC sequences.
 
-Validate and reload changed main settings without terminating panes:
+#### B. Auto Title (`herdr.auto-title`)
+Built and linked from local checkout (`~/Code/herdr-auto-title`):
+* Managed via `config.env` (`HERDR_AUTO_TITLE_BRANCH_MAX=0`, `HERDR_AUTO_TITLE_POSITION=false`).
 
-```sh
-herdr config check
-herdr server reload-config
-```
+#### C. Usagebar (`usagebar`)
+Configured in `plugins/config/usagebar/config.toml` for agent quota notifications and threshold warnings.
 
-The main config already contains Ayu Dark custom colors; its underlying `vesper`
-theme name is not a reason to reset the palette. There is no need to copy Theme
-Picker's runtime selection marker.
+### 3. Auto Title Plugin Linking
+The scripts build and link the standalone `herdr-auto-title` repository (located at `~/Code/herdr-auto-title`, `~/Personal/herdr-auto-title`, `Z:\Personal\herdr-auto-title`, or custom `-PluginDir`).
+The plugin contains platform fixes that recognize shell executables and full path strings, preventing idle shells from generating ugly path titles.
 
-`windows-terminal-profile.example.json` is a generic WSL launcher/font fragment.
-Merge it into the chosen profile, preserving that profile's GUID and unrelated
-settings. Adapt the distribution and shell if needed. Install `JetBrains Mono
-Herdr` on Windows when Windows Terminal renders the UI, not only in WSL.
-Login-interactive Zsh supplies the launcher PATH; an already-running persistent
-server retains its original environment.
+* **Linked Mode**: The installer uses `herdr plugin link` to register the local repository with Herdr. This ensures Herdr runs your local build and will never silently overwrite it with remote commits.
 
-Keep `CLAUDE_CODE_DISABLE_TERMINAL_TITLE` absent and preserve official Claude and
-Copilot SessionStart hooks. Verify live Radar and Auto Title labels, including
-an unchanged Claude title. The native Copilot title may retain the suffix; Auto
-Title's width limit may legitimately truncate long labels.
+### 4. Agent Integrations
+The setup scripts automatically run `herdr integration install` for supported agent clients:
+* `antigravity-cli`
+* `claude`
+* `codex`
+* `copilot`
+* `opencode`
 
-When the Radar hook changes, restart only its daemon: invoke
-`hhdebb.herdr-radar.state-stop`, wait for successful completion, then invoke
-`hhdebb.herdr-radar.state-start` and check `herdr plugin log list`. Do not stop the
-Herdr server or restart user agents without permission.
+These integrations install lightweight lifecycle hooks into each agent's config folder so Herdr's socket receives live updates on active tasks, transcripts, and agent statuses.

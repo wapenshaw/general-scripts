@@ -1,0 +1,14 @@
+# Local AI setup output, credentials and backups
+ai/generated/
+ai/local/
+ai/.env
+ai/.env.*
+!ai/.env.example
+**/.credentials.json
+**/antigravity-accounts.json
+**/mcp_credentials.json
+**/auth.json
+**/.env.local
+**/*.bak-*
+**/__pycache__/
+.DS_Store

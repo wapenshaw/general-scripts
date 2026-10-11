@@ -2,6 +2,46 @@
 
 Notable changes to this personal workstation toolbox. Newest first.
 
+## 2026-10-05
+
+- Fixed "fzf is not installed" in Herdr plugins after a reboot: a server started
+  over SSH by a `herdr --remote` client runs a non-interactive `zsh -c`, which
+  never read the Homebrew setup that lived only in `.zprofile`. Homebrew
+  `shellenv` (Apple Silicon, Intel, Linuxbrew; guarded) now loads from
+  `zsh/zsh/.zshenv`, `.zprofile` re-applies it after macOS `path_helper`, and
+  `zsh/install.sh` verifies a minimal-environment `zsh -c` can find `brew`.
+- `zsh/install.sh` no longer needs bash 4: it failed on macOS's stock bash 3.2
+  (`local -A`), which is what a fresh Mac runs before Homebrew bash exists.
+- The Herdr installer now installs the theme picker from `wapenshaw/herdr-theme-picker`
+  (ref `go-side-by-side`, overridable via `HERDR_THEME_PICKER_REPO`/`_REF`) to get
+  the Windows port. The plugin itself no longer guesses tool directories; the
+  `.zshenv` change above is what keeps `fzf` visible.
+
+## 2026-09-30
+
+- Fixed Grok's Windows status-line startup by generating a native `.cmd` launcher
+  and configuring its single path, avoiding inline command filename parsing.
+
+- Imported portable Claude Code, Codex and Grok preferences and status lines into
+  `ai/`, with one MCP registry generating native Windows/macOS definitions for
+  all four clients. Reused OpenCode's existing plugin/skill payload, corrected its
+  installer source paths and environment substitution, and switched its optional
+  GitHub MCP to the official remote server. Login/session state stays local.
+
+- Windows Node is managed by nvm v2 in link mode, pnpm is standalone, and uv owns
+  Python interpreters and CLI environments. Removed mise from Windows setup.
+- Added the desired `Z:\Packages` storage manifest, User-scope environment setup,
+  private backups and explicit environment snapshot restore.
+- PowerShell 7 uses one shared AllHosts profile for Windows Terminal and VS Code,
+  with manifest-selected modules and setup-time plugin installation. Fixed the
+  interactive VS Code `-NoExit -Command` startup path. Visual Studio activation
+  is explicit via `vsdev`.
+- Integrated these changes with the cross-platform bootstraps. Windows
+  `-Assurant` aliases `-Work`; an omitted theme preserves existing Starship config.
+- Documented migration, backups and shell troubleshooting in the
+  [profile guide](powershell/profile/README.md) and
+  [cleanup record](docs/POWERSHELL-SETUP-REVIEW.md).
+
 ## 2026-08-19
 
 First-run installers for every OS, failsafe Cargo PATH, and Assurant as an

@@ -6,15 +6,15 @@ Personal Windows 11 post-install + dev-environment toolbox. No build system, no 
 
 - **Repo conventions & architecture**: [`.github/copilot-instructions.md`](.github/copilot-instructions.md) — read this first.
 - **Fresh install playbook**: [`docs/FRESH-INSTALL.md`](docs/FRESH-INSTALL.md) — 10-step ordered bootstrap.
+- **Portable AI clients and shared MCPs**: [`ai/README.md`](ai/README.md) — preferences, native config generation and private backup/install flow.
 
 ## Layout
 
-- `macos/install.zsh` — first-run Mac bootstrap: Homebrew (installed if missing) + `mac-update.zsh --bootstrap` + `zsh/install.sh --base`
-- `linux/install.sh` — first-run Linux bootstrap: Fedora `dnf` or Ubuntu `apt-get`, official user-level fallbacks (mise/uv/starship/rustup), then `zsh/install.sh`
-- `mac-update.zsh` — recurring Mac maintenance (Homebrew/mise/rustup/uv); `--bootstrap` also installs Homebrew when absent
-- `powershell/` — runnable utilities: `profile/` (install + startup, modular `modules/` with ordered `NN-name.ps1` files + `work/` for Assurant mode, `Register-ProfileFunctions.ps1` lazy-loads `functions/`), `system/` (registry/network/shutdown), `tools/` (daily helpers including `Install-Workstation.ps1` first-run orchestrator), `diagnostics/` (probes), `functions/` (profile-loaded helpers + short aliases)
-- `zsh/` — modular zsh config for macOS/Linux/WSL (XDG-style, `install.sh` deploys)
-- `config/env/` — captured Windows env vars (`user.json`, `system.json`, `paths.json`)
+- `powershell/` — runnable utilities: `profile/` (install + startup, modular `modules/` with ordered `NN-name.ps1` files + `work/` for work mode, `Register-ProfileFunctions.ps1` lazy-loads `functions/`), `system/` (registry/network/shutdown), `tools/` (daily helpers), `diagnostics/` (probes), `functions/` (profile-loaded helpers + short aliases)
+- `zsh/` — modular macOS/Linux/WSL zsh config; `install.sh` deploys to `~/.zsh`
+- `macos/`, `linux/`, `mac-update.zsh` — platform bootstraps and Mac maintenance; Windows bootstrap is `powershell/tools/Install-Workstation.ps1`
+- `config/env/` — desired development storage manifest (`development.json`), directory documentation and historical environment snapshots
+- `ai/` — portable AI workspace and client configs: Claude (incl. local plugins in `ai/config/claude/plugins/`), Codex, Grok, OpenCode (`ai/opencode/`), Herdr (`ai/herdr/`), status lines, and shared MCP registry; uv-managed Python generates Windows/macOS client configs
 - `starship/`, `fonts/`, `windows-terminal/`, `extensions/`, `icons/` — config/asset payloads
 - `registry-tweaks/` — paired `dos/` + `undos/` `.reg` files
 - `er605-openwrt/` — TP-Link ER605 v2 OpenWrt flashing helpers (router-side)
@@ -37,7 +37,7 @@ zsh -n ./zsh/zsh/.zshenv ./zsh/zsh/.zprofile ./zsh/zsh/.zshrc ./zsh/zsh/*.zsh ./
 
 - PowerShell: `Verb-Noun` PascalCase, approved verbs from `Get-Verb`, comment-based help at top.
 - Admin scripts: `#requires -RunAsAdministrator` or explicit principal check — match the file you edit.
-- New reusable functions go in `powershell/functions/*.ps1`, not in `User-Profile.ps1`.
+- New reusable functions go in `powershell/functions/*.ps1`; startup configuration goes in ordered `powershell/profile/modules/` files. Both ConsoleHost and VS Code use AllHosts.
 - Registry tweaks: always add matching `dos/` + `undos/` pairs.
 - Zsh module order matters (history/exports/completion/fzf/tools → aliases/functions/bindings/plugins → `fast-syntax-highlighting` last → starship init).
 - No secrets in tracked files. Export/Import-Env strips `*TOKEN*`, `*SECRET*`, `*AUTH*`. Azure creds → gitignored `~/.zsh/work/az.env`.

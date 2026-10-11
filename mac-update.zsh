@@ -20,26 +20,22 @@ typeset UV_DEFAULT_PYTHON=""
 typeset UV_DEFAULT_VERSION=""
 typeset PYTHON3_EXECUTABLE=""
 
-typeset MISE_UV_ACTIVE=false
-typeset MISE_UV_INSTALLED=false
-
 FAILURES=()
 WARNINGS=()
 
 UPDATE_MACOS=false
 BOOTSTRAP_TOOLS=false
-PRUNE=false
 DRY_RUN=false
 
 # Python version exposed globally as:
 #
 #   ~/.local/bin/python
 #   ~/.local/bin/python3
-#   ~/.local/bin/python3.13
+#   ~/.local/bin/python3.14
 #
-# Python 3.13 is used because some AI/transcription tools do not yet
+# Python 3.14 is used because some AI/transcription tools do not yet
 # support Python 3.14.
-UV_DEFAULT_PYTHON_VERSION="3.13"
+UV_DEFAULT_PYTHON_VERSION="3.14"
 
 # Native command-line tools managed by Homebrew.
 #
@@ -65,7 +61,6 @@ DEV_TOOLS=(
 	hyperfine
 	uv
 	starship
-	mise
 	neovim
 	lf
 	bun
@@ -252,7 +247,6 @@ Usage:
 Options:
   --macos       Install recommended macOS updates.
   --bootstrap   Install Homebrew if missing, then the curated tool collection.
-  --prune       Remove unused mise tool versions.
   --dry-run     Print mutating commands without running them.
   --help, -h    Show this help.
 
@@ -261,29 +255,27 @@ Examples:
   ./mac-update.zsh --dry-run
   ./mac-update.zsh --bootstrap
   ./macos/install.zsh
-  ./mac-update.zsh --macos --bootstrap --prune --dry-run
+  ./mac-update.zsh --macos --bootstrap --dry-run
 
 Routine behavior:
   - Checks for available macOS updates.
   - Updates and upgrades Homebrew packages.
-  - Updates tools managed by mise.
   - Updates rustup and the installed Rust toolchain when rustup is present.
-  - Verifies that uv is managed by Homebrew rather than mise.
   - Upgrades uv-managed Python installations.
   - Upgrades Python CLI applications managed by uv.
-  - Runs Homebrew, mise, rustup, uv, Python, and environment health checks.
+  - Runs Homebrew, rustup, uv, Python, and environment health checks.
 
 Bootstrap behavior:
   - Installs Xcode Command Line Tools / Homebrew when they are missing.
-  - Installs native developer tools through Homebrew (including starship, mise, neovim).
+  - Installs native developer tools through Homebrew (including starship, neovim).
   - Installs the uv executable through Homebrew.
   - Installs rustup via the official installer without mutating shell rc files.
-  - Installs Python 3.13 through uv as the global/default Python.
+  - Installs Python 3.14 through uv as the global/default Python.
   - Installs Python CLI tools such as pre-commit and ruff through uv.
 
 Tool ownership:
-  Homebrew  Native command-line utilities, uv, starship, mise, neovim
-  mise      Node.js, Go, Java, Terraform, and other non-Python runtimes
+  Homebrew  Native command-line utilities, uv, starship, neovim
+  NVM       Node.js and global Node packages
   rustup    Rust toolchain (rustc, cargo, rustfmt, clippy)
   uv        Python installations and Python CLI applications
   macOS     /usr/bin/python3; this is never modified
@@ -301,9 +293,6 @@ for arg in "$@"; do
 		;;
 	--bootstrap)
 		BOOTSTRAP_TOOLS=true
-		;;
-	--prune)
-		PRUNE=true
 		;;
 	--dry-run)
 		DRY_RUN=true
@@ -505,87 +494,34 @@ else
 fi
 
 #
-# mise
+# Node / NVM
 #
 
-section "mise"
+export NVM_DIR="${NVM_DIR:-$HOME/.nvm}"
+if [[ -d "$NVM_DIR" ]]; then
+	section "Node / NVM"
 
-if command_exists mise; then
-	info "mise: $(mise --version)"
+	# Share the shell's version selection and PATH rule without loading nvm.sh.
+	source "${0:A:h}/zsh/zsh/nvm-path.zsh"
+	source "${0:A:h}/macos/lib/nvm.zsh"
+	remove_legacy_nvm_links || add_failure "Remove legacy NVM symlinks"
 
-	print
-	info "Checking for mise-managed uv"
-
-	MISE_UV_ACTIVE=false
-	MISE_UV_INSTALLED=false
-
-	if mise current 2>/dev/null | grep -Eq '^uv[[:space:]]'; then
-		MISE_UV_ACTIVE=true
-	fi
-
-	if [[ -d "$HOME/.local/share/mise/installs/uv" ]]; then
-		MISE_UV_INSTALLED=true
-	fi
-
-	if [[ "$MISE_UV_ACTIVE" == true ]]; then
-		warning "uv is currently active through mise"
-		add_warning "uv is active through mise"
-	fi
-
-	if [[ "$MISE_UV_INSTALLED" == true ]]; then
-		warning "A mise-managed uv installation exists"
-		print "  $HOME/.local/share/mise/installs/uv"
-		add_warning "A mise-managed uv installation remains installed"
-	fi
-
-	if [[ "$MISE_UV_ACTIVE" == true ||
-		"$MISE_UV_INSTALLED" == true ]]; then
-		print
-		warning "Recommended migration commands:"
-		print "  mise use -g --remove uv"
-		print "  mise uninstall uv --all"
-		print "  brew install uv"
+	if command_exists node; then
+		typeset NODE_EXECUTABLE="$(node -p 'process.execPath')"
+		if [[ "$NODE_EXECUTABLE" == "$NVM_DIR"/versions/node/*/bin/node ]]; then
+			success "node: $(node --version) ($NODE_EXECUTABLE)"
+		else
+			warning "Node does not resolve to NVM: $NODE_EXECUTABLE"
+			warning "Select an installed version with nvm alias default <version>"
+			add_warning "Node does not resolve to NVM"
+		fi
 	else
-		success "uv is neither configured nor installed through mise"
+		info "Node is not yet installed in NVM"
 	fi
 
-	print
-	info "Showing outdated mise-managed tools"
-
-	if mise outdated; then
-		success "Finished checking mise-managed tools"
-	else
-		warning "mise could not determine outdated tools"
-		add_warning "Check mise-managed tools"
+	if command_exists pnpm; then
+		success "pnpm: $(pnpm --version)"
 	fi
-
-	print
-
-	run_step \
-		"Upgrade mise-managed tools" \
-		mise upgrade
-
-	if [[ "$PRUNE" == true ]]; then
-		run_step \
-			"Prune unused mise tool versions" \
-			mise prune --yes
-	else
-		info "Skipping mise pruning"
-		print "Use --prune to remove unused mise tool versions."
-	fi
-
-	print
-	info "Verifying mise configuration"
-
-	if mise doctor; then
-		success "mise configuration check completed"
-	else
-		warning "mise reported configuration issues"
-		add_warning "mise health check reported issues"
-	fi
-else
-	warning "mise is unavailable in PATH; skipping mise maintenance"
-	add_warning "mise unavailable"
 fi
 
 #
@@ -668,14 +604,9 @@ if command_exists uv; then
 	BREW_UV_OPT="$(brew --prefix uv)/bin/uv"
 
 	if command_exists brew &&
-		brew list --formula uv >/dev/null 2>&1 &&
 		[[ "$UV_PATH" == "$BREW_UV_LINK" ||
 			"$UV_PATH" == "$BREW_UV_OPT" ]]; then
 		success "uv is installed and managed by Homebrew"
-	elif [[ "$UV_PATH" == "$HOME/.local/share/mise/"* ]]; then
-		warning "uv resolves to a mise-managed installation"
-		print "  $UV_PATH"
-		add_warning "uv resolves to mise"
 	elif [[ "$UV_PATH" == "$HOME/.local/bin/uv" ]]; then
 		warning "uv resolves to a standalone user installation"
 		print "  $UV_PATH"
@@ -1076,13 +1007,13 @@ else
 	add_warning "GitHub CLI unavailable"
 fi
 
-if command_exists mise; then
+if [[ -d "$NVM_DIR" ]]; then
 	print
-	info "Active mise tools:"
-
-	if ! mise current; then
-		warning "Could not display active mise tools"
-		add_warning "Display active mise tools"
+	if command_exists node; then
+		success "node: $(node --version)"
+	fi
+	if command_exists pnpm; then
+		success "pnpm: $(pnpm --version)"
 	fi
 fi
 
@@ -1101,9 +1032,6 @@ if command_exists uv; then
 		[[ "$UV_PATH" == "$BREW_UV_LINK" ||
 			"$UV_PATH" == "$BREW_UV_OPT" ]]; then
 		success "uv is installed and managed by Homebrew"
-	elif [[ "$UV_PATH" == "$HOME/.local/share/mise/"* ]]; then
-		warning "uv resolves to a mise-managed installation"
-		add_warning "uv resolves to mise"
 	else
 		warning "uv does not resolve to the expected Homebrew executable"
 		print "  $UV_PATH"

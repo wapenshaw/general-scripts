@@ -30,7 +30,7 @@ if ((Test-Path $userBin) -and ($env:PATH -notlike "*$userBin*")) {
 
 # Cargo (Rust) — add rustup's bin dir only when cargo is actually installed.
 # rustup self uninstall removes the binary; leftover dirs must not stay on PATH.
-# CARGO_HOME (Set-DevPackagePaths / user.json) wins over the default ~/.cargo.
+# CARGO_HOME (Set-DevPackagePaths / development.json) wins over the default ~/.cargo.
 $cargoHome = if (-not [string]::IsNullOrWhiteSpace($env:CARGO_HOME)) {
     $env:CARGO_HOME
 } else {

@@ -5,6 +5,16 @@
 
 export ZDOTDIR="$HOME/.zsh"
 export skip_global_compinit=1
+typeset -U path PATH
+
+# Homebrew — must be here (read by EVERY zsh, including non-interactive ones),
+# not only in .zprofile/.zshrc. A Herdr server started by a `herdr --remote`
+# client over SSH runs `zsh -c` and would otherwise have no Homebrew on PATH, so
+# plugins fail with "fzf is not installed". Guarded: no-op if brew is absent.
+for _brew in /opt/homebrew/bin/brew /usr/local/bin/brew /home/linuxbrew/.linuxbrew/bin/brew; do
+  if [ -x "$_brew" ]; then eval "$("$_brew" shellenv)"; break; fi
+done
+unset _brew
 
 # XDG Base Directories — centralizes config/cache/data/state locations.
 # Defaults match the freedesktop spec; users can override by exporting before
@@ -17,32 +27,13 @@ export XDG_STATE_HOME="${XDG_STATE_HOME:-$HOME/.local/state}"
 # Starship config lives alongside the zsh modules
 export STARSHIP_CONFIG="$ZDOTDIR/starship.toml"
 
-# mise owns Node and other non-Python runtimes. Initialize its environment
-# here so mise-managed tools also work in non-interactive shells; tools.zsh
-# adds the interactive directory hooks later.
-_mise_bin=''
-if [[ -x /opt/homebrew/bin/mise ]]; then
-  _mise_bin=/opt/homebrew/bin/mise
-elif command -v mise >/dev/null 2>&1; then
-  _mise_bin="$(command -v mise)"
-fi
-if [[ -n "$_mise_bin" ]]; then
-  eval "$("$_mise_bin" env -s zsh 2>/dev/null)"
-fi
-unset _mise_bin
-
-# Cargo (Rust) — available in non-interactive shells, but only when rustup's
-# cargo is actually installed. rustup self uninstall removes ~/.cargo/bin/cargo;
-# leftover env files must not keep a dead directory on PATH.
+# User binaries and Cargo (Rust) — available in non-interactive shells.
+# Re-apply after Homebrew so ~/.local/bin and rustup win over Homebrew binaries.
+# rustup self uninstall removes ~/.cargo/bin/cargo; leftover env files must not keep a dead dir.
 if [[ -x "$HOME/.cargo/bin/cargo" ]]; then
-  if [[ -f "$HOME/.cargo/env" ]]; then
-    . "$HOME/.cargo/env"
-  else
-    case ":${PATH}:" in
-      *:"$HOME/.cargo/bin":*) ;;
-      *) export PATH="$HOME/.cargo/bin:$PATH" ;;
-    esac
-  fi
+  path=("$HOME/.local/bin" "$HOME/.cargo/bin" $path)
+else
+  path=("$HOME/.local/bin" $path)
 fi
 
 # Assurant environment (sourced only when install.sh --assurant set ZSH_ASSURANT=1).
@@ -52,3 +43,6 @@ if [[ "${ZSH_ASSURANT:-0}" == "1" ]]; then
   done
   unset _f
 fi
+
+# Run last so Homebrew, user-local binaries, and work exports cannot shadow NVM.
+[[ -f "$ZDOTDIR/nvm-path.zsh" ]] && source "$ZDOTDIR/nvm-path.zsh"

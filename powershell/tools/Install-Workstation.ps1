@@ -13,7 +13,7 @@
     Each step continues after a failure so a missing package never blocks the
     profile install. Does not move special folders, import env snapshots, or
     set Z:\Packages paths — those stay in docs/FRESH-INSTALL.md (steps 4–6)
-    and should run before this script on a brand-new box so rustup/mise write
+    and should run before this script on a brand-new box so runtimes/tools write
     into the relocated caches.
 
     Idempotent. Re-run any time.
@@ -30,7 +30,7 @@
     Skip profile deploy; only install winget packages.
 
 .PARAMETER StarshipTheme
-    Starship theme for Install-Profile.ps1. Defaults to nova.
+    Explicit Starship theme override. Omission preserves an existing theme.
 
 .PARAMETER List
     Print the winget package ids that would be installed and exit.
@@ -59,7 +59,7 @@ param(
     [switch]$Assurant,
     [switch]$SkipPackages,
     [switch]$SkipProfile,
-    [string]$StarshipTheme = 'nova',
+    [string]$StarshipTheme,
     [switch]$List
 )
 
@@ -140,7 +140,7 @@ Write-Host ""
 Write-Host "Windows workstation bootstrap" -ForegroundColor Cyan
 Write-Host "Repo:    $RepoRoot"
 Write-Host "Profile: $(if ($Assurant) { 'personal + assurant' } else { 'personal' })"
-Write-Host "Theme:   $StarshipTheme"
+Write-Host "Theme:   $(if ($StarshipTheme) { $StarshipTheme } else { 'preserve existing (nova if missing)' })"
 
 if (-not (Test-IsAdmin)) {
     Write-Host ""
@@ -186,9 +186,8 @@ if (-not $SkipProfile) {
         Write-WarnStep "Install-Profile.ps1 missing at $ProfileScript"
         $profileFailed = $true
     } else {
-        $profileArgs = @{
-            StarshipTheme = $StarshipTheme
-        }
+        $profileArgs = @{}
+        if ($StarshipTheme) { $profileArgs['StarshipTheme'] = $StarshipTheme }
         if ($Assurant) { $profileArgs['Assurant'] = $true }
 
         try {
@@ -220,8 +219,8 @@ Write-Host "===========================================" -ForegroundColor Green
 Write-Host ""
 Write-Host "Not done by this script (see docs/FRESH-INSTALL.md):" -ForegroundColor DarkGray
 Write-Host "  - Move-Special-Folders.ps1"
-Write-Host "  - Import-Env.ps1 -MergePath"
-Write-Host "  - Set-DevPackagePaths.ps1"
+Write-Host "  - Set-DevPackagePaths.ps1 (desired storage manifest)"
+Write-Host "  - Install-NodeToolchain.ps1 and uv Python/tool setup"
 Write-Host "  - Registry / network / shutdown tweaks"
 
 if ($packageFailed -or $profileFailed) {

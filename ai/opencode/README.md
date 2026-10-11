@@ -1,0 +1,95 @@
+# opencode/
+
+This folder packages the user's OpenCode configuration so it can be ported across Linux, macOS, and Windows. Run the matching installer for your OS once per machine; restart OpenCode afterwards.
+
+For shared MCPs across **Claude Code, Codex, Grok and OpenCode**, use
+[ai/README.md](../ai/README.md). Its installer reuses this payload and generates
+OpenCode's native definitions from one registry. These standalone installers
+deploy only this folder's OpenCode defaults.
+
+## Purpose
+
+OpenCode keeps its config under `~/.config/opencode/` and the bundled user-level
+skills under `~/.agents/skills/`. This package contains the reviewed plugin config
+and skill trees from the live machine. Credentials use environment references;
+login state and caches are excluded. The installers deploy this folder directly.
+The main config lets the target OS choose its shell instead of forcing `pwsh`.
+
+## Folder map
+
+| Path                          | What it is                                                         |
+| ----------------------------- | ------------------------------------------------------------------ |
+| `README.md`                   | This file                                                          |
+| `install.sh`                  | POSIX bash installer (Linux/macOS)                                 |
+| `Install-OpenCodeConfig.ps1`  | Windows PowerShell installer                                       |
+| `config/`                     | Sanitized copies of `opencode.json`, `oh-my-opencode-slim.json`, `tui.json`, `dcp.jsonc`, `opencode-mem.jsonc`, `quota-toast.json` |
+| `skills/`                     | Internal skills (clonedeps, codemap, deepwork, oh-my-opencode-slim, etc.) — deploys to `~/.config/opencode/skills/` |
+| `agent-skills/`               | User-level agent skills (api-security-hardening, find-skills, frontend-design, understand-*, etc.) — deploys to `~/.agents/skills/` |
+| `package.json`                | Tracks `@opencode-ai/plugin` dependency used by `opencode package` |
+| `themes/`                     | Imported custom themes, deployed to `~/.config/opencode/themes/` |
+
+## Quickstart
+
+### Windows
+
+```powershell
+pwsh -File .\opencode\Install-OpenCodeConfig.ps1
+```
+
+To uninstall (removes ONLY the files this package manages):
+
+```powershell
+pwsh -File .\opencode\Install-OpenCodeConfig.ps1 -Uninstall
+```
+
+### Linux / macOS
+
+```bash
+./opencode/install.sh
+```
+
+To uninstall (removes ONLY the files this package manages):
+
+```bash
+./opencode/install.sh --uninstall
+```
+
+Both installers are idempotent: identical files are skipped silently, and any existing target file whose content differs from the payload is backed up to `<target>.bak-<yyyyMMdd-HHmmss>` before being overwritten.
+
+## Required environment variables
+
+Set these in your shell profile (PowerShell, bash, zsh, fish — whatever launches OpenCode) before running the opencode TUI/CLI.
+
+| Variable                      | Purpose                                                              |
+| ----------------------------- | -------------------------------------------------------------------- |
+| `GITHUB_PERSONAL_ACCESS_TOKEN`| Auth for the official remote GitHub MCP; disabled until explicitly enabled |
+| `CONTEXT7_API_KEY`            | Optional Context7 key for higher limits                            |
+
+**Google provider** — the `google` provider block in `config/opencode.json` is shipped with the user's `projectId` baked in (`gen-lang-client-0968106005`). Google auth itself is handled out-of-band by running `opencode auth login` once on each machine; no env var is required for Google.
+
+Both variables use OpenCode's documented **`{env:NAME}`** substitution. The earlier
+`${NAME}` syntax was corrected during the September 2026 import. Keep values in
+private environment setup. GitHub uses `https://api.githubcopilot.com/mcp/`,
+replacing the legacy npm server. Enable it through the shared installer or change
+its `enabled` value after supplying the environment variable. The shared installer
+omits Context7's optional header when no key is set.
+
+## Excluded files
+
+These live on the source machine but are NOT shipped in this repo:
+
+| Excluded                              | Why                                                                    |
+| ------------------------------------- | ---------------------------------------------------------------------- |
+| `antigravity-accounts.json`           | Contains Google OAuth credentials                                      |
+| `opencode.json.bak`, `tui.json.bak`   | Local backups                                                          |
+| `usage-stats.db*`, `usage-stats.jsonc`| Local usage telemetry database                                         |
+| `opencode-notifier-state.json`        | Local notifier plugin state                                            |
+| `node_modules/`                       | Regenerated by `opencode package` / npm                                |
+| `.oh-my-opencode-slim/`               | Plugin-managed cache directory                                         |
+| `opencode-quota/` wrapper             | The wrapper subdir is flattened — only `quota-toast.json` is shipped into `config/` |
+
+The exclusion list keeps credentials, transient state, and regenerable artifacts out of version control while still packaging everything needed to reproduce the user's setup on a new machine.
+
+## Restart note
+
+After running either installer, **restart OpenCode** (exit and relaunch the TUI, or re-invoke the `opencode` binary) so it picks up the new config and skill folders. Skills and plugin metadata are read at startup; in-flight sessions will not see the new files.

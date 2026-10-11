@@ -3,26 +3,27 @@
     Restores Windows environment variables from the JSON files written by Export-Env.ps1.
 
 .DESCRIPTION
-    Reads user.json (and, with -IncludeMachine, system.json) from <repo>\config\env\ and
-    applies every variable via [Environment]::SetEnvironmentVariable. By default each
+    Reads user.json (and, with -IncludeMachine, system.json) from the supplied backup directory and
+    previews changes unless -Apply is supplied. When applying, each
     variable is set verbatim, clobbering whatever is on the target system. Use -MergePath
     to preserve the existing Path and append the captured entries (deduped).
 
 .PARAMETER ConfigDir
-    Directory containing user.json / system.json. Defaults to <repo>\config\env.
+    Required backup directory containing user.json / system.json.
 .PARAMETER IncludeMachine
     Also apply machine-scope vars from system.json. Requires an elevated PowerShell session.
 .PARAMETER MergePath
     Preserve the target system's existing Path entries and append the captured ones
     (deduped) instead of replacing the whole Path.
+.PARAMETER Apply
+    Apply the snapshot. Without this switch, only preview the changes.
 .PARAMETER DryRun
     Print what would be set without writing to the registry.
 
 .EXAMPLE
-    PS> pwsh -File .\Import-Env.ps1
-    PS> pwsh -File .\Import-Env.ps1 -IncludeMachine
-    PS> pwsh -File .\Import-Env.ps1 -IncludeMachine -DryRun
-    PS> pwsh -File .\Import-Env.ps1 -MergePath
+    PS> pwsh -File .\Import-Env.ps1 -ConfigDir C:/path/to/export
+    PS> pwsh -File .\Import-Env.ps1 -ConfigDir C:/path/to/export -IncludeMachine -DryRun
+    PS> pwsh -File .\Import-Env.ps1 -ConfigDir C:/path/to/export -MergePath -Apply
 
 .NOTES
     Pair with Export-Env.ps1. See config\env\README.md for what is filtered out and
@@ -31,13 +32,22 @@
 
 [CmdletBinding()]
 param(
-    [string]$ConfigDir = (Join-Path $PSScriptRoot "..\..\config\env"),
+    [Parameter(Mandatory)]
+    [ValidateScript({ Test-Path -LiteralPath $_ -PathType Container })]
+    [string]$ConfigDir,
     [switch]$IncludeMachine,
     [switch]$MergePath,
-    [switch]$DryRun
+    [switch]$DryRun,
+    [switch]$Apply
 )
 
 $ErrorActionPreference = "Stop"
+if (-not $Apply) { $DryRun = $true }
+if (-not $DryRun) {
+    $backupDir = Join-Path $env:LOCALAPPDATA ('PowerShellSetup/import-backups/' + (Get-Date -Format 'yyyyMMdd-HHmmss-fff'))
+    & (Join-Path $PSScriptRoot 'Export-Env.ps1') -OutputDir $backupDir -IncludeMachine:$IncludeMachine
+    Write-Host "Pre-import backup: $backupDir"
+}
 
 function Apply-Env {
     param(

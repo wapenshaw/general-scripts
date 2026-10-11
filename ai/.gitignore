@@ -20,6 +20,6 @@ __pycache__/
 *.sock
 *.pid
 SNAPSHOT.json
-herdr/plugins.json
-herdr/theme-picker-applied
+wsl/herdr/plugins.json
+wsl/herdr/theme-picker-applied
 *.local.md

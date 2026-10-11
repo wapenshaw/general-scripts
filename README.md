@@ -4,16 +4,16 @@ macOS and Linux use **zsh**. Windows uses **PowerShell 7 + Windows Terminal**. F
 
 | OS | First-run | Later updates | Shell config |
 |----|-----------|---------------|--------------|
-| **macOS** | [`macos/install.zsh`](./macos/install.zsh) — installs Homebrew if needed, then CLI tools + rustup, then zsh | [`mac-update.zsh`](./mac-update.zsh) | [`zsh/install.sh --base`](./zsh/install.sh) |
+| **macOS** | [`macos/install.zsh`](./macos/install.zsh) — 4-stage workstation setup (env, runtimes, apps, data; see [`docs/MAC-SETUP.md`](./docs/MAC-SETUP.md)) | [`mac-update.zsh`](./mac-update.zsh) | [`zsh/install.sh`](./zsh/install.sh) (base by default) |
 | **Fedora / Ubuntu / WSL** | [`linux/install.sh`](./linux/install.sh) — `dnf` or `apt-get`, official fallbacks, then zsh | re-run `linux/install.sh --update` | [`zsh/install.sh`](./zsh/install.sh) (personal by default) |
 | **Windows 11** | [`powershell/tools/Install-Workstation.ps1`](./powershell/tools/Install-Workstation.ps1) — App Installer/winget + profile | [`Update-WinGetPackages.ps1`](./powershell/tools/Update-WinGetPackages.ps1) | [`Install-Profile.ps1`](./powershell/profile/Install-Profile.ps1) |
 
 ```bash
-# macOS
-./macos/install.zsh                 # personal (default)
-./macos/install.zsh --assurant      # Assurant/Astra modules
-./mac-update.zsh                    # later Homebrew / mise / rustup / uv updates
-./mac-update.zsh --bootstrap        # install Homebrew if missing + curated tools
+# macOS — full fresh setup or staged (see docs/MAC-SETUP.md)
+./macos/install.zsh                 # all 4 stages (env, runtimes, apps, data)
+./macos/install.zsh --stage=env     # stage 1: brew, zsh, fonts, defaults
+./macos/install.zsh --stage=apps    # stage 3: brew apps and casks
+./mac-update.zsh                    # ongoing routine maintenance
 
 # Fedora, Ubuntu, Debian, WSL
 ./linux/install.sh                  # personal (default)
@@ -28,9 +28,28 @@ pwsh -File .\powershell\tools\Install-Workstation.ps1
 pwsh -File .\powershell\tools\Install-Workstation.ps1 -Assurant
 ```
 
-On a brand-new Windows box, drive layout / env restore still follow **[docs/FRESH-INSTALL.md](./docs/FRESH-INSTALL.md)** (steps 1–6) *before* the workstation installer so rustup and mise write into `Z:\Packages`.
+On a brand-new Windows box, follow **[docs/FRESH-INSTALL.md](./docs/FRESH-INSTALL.md)** (steps 1–6) for drive layout, the desired storage manifest and nvm/uv runtime setup before the workstation installer. Windows uses nvm v2 for Node, standalone pnpm and uv for Python, with development storage under `Z:\Packages`.
 
 Cargo/rustup PATH is added only when the `cargo` binary exists (zsh: `~/.cargo/bin/cargo`; PowerShell: `$env:CARGO_HOME\bin\cargo.exe` or `~\.cargo\bin\cargo.exe`). `rustup self uninstall` therefore drops it off PATH.
+
+## AI client configuration
+
+[ai/README.md](./ai/README.md) provides portable **Claude Code, Codex, Grok and
+OpenCode** preferences, status lines and one shared MCP registry for Windows and
+macOS/Linux. It reuses the existing OpenCode plugin/skill payload. Render first;
+installation merges settings with private backups. Authentication is per machine.
+
+```powershell
+# Windows: render, then install
+./ai/Install-AIConfig.ps1
+./ai/Install-AIConfig.ps1 -Install
+```
+
+```bash
+# macOS / Linux: render, then install
+bash ./ai/install.sh
+bash ./ai/install.sh --install
+```
 
 ---
 
@@ -54,7 +73,7 @@ Install these **before** running the profile installer. The profile will still l
 | **PowerShell 7 (`pwsh`)** | **Manual MSI** from [PowerShell releases](https://github.com/PowerShell/PowerShell/releases/latest) — not via winget. Verify: `pwsh --version` | Yes |
 | **Git** | `winget` / [Install-Essentials.ps1](./powershell/tools/Install-Essentials.ps1) | Yes (clone + git helpers) |
 | **starship, zoxide, fzf** | `Install-Essentials.ps1` (Utilities list) | Strongly recommended — prompt, `cd` jumper, fuzzy find |
-| **eza, bat, ripgrep, mise, …** | Same essentials script | Optional; aliases/modules no-op if absent |
+| **eza, bat, ripgrep, nvm, …** | Same essentials script | Optional; aliases/modules no-op if absent |
 | **Windows Terminal** | Essentials list | Recommended host for `pwsh` |
 
 Minimal CLI path:
@@ -76,17 +95,18 @@ Utilities-only (shell tools without PowerToys/VS Code/etc.):
 .\powershell\tools\Install-Essentials.ps1 -Utilities
 ```
 
-See `Install-Essentials.ps1 -List` for package IDs. Full fresh-box order (OOBE → env restore → package paths → winget → profile) is in [docs/FRESH-INSTALL.md](./docs/FRESH-INSTALL.md).
+See `Install-Essentials.ps1 -List` for package IDs. Full fresh-box order (OOBE → storage manifest → runtimes and tools → profile) is in [docs/FRESH-INSTALL.md](./docs/FRESH-INSTALL.md).
 
 ### What the installer does
 
 1. Copies `powershell/profile/modules/*.ps1` → `~/.config/powershell/modules/`
 2. Copies `powershell/functions/*.ps1` → `~/.config/powershell/functions/`
 3. Installs `Register-ProfileFunctions.ps1` (lazy-loads functions; registers short aliases like `rsb` immediately)
-4. Writes the full loader to `~/.config/powershell/profile.ps1` and a thin stub into `$PROFILE`
-5. Runs `Set-StarshipConfig.ps1` (default theme: `nova`)
+4. Installs the loader and explicit module manifest under `~/.config/powershell/`, with a thin AllHosts entry point
+5. Removes separate ConsoleHost/VS Code profile files after backing them up; both hosts use AllHosts
+6. Keeps the existing Starship theme; installs `nova` only if missing, or replaces it with an explicit `-StarshipTheme`
 
-Re-running is idempotent. Does **not** install winget, PowerShell, starship, fonts, or other tools.
+Re-running backs up the live configuration and deploys selected dependencies to a local module store. Does **not** install winget, PowerShell, starship, fonts, or runtimes. See [the shell setup guide](./powershell/profile/README.md).
 
 ### Usage
 
@@ -99,7 +119,12 @@ pwsh -File .\powershell\profile\Install-Profile.ps1 -StarshipTheme nordic
 pwsh -File .\powershell\profile\Install-Profile.ps1 -Uninstall
 ```
 
-Restart PowerShell (or open a new tab) after running. First launch may auto-install PSGallery plugins (`Terminal-Icons`, `posh-git`, `PSFzf`) unless `$env:PS_PLUGINS` is set.
+Restart PowerShell after running. PSFzf is deployed by the installer; startup never downloads dependencies. Node uses nvm v2, Python uses uv, and pnpm is standalone without Corepack.
+
+Windows Terminal and VS Code share the same PowerShell 7 configuration. After
+environment changes, fully quit VS Code and reopen it from Start before creating
+a terminal. See [VS Code troubleshooting](./powershell/profile/README.md#vs-code-and-terminal-differences)
+and the [September 2026 cleanup record](./docs/POWERSHELL-SETUP-REVIEW.md).
 
 ---
 
