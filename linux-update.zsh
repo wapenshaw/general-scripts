@@ -173,6 +173,33 @@ run_step() {
 	fi
 }
 
+update_nvm_node() {
+	# NVM supports bash/sh; isolate it from zsh options and the caller's PATH.
+	/bin/bash -c '
+		set -e
+		export NVM_DIR="$1"
+		. "$NVM_DIR/nvm.sh" --no-use
+		current="$(nvm version default)" || current=N/A
+		if [[ ! "$current" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+			printf "No installed NVM default to update: %s\n" "$current"
+			exit 0
+		fi
+		major="${current#v}"
+		major="${major%%.*}"
+		latest="$(nvm version-remote "$major")"
+		if [[ ! "$latest" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ || "$latest" != "v$major."* ]]; then
+			printf "Could not resolve the latest Node %s release.\n" "$major" >&2
+			exit 1
+		fi
+		if [[ "$latest" == "$current" ]]; then
+			printf "Node %s is up to date.\n" "$current"
+			exit 0
+		fi
+		nvm install "$latest" --reinstall-packages-from="$current" --skip-default-packages
+		nvm alias default "$latest"
+	' update-nvm-node "$1"
+}
+
 # Puts Linuxbrew on PATH for this run. shellenv prepends, so ~/.local/bin (uv's
 # python shims, uv) is moved back in front, as the zsh config does for real shells.
 activate_homebrew() {
@@ -441,6 +468,10 @@ Routine behavior:
   - Lists available system package updates (installs them only with --system).
   - Updates and upgrades Homebrew packages, then removes unused dependencies.
   - Keeps the Azure kubelogin tap a shallow clone.
+  - Updates the NVM default within its current Node major, migrates global npm
+    packages, and retains older Node versions for rollback.
+  - Updates the standalone Bun installation with bun upgrade.
+  - Updates native Claude Code with claude update; Homebrew owns Codex.
   - Updates rustup and the installed Rust toolchain when rustup is present.
   - Updates uv, upgrades uv-managed Python installations and uv tools.
   - Runs Homebrew, rustup, uv, Python, PATH-order and WSL health checks.
@@ -475,6 +506,8 @@ Tool ownership:
   apt / dnf  System packages and prerequisites (zsh, git, curl, build tools, direnv)
   Homebrew   Native CLI utilities in linux/Brewfile; never Python or Node
   NVM        Node.js and global Node packages
+  Bun        Standalone Bun (bun upgrade)
+  Claude     Native installer (claude update); fastest release availability
   rustup     Rust toolchain (rustc, cargo, rustfmt, clippy)
   uv         uv itself (uv self update), Python installations, Python CLI tools
 HELP
@@ -808,6 +841,11 @@ export NVM_DIR="${NVM_DIR:-$HOME/.nvm}"
 if [[ -d "$NVM_DIR" ]]; then
 	section "Node / NVM"
 
+	if [[ -s "$NVM_DIR/nvm.sh" ]]; then
+		run_step "Update the NVM default within its current Node major" \
+			update_nvm_node "$NVM_DIR"
+	fi
+
 	# Share the shell's version selection and PATH rule without loading nvm.sh.
 	if [[ -f "$SCRIPT_DIR/zsh/zsh/nvm-path.zsh" ]]; then
 		source "$SCRIPT_DIR/zsh/zsh/nvm-path.zsh"
@@ -829,6 +867,33 @@ if [[ -d "$NVM_DIR" ]]; then
 	if command_exists pnpm; then
 		success "pnpm: $(pnpm --version)"
 	fi
+fi
+
+#
+# Bun and native Claude Code
+#
+
+section "Bun"
+typeset BUN_EXECUTABLE="${BUN_INSTALL:-$HOME/.bun}/bin/bun"
+if [[ -x "$BUN_EXECUTABLE" ]]; then
+	run_step "Update standalone Bun" "$BUN_EXECUTABLE" upgrade
+else
+	info "Standalone Bun is not installed; skipping its update"
+fi
+
+section "Claude Code"
+if command_exists claude; then
+	typeset CLAUDE_EXECUTABLE="$(command -v claude)"
+	if [[ "$CLAUDE_EXECUTABLE" == /home/linuxbrew/* ||
+		"$CLAUDE_EXECUTABLE" == "$HOME/.linuxbrew/"* ]]; then
+		info "Claude Code is managed by Homebrew and updated with brew upgrade"
+	elif [[ "$CLAUDE_EXECUTABLE" == "$HOME/.local/bin/claude" ]]; then
+		run_step "Update native Claude Code" "$CLAUDE_EXECUTABLE" update
+	else
+		info "Claude Code is managed outside the native installer; skipping its update"
+	fi
+else
+	info "Claude Code is not installed; skipping its update"
 fi
 
 #

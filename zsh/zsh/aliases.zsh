@@ -59,8 +59,11 @@ alias help='run-help'
 # System maintenance
 sysup() {
   local rc=0 ran=0
-  # Linux/WSL: apt owns the system; Homebrew (below) owns the CLI tools in linux/Brewfile.
-  if [[ "$OSTYPE" != darwin* ]] && (( $+commands[apt] )); then
+  # Linux: dnf/apt owns the system; Homebrew owns the CLI tools in linux/Brewfile.
+  if [[ "$OSTYPE" != darwin* ]] && (( $+commands[dnf] )); then
+    ran=1
+    sudo dnf upgrade --refresh -y && sudo dnf autoremove -y && sudo dnf clean all || rc=1
+  elif [[ "$OSTYPE" != darwin* ]] && (( $+commands[apt] )); then
     ran=1
     sudo apt update -y && sudo apt full-upgrade -y && sudo apt autoremove -y && sudo apt clean -y && sudo apt autoclean -y || rc=1
   fi
@@ -69,7 +72,7 @@ sysup() {
     brew update && brew upgrade && brew cleanup || rc=1
   fi
   if (( ! ran )); then
-    print -u2 'No supported package manager found (brew or apt).'
+    print -u2 'No supported package manager found (brew, dnf or apt).'
     return 1
   fi
   return $rc

@@ -129,6 +129,35 @@ elif command -v wslpath >/dev/null 2>&1; then
 
   clipcopy()  { "$_win/System32/clip.exe"; }
   clippaste() { "$_win/System32/WindowsPowerShell/v1.0/powershell.exe" -NoProfile -Command Get-Clipboard 2>/dev/null | tr -d '\r'; }
+elif [[ "$OSTYPE" == linux* ]]; then
+  open() { command xdg-open "${1:-.}"; }
+  explore() { open "${1:-.}"; }
+
+  clipcopy() {
+    if [[ -n "${WAYLAND_DISPLAY:-}" ]] && (( $+commands[wl-copy] )); then
+      command wl-copy
+    elif (( $+commands[xsel] )); then
+      command xsel --clipboard --input
+    elif (( $+commands[xclip] )); then
+      command xclip -selection clipboard
+    else
+      print -u2 'Install wl-clipboard, xsel or xclip for clipboard support.'
+      return 1
+    fi
+  }
+
+  clippaste() {
+    if [[ -n "${WAYLAND_DISPLAY:-}" ]] && (( $+commands[wl-paste] )); then
+      command wl-paste --no-newline
+    elif (( $+commands[xsel] )); then
+      command xsel --clipboard --output
+    elif (( $+commands[xclip] )); then
+      command xclip -selection clipboard -o
+    else
+      print -u2 'Install wl-clipboard, xsel or xclip for clipboard support.'
+      return 1
+    fi
+  }
 fi
 
 # =========================================================

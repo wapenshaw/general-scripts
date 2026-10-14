@@ -9,6 +9,7 @@
 #   terraform      tfenv.         rustup/cargo   rustup.      go   herdr-managed.
 #   kubectl/docker Docker Desktop WSL integration.
 #   bun            `bun upgrade`.
+#   claude         native installer / `claude update`; Homebrew can lag new releases.
 #   direnv         pulls Homebrew bash, which would shadow /bin/bash for `env bash` scripts (apt).
 #   git, curl, wget, zsh, make, tmux, tree, unzip, htop, watch, az   system/apt.
 
@@ -37,3 +38,6 @@ brew "shfmt"
 brew "starship"
 brew "yq"
 brew "zoxide"
+
+# Codex's cask includes Linux binaries and tracks the current upstream release.
+cask "codex"
