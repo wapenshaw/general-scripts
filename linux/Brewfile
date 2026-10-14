@@ -1,0 +1,39 @@
+# Linuxbrew (WSL/Ubuntu) CLI tools. Apply with: brew bundle --file ~/wapenshaw/linux/Brewfile
+# linux/install.sh installs Homebrew and applies this file; ./linux-update.zsh keeps it current
+# (`sysup` in zsh/zsh/aliases.zsh runs apt, then brew update/upgrade/cleanup).
+#
+# Deliberately NOT here:
+#   python, node   Python is managed by uv (global default via `uv python install --default`),
+#                  Node by nvm. Brew dependencies that link either would shadow them; avoid.
+#   uv, uvx        self-updating (`uv self update`), owns Python.
+#   terraform      tfenv.         rustup/cargo   rustup.      go   herdr-managed.
+#   kubectl/docker Docker Desktop WSL integration.
+#   bun            `bun upgrade`.
+#   direnv         pulls Homebrew bash, which would shadow /bin/bash for `env bash` scripts (apt).
+#   git, curl, wget, zsh, make, tmux, tree, unzip, htop, watch, az   system/apt.
+
+# Azure's kubelogin (AKS exec plugin, what ~/.kube/config calls). NOT homebrew-core's
+# "kubelogin", which is int128's unrelated OIDC plugin. The tap's git history is ~460 MB;
+# install.sh and linux-update.zsh re-clone it shallow (git clone --depth 1
+# https://github.com/Azure/homebrew-kubelogin over Taps/azure/homebrew-kubelogin).
+tap "azure/kubelogin"
+brew "azure/kubelogin/kubelogin"
+
+brew "bat"
+brew "eza"
+brew "fd"
+brew "fzf"
+brew "gh"
+brew "git-delta"
+brew "helm"
+brew "hyperfine"
+brew "jq"
+brew "just"
+brew "k9s"
+brew "neovim"
+brew "ripgrep"
+brew "shellcheck"
+brew "shfmt"
+brew "starship"
+brew "yq"
+brew "zoxide"

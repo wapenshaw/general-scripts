@@ -1,25 +1,35 @@
 #!/usr/bin/env bash
 # linux/install.sh — first-run Linux bootstrap (Fedora dnf / Ubuntu apt-get)
 #
-# Installs the curated CLI tools from the native package manager, falls back
-# to official user-level installers when a package is missing, then deploys
-# the zsh config. Safe to re-run. A missing package never aborts the rest.
+# Installs the system prerequisites from the native package manager, then
+# Homebrew (Linuxbrew) and the CLI tools in linux/Brewfile, the official
+# uv/rustup/bun installers, and finally the zsh config. Safe to re-run. A
+# failed step never aborts the rest. Keep it current afterwards with
+# ./linux-update.zsh.
 #
 # Usage:
 #   ./linux/install.sh              # Fedora/Ubuntu: tools + zsh (personal)
 #   ./linux/install.sh --assurant   # same, with Assurant/Astra modules
 #   ./linux/install.sh --base       # explicit personal profile
-#   ./linux/install.sh --update     # also upgrade already-installed packages
+#   ./linux/install.sh --update     # also upgrade already-installed system packages
 #   ./linux/install.sh --dry-run    # print mutating commands
 #   ./linux/install.sh --skip-zsh   # tools only
 #   ./linux/install.sh --skip-tools # zsh config only
+#   ./linux/install.sh --bash-only  # only the Homebrew hook for bash (~/.profile, ~/.bashrc)
 #
 # Package ownership:
-#   dnf / apt-get   native CLI tools (zsh, git, eza, bat, fd, ripgrep, …)
-#   official scripts  mise, uv, starship, rustup, zoxide when the distro
-#                     package is unavailable
+#   dnf / apt-get   system prerequisites (zsh, git, curl, compiler toolchain,
+#                   direnv). direnv stays native: Homebrew's pulls in its own bash
+#   Homebrew        CLI tools in linux/Brewfile (eza, bat, fd, ripgrep, fzf, gh,
+#                   starship, zoxide, k9s, Azure kubelogin, …)
+#   uv              Python installs and Python CLI tools (official installer;
+#                   `uv self update`). Python is never installed through brew
+#   nvm             Node.js. Node is never installed through brew
+#   bash hook       bash never reads ~/.zsh, so linux/shell/brew.sh puts Homebrew on
+#                   bash's PATH too (agent tools such as Copilot CLI run bash)
 #   rustup          rustc / cargo (PATH is owned by the zsh config; only
 #                   added when ~/.cargo/bin/cargo exists)
+#   bun             official installer (`bun upgrade`)
 
 set -u
 set -o pipefail
@@ -31,6 +41,7 @@ UPDATE=0
 DRY_RUN=0
 SKIP_ZSH=0
 SKIP_TOOLS=0
+BASH_ONLY=0
 STARSHIP_THEME="${ZSH_STARSHIP_THEME:-}"
 
 OS_ID=""
@@ -44,7 +55,7 @@ WARNINGS=()
 FAILURES=()
 
 usage() {
-  sed -n '2,22p' "$0"
+  sed -n '2,32p' "$0"
 }
 
 for arg in "$@"; do
@@ -55,6 +66,7 @@ for arg in "$@"; do
     --dry-run) DRY_RUN=1 ;;
     --skip-zsh) SKIP_ZSH=1 ;;
     --skip-tools) SKIP_TOOLS=1 ;;
+    --bash-only) BASH_ONLY=1 ;;
     --theme=*) STARSHIP_THEME="${arg#--theme=}" ;;
     -h|--help)
       usage
@@ -299,60 +311,9 @@ ensure_local_bin() {
   esac
 }
 
-link_renamed_binary() {
-  local src_cmd="$1"
-  local dest_name="$2"
-  local dest="$HOME/.local/bin/$dest_name"
-  local src
-
-  command_exists "$dest_name" && return 0
-  command_exists "$src_cmd" || return 1
-
-  src="$(command -v "$src_cmd")"
-  if [[ "$DRY_RUN" -eq 1 ]]; then
-    print_command ln -sfn "$src" "$dest"
-    return 0
-  fi
-
-  ln -sfn "$src" "$dest"
-  green "Linked $src_cmd → ~/.local/bin/$dest_name"
-}
-
 #
 # Official user-level fallbacks (no root required)
 #
-
-install_starship_official() {
-  command_exists starship && { green "starship already on PATH"; return 0; }
-  ensure_local_bin
-  info "Installing starship via official installer"
-  if [[ "$DRY_RUN" -eq 1 ]]; then
-    print_command sh -c 'curl -sS https://starship.rs/install.sh | sh -s -- -y -b "$HOME/.local/bin"'
-    return 0
-  fi
-  if curl -fsSL https://starship.rs/install.sh | sh -s -- -y -b "$HOME/.local/bin"; then
-    green "Installed starship → ~/.local/bin"
-  else
-    yellow "Official starship installer failed"
-    add_warning "starship official installer"
-  fi
-}
-
-install_mise_official() {
-  command_exists mise && { green "mise already on PATH"; return 0; }
-  ensure_local_bin
-  info "Installing mise via official installer"
-  if [[ "$DRY_RUN" -eq 1 ]]; then
-    print_command sh -c 'curl https://mise.run | sh'
-    return 0
-  fi
-  if curl -fsSL https://mise.run | sh; then
-    green "Installed mise → ~/.local/bin"
-  else
-    yellow "Official mise installer failed"
-    add_warning "mise official installer"
-  fi
-}
 
 install_uv_official() {
   command_exists uv && { green "uv already on PATH"; return 0; }
@@ -367,22 +328,6 @@ install_uv_official() {
   else
     yellow "Official uv installer failed"
     add_warning "uv official installer"
-  fi
-}
-
-install_zoxide_official() {
-  command_exists zoxide && { green "zoxide already on PATH"; return 0; }
-  ensure_local_bin
-  info "Installing zoxide via official installer"
-  if [[ "$DRY_RUN" -eq 1 ]]; then
-    print_command sh -c 'curl -sSfL https://raw.githubusercontent.com/ajeetdsouza/zoxide/main/install.sh | sh'
-    return 0
-  fi
-  if curl -fsSL https://raw.githubusercontent.com/ajeetdsouza/zoxide/main/install.sh | sh; then
-    green "Installed zoxide → ~/.local/bin"
-  else
-    yellow "Official zoxide installer failed"
-    add_warning "zoxide official installer"
   fi
 }
 
@@ -451,108 +396,246 @@ install_bun_official() {
 bootstrap_uv_python() {
   command_exists uv || return 0
 
-  run_cmd "Install Python 3.13 as the uv default" \
-    uv python install 3.13 --default
+  run_cmd "Install Python 3.14 as the uv default" \
+    uv python install 3.14 --default
+  run_cmd "Pin the global uv Python to 3.14" \
+    uv python pin --global 3.14
 
-  if command_exists uv; then
-    run_cmd "Install uv tool: pre-commit" uv tool install pre-commit
-    run_cmd "Install uv tool: ruff" uv tool install ruff
+  run_cmd "Install uv tool: pre-commit" uv tool install pre-commit
+  run_cmd "Install uv tool: ruff" uv tool install ruff
+}
+
+#
+# Homebrew (Linuxbrew)
+#
+
+BREW_BIN=""
+BREW_INSTALLER_URL="https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh"
+AZURE_KUBELOGIN_TAP_URL="https://github.com/Azure/homebrew-kubelogin"
+
+find_brew() {
+  local candidate
+  for candidate in /home/linuxbrew/.linuxbrew/bin/brew "$HOME/.linuxbrew/bin/brew"; do
+    if [[ -x "$candidate" ]]; then
+      BREW_BIN="$candidate"
+      return 0
+    fi
+  done
+  if command_exists brew; then
+    BREW_BIN="$(command -v brew)"
+    return 0
+  fi
+  return 1
+}
+
+# Puts brew on PATH for this run. shellenv prepends, so ~/.local/bin (uv's python
+# shims, uv) is moved back in front, as the zsh config does for real shells.
+activate_homebrew() {
+  find_brew || return 1
+  eval "$("$BREW_BIN" shellenv bash)"
+  export PATH="$HOME/.local/bin:$PATH"
+  export HOMEBREW_NO_ENV_HINTS=1
+}
+
+install_homebrew() {
+  if activate_homebrew; then
+    green "Homebrew already installed: $BREW_BIN"
+    return 0
+  fi
+
+  if [[ "$DRY_RUN" -eq 1 ]]; then
+    info "Installing Homebrew"
+    print_command env NONINTERACTIVE=1 /bin/bash -c "curl -fsSL $BREW_INSTALLER_URL | bash"
+    return 0
+  fi
+
+  if [[ "${EUID:-$(id -u)}" -eq 0 ]]; then
+    yellow "Homebrew will not install as root; re-run as your normal user"
+    add_warning "Homebrew (run as a non-root user)"
+    return 1
+  fi
+
+  # The installer creates /home/linuxbrew with sudo. NONINTERACTIVE=1 needs
+  # passwordless sudo; with only a TTY let it prompt for the password.
+  local noninteractive=""
+  if sudo -n true 2>/dev/null; then
+    noninteractive=1
+  elif [[ ! -t 0 || ! -t 1 ]]; then
+    yellow "Homebrew needs sudo; no passwordless sudo and no TTY, skipping"
+    add_warning "Homebrew (needs sudo and a TTY: re-run this script from a terminal)"
+    return 1
+  fi
+
+  local installer
+  installer="$(mktemp)"
+  info "Installing Homebrew"
+  if curl -fsSL "$BREW_INSTALLER_URL" -o "$installer" &&
+    env ${noninteractive:+NONINTERACTIVE=1} /bin/bash "$installer"; then
+    rm -f "$installer"
+    if activate_homebrew; then
+      green "Homebrew installed: $BREW_BIN"
+      return 0
+    fi
+    yellow "Homebrew installer finished but brew was not found"
+    add_warning "Homebrew PATH after install"
+    return 1
+  fi
+
+  rm -f "$installer"
+  yellow "Homebrew installer failed"
+  add_warning "Install Homebrew"
+  return 1
+}
+
+# The Azure kubelogin tap carries ~460 MB of git history. Clone it shallow before
+# `brew bundle` taps it (brew would do a full clone), or re-clone an existing full one.
+ensure_azure_kubelogin_tap() {
+  local tap_dir
+  tap_dir="$("$BREW_BIN" --repository)/Library/Taps/azure/homebrew-kubelogin"
+
+  if [[ -d "$tap_dir/.git" &&
+    "$(git -C "$tap_dir" rev-parse --is-shallow-repository 2>/dev/null)" == true ]]; then
+    green "Azure kubelogin tap is already a shallow clone"
+    return 0
+  fi
+
+  info "Cloning the Azure kubelogin tap shallow (a full clone is ~460 MB)"
+  if [[ "$DRY_RUN" -eq 1 ]]; then
+    print_command git clone --depth 1 "$AZURE_KUBELOGIN_TAP_URL" "$tap_dir"
+    return 0
+  fi
+
+  mkdir -p "$(dirname "$tap_dir")"
+  if ! git clone --depth 1 -q "$AZURE_KUBELOGIN_TAP_URL" "$tap_dir.shallow"; then
+    rm -rf "$tap_dir.shallow"
+    yellow "Could not clone the Azure kubelogin tap"
+    add_warning "Azure kubelogin tap clone"
+    return 0
+  fi
+  if [[ "$tap_dir" == */Library/Taps/azure/homebrew-kubelogin ]]; then
+    rm -rf "$tap_dir"
+    mv "$tap_dir.shallow" "$tap_dir"
+    green "Azure kubelogin tap cloned shallow"
   fi
 }
 
+brew_bundle() {
+  local brewfile="$REPO/linux/Brewfile"
+
+  if [[ ! -f "$brewfile" ]]; then
+    red "Missing $brewfile"
+    add_failure "linux/Brewfile missing"
+    return 1
+  fi
+
+  if [[ -z "$BREW_BIN" ]]; then
+    if [[ "$DRY_RUN" -eq 1 ]]; then
+      info "Dry-run: Homebrew is not installed yet; the bundle step would run:"
+      print_command brew bundle --file "$brewfile"
+    else
+      yellow "Homebrew is unavailable; skipping $brewfile"
+    fi
+    return 0
+  fi
+
+  ensure_azure_kubelogin_tap
+  run_cmd "Install the Homebrew tools in linux/Brewfile" \
+    "$BREW_BIN" bundle --file "$brewfile"
+}
+
+BASH_BREW_BEGIN="# >>> linux/install.sh Homebrew block >>>"
+BASH_BREW_END="# <<< linux/install.sh Homebrew block <<<"
+
+# bash never reads ~/.zsh, so give it Homebrew too: deploy linux/shell/brew.sh and
+# source it from ~/.profile (login shells) and ~/.bashrc (interactive shells).
+# Already-running processes keep the PATH they started with and must be restarted.
+install_bash_brew() {
+  local src="$REPO/linux/shell/brew.sh"
+  local dest="$HOME/.config/shell/brew.sh"
+  local rc ts
+
+  if [[ ! -f "$src" ]]; then
+    red "Missing $src"
+    add_failure "linux/shell/brew.sh missing"
+    return 1
+  fi
+
+  info "Installing the Homebrew hook for bash"
+
+  if [[ "$DRY_RUN" -eq 1 ]]; then
+    print_command mkdir -p "$(dirname "$dest")"
+    print_command cp "$src" "$dest"
+    for rc in "$HOME/.profile" "$HOME/.bashrc"; do
+      printf '  append the Homebrew block to %s\n' "$rc"
+    done
+    return 0
+  fi
+
+  ts="$(date +%Y%m%d%H%M%S)"
+  mkdir -p "$(dirname "$dest")"
+  cp "$src" "$dest"
+  green "Installed ~/.config/shell/brew.sh"
+
+  for rc in "$HOME/.profile" "$HOME/.bashrc"; do
+    if [[ -f "$rc" ]] && grep -qF "$BASH_BREW_BEGIN" "$rc"; then
+      green "$rc already sources it"
+      continue
+    fi
+
+    [[ -f "$rc" ]] && cp -p "$rc" "$rc.bak-brew-$ts"
+    # shellcheck disable=SC2016
+    {
+      printf '\n%s\n' "$BASH_BREW_BEGIN"
+      printf '# Homebrew on PATH for bash (zsh gets it from ~/.zsh/.zshenv).\n'
+      printf '[ -r "$HOME/.config/shell/brew.sh" ] && . "$HOME/.config/shell/brew.sh"\n'
+      printf '%s\n' "$BASH_BREW_END"
+    } >> "$rc"
+    green "Added the Homebrew block to $rc (backup: $rc.bak-brew-$ts)"
+  done
+}
+
 #
-# Catalog: package  binary  [fallback]
-# fallback is one of: starship mise uv zoxide rustup (empty = no fallback)
+# System prerequisites (native package manager). Everything else is Homebrew.
+# Format: package  binary-to-look-for (empty = rely on the package database)
 #
 
 fedora_catalog() {
-  cat <<'EOF'
+  cat <<'EOF2'
 zsh zsh
 git git
 curl curl
-ca-certificates ca-certificates
-eza eza
-bat bat
-fd-find fd
-ripgrep rg
-fzf fzf
-zoxide zoxide zoxide
+ca-certificates
+gcc gcc
+gcc-c++ g++
+make make
+procps-ng
+file file
 direnv direnv
-neovim nvim
-ShellCheck shellcheck
-shfmt shfmt
-git-delta delta
-just just
-hyperfine hyperfine
-jq jq
-yq yq
-gh gh
-mise mise mise
-starship starship starship
-uv uv uv
-rustup rustup-init rustup
-EOF
+EOF2
 }
 
 ubuntu_catalog() {
-  cat <<'EOF'
+  cat <<'EOF2'
 zsh zsh
 git git
 curl curl
-ca-certificates ca-certificates
-eza eza
-bat bat
-fd-find fdfind
-ripgrep rg
-fzf fzf
-zoxide zoxide zoxide
+ca-certificates
+build-essential
+procps
+file file
 direnv direnv
-neovim nvim
-shellcheck shellcheck
-shfmt shfmt
-git-delta delta
-just just
-hyperfine hyperfine
-jq jq
-yq yq
-gh gh
-mise mise mise
-starship starship starship
-uv uv uv
-rustup rustup-init rustup
-EOF
-}
-
-run_fallback() {
-  local name="$1"
-  case "$name" in
-    starship) install_starship_official ;;
-    mise)     install_mise_official ;;
-    uv)       install_uv_official ;;
-    zoxide)   install_zoxide_official ;;
-    rustup)   install_rustup_official ;;
-    *)        yellow "Unknown fallback: $name" ;;
-  esac
+EOF2
 }
 
 install_catalog() {
-  local line pkg binary fallback
+  local line pkg binary
 
   while IFS= read -r line; do
     [[ -z "$line" || "$line" == \#* ]] && continue
     pkg=""
     binary=""
-    fallback=""
-    read -r pkg binary fallback <<< "$line"
-
-    if install_pkg "$pkg" "$binary"; then
-      continue
-    fi
-
-    if [[ -n "$fallback" ]]; then
-      info "Falling back to official installer for $fallback"
-      run_fallback "$fallback"
-    fi
+    read -r pkg binary <<< "$line"
+    install_pkg "$pkg" "$binary" || true
   done
 }
 
@@ -561,7 +644,7 @@ install_tools() {
     printf '\n\033[1m\033[34m--- %s ---\033[0m\n\n' "$1"
   }
 
-  section_tools "Native packages ($PM)"
+  section_tools "System packages ($PM)"
 
   refresh_packages
   ensure_local_bin
@@ -571,20 +654,19 @@ install_tools() {
     apt) install_catalog < <(ubuntu_catalog) ;;
   esac
 
-  if [[ "$PM" == apt ]]; then
-    link_renamed_binary batcat bat
-    link_renamed_binary fdfind fd
+  section_tools "Homebrew"
+  if install_homebrew; then
+    brew_bundle
+  else
+    add_warning "Skipped linux/Brewfile (Homebrew unavailable)"
   fi
+  install_bash_brew
 
-  section_tools "User-level fallbacks"
+  section_tools "User-level installers"
 
-  # Always try these if the binary is still missing. Distros often lack them.
-  command_exists starship || install_starship_official
-  command_exists mise     || install_mise_official
-  command_exists uv       || install_uv_official
-  command_exists zoxide   || install_zoxide_official
+  command_exists uv || install_uv_official
   [[ -x "$HOME/.cargo/bin/cargo" ]] || install_rustup_official
-  command_exists bun      || install_bun_official
+  command_exists bun || install_bun_official
 
   section_tools "uv Python"
   bootstrap_uv_python
@@ -642,6 +724,12 @@ info "Profile:  $([[ "$ASSURANT" -eq 1 ]] && printf assurant || printf personal)
 info "sudo:     $([[ "$HAVE_SUDO" -eq 1 ]] && printf yes || printf no)"
 [[ "$DRY_RUN" -eq 1 ]] && yellow "Dry-run: mutating commands will only be printed"
 printf '\n'
+
+if [[ "$BASH_ONLY" -eq 1 ]]; then
+  SKIP_TOOLS=1
+  SKIP_ZSH=1
+  install_bash_brew
+fi
 
 if [[ "$SKIP_TOOLS" -eq 0 ]]; then
   install_tools
