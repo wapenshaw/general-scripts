@@ -19,7 +19,9 @@ Node with nvm.
   rustup; `uv self update`, `uv python upgrade`, `uv tool upgrade --all`; keeps the Azure
   kubelogin tap shallow; `--bootstrap` applies the Brewfile, rustup, uv Python 3.14 and tools;
   `--cleanup` (apt/dnf cache and unused packages, journal, rotated logs, old `/tmp`, brew/uv/npm/pip
-  caches, then `sudo fstrim -av`; never wipes the uv cache or deletes sockets), `--deep` (also
+  caches; general Linux, never wipes the uv cache or deletes sockets), `--wsl` (WSL only:
+  `sudo fstrim -av` so the VHDX can shrink, plus the Windows-side steps; the read-only WSL checks,
+  disk usage, `no-aaaa` and `SSL_CERT_FILE`, also print on a plain run under WSL), `--deep` (also
   `~/.cache`, npx, Azure MCP extractions, old Claude versions, idle Copilot sessions; replaces
   the retired, deleted `~/cleanup.sh`), `--dry-run`. Checks that brew-owned tools resolve into Homebrew, flags leftover apt copies,
   brew python/node/bash/rust formulae and the wrong kubelogin, verifies PATH order (nvm node and

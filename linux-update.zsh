@@ -28,6 +28,7 @@ UPDATE_SYSTEM=false
 BOOTSTRAP_TOOLS=false
 CLEANUP=false
 DEEP_CLEANUP=false
+WSL_MODE=false
 DRY_RUN=false
 
 # Cleanup tuning (override from the environment, e.g. JOURNAL_MAX_AGE=3d ./linux-update.zsh --cleanup).
@@ -288,6 +289,7 @@ purge_residual_configs() {
 	sudo apt-get purge -y "${residual[@]}"
 }
 
+# WSL: tells the Windows host which blocks are free so the VHDX can shrink.
 trim_free_space() {
 	sudo fstrim -av
 	local rc=$?
@@ -414,11 +416,12 @@ Usage:
 Options:
   --system      Install system package updates (apt or dnf). Uses sudo.
   --cleanup     Free disk space (apt/dnf caches, unused packages, old logs and /tmp,
-                brew/uv/npm/pip caches) and finish with `sudo fstrim -av` so the
-                WSL virtual disk can shrink. Uses sudo.
+                brew/uv/npm/pip caches). General Linux. Uses sudo.
   --deep        With --cleanup, also sweep ~/.cache (except uv, pre-commit, ruff),
                 the npx cache, Azure MCP extractions, old Claude Code versions and
                 idle Copilot sessions. Implies --cleanup.
+  --wsl         WSL only: run `sudo fstrim -av` (put it after --cleanup) so the virtual
+                disk can shrink, and print the Windows-side steps. Uses sudo.
   --bootstrap   Install Homebrew if missing, then apply linux/Brewfile, rustup,
                 the uv default Python and the uv tools.
   --dry-run     Print mutating commands without running them.
@@ -430,6 +433,7 @@ Examples:
   ./linux-update.zsh --system
   ./linux-update.zsh --cleanup
   ./linux-update.zsh --cleanup --deep --dry-run
+  ./linux-update.zsh --cleanup --wsl
   ./linux-update.zsh --bootstrap
   ./linux-update.zsh --system --bootstrap --dry-run
 
@@ -450,8 +454,15 @@ Cleanup (only with --cleanup; a normal run just reports what is reclaimable):
   - --deep adds: ~/.cache (CACHE_KEEP_NAMES, default "uv pre-commit ruff"), npx cache
     (skips dirs in use), Azure MCP extractions, Claude Code versions (keeps 2), Copilot
     sessions idle SESSION_MAX_AGE_DAYS (14, skips live and git-containing ones).
-  - Last step: sudo fstrim -av, then prints the filesystem usage before and after.
-    Shrinking the VHDX itself happens on Windows (see the WSL section).
+  - Prints the root filesystem usage before and after.
+
+WSL (detected from WSL_DISTRO_NAME; a plain run only reports, --wsl also acts):
+  - Reports root filesystem usage, the RES_OPTIONS no-aaaa DNS workaround (Zscaler
+    black-holes AAAA lookups) and SSL_CERT_FILE (Zscaler CA bundle).
+  - Reminds you of `wsl --shutdown` when a restart is pending.
+  - --wsl: sudo fstrim -av, then the Windows-side steps. A sparse VHD
+    (wsl --manage <distro> --set-sparse true, one-time) reclaims trimmed blocks
+    automatically; otherwise wsl --shutdown, then diskpart: compact vdisk.
 
 Bootstrap behavior:
   - Runs linux/install.sh --skip-zsh when Homebrew is missing.
@@ -487,6 +498,9 @@ for arg in "$@"; do
 	--deep)
 		CLEANUP=true
 		DEEP_CLEANUP=true
+		;;
+	--wsl)
+		WSL_MODE=true
 		;;
 	--dry-run)
 		DRY_RUN=true
@@ -524,10 +538,6 @@ print "Distro:       $DISTRO_NAME"
 print "Kernel:       $(uname -r)"
 print "Architecture: $(uname -m)"
 print "Shell:        ${SHELL:-unknown}"
-
-if [[ -n "${WSL_DISTRO_NAME:-}" ]]; then
-	print "WSL distro:   $WSL_DISTRO_NAME"
-fi
 
 if [[ "$DRY_RUN" == true ]]; then
 	print
@@ -571,9 +581,6 @@ apt)
 
 	if [[ -e /var/run/reboot-required ]]; then
 		warning "A restart is required to finish a system update"
-		if [[ -n "${WSL_DISTRO_NAME:-}" ]]; then
-			print "  From Windows: wsl --shutdown"
-		fi
 		add_warning "System restart required"
 	fi
 	;;
@@ -1176,24 +1183,12 @@ if [[ "$CLEANUP" == true ]]; then
 		sweep_copilot_sessions
 	fi
 
-	print
-	info "Trimming free space"
-
-	run_step "Trim unused filesystem blocks" trim_free_space
-
 	if [[ "$DRY_RUN" != true ]]; then
 		typeset USED_AFTER_KB="$(fs_used_kb)"
 
 		print
 		info "Root filesystem used: $(human_kb "$USED_BEFORE_KB") → $(human_kb "$USED_AFTER_KB")"
 		df -h / | sed 's/^/  /'
-	fi
-
-	if [[ -n "${WSL_DISTRO_NAME:-}" ]]; then
-		print
-		info "The virtual disk shrinks on the Windows side:"
-		print "  A sparse VHD (wsl --manage $WSL_DISTRO_NAME --set-sparse true) reclaims the trimmed blocks"
-		print "  automatically. Otherwise: wsl --shutdown, then diskpart: compact vdisk."
 	fi
 else
 	info "Reclaimable space (nothing was removed):"
@@ -1226,8 +1221,8 @@ else
 
 	print
 	info "Cleanup was not requested"
-	print "Use --cleanup to free this space and trim the disk (sudo), --deep to also"
-	print "sweep ~/.cache, the npx cache, old Claude versions and idle Copilot sessions."
+	print "Use --cleanup to free this space (sudo), --deep to also sweep ~/.cache, the"
+	print "npx cache, old Claude versions and idle Copilot sessions."
 fi
 
 #
@@ -1534,9 +1529,17 @@ fi
 # WSL
 #
 
-if [[ -n "${WSL_DISTRO_NAME:-}" ]]; then
+if [[ -z "${WSL_DISTRO_NAME:-}" ]]; then
+	if [[ "$WSL_MODE" == true ]]; then
+		warning "--wsl was requested but this is not WSL; skipping the WSL steps"
+		add_warning "--wsl requested outside WSL"
+	fi
+else
 	section "WSL"
 
+	info "WSL distro: $WSL_DISTRO_NAME"
+
+	print
 	info "Root filesystem:"
 	df -h / | sed 's/^/  /'
 
@@ -1548,11 +1551,6 @@ if [[ -n "${WSL_DISTRO_NAME:-}" ]]; then
 	else
 		success "The root filesystem is ${ROOT_USED_PERCENT} percent full"
 	fi
-
-	print
-	info "The WSL virtual disk only shrinks on the Windows side:"
-	print "  Linux:   sudo fstrim -av   (./linux-update.zsh --cleanup does this)"
-	print "  Windows: wsl --manage $WSL_DISTRO_NAME --set-sparse true   (one-time; then it reclaims automatically)"
 
 	print
 
@@ -1571,6 +1569,28 @@ if [[ -n "${WSL_DISTRO_NAME:-}" ]]; then
 	else
 		warning "SSL_CERT_FILE is not set; downloads may fail behind Zscaler"
 		add_warning "SSL_CERT_FILE not set"
+	fi
+
+	if [[ -e /var/run/reboot-required ]]; then
+		print
+		warning "A restart is pending; from Windows: wsl --shutdown"
+	fi
+
+	print
+
+	if [[ "$WSL_MODE" == true ]]; then
+		info "Trimming free space so the virtual disk can shrink"
+
+		prime_sudo
+		run_step "Trim unused filesystem blocks (fstrim)" trim_free_space
+
+		print
+		info "The virtual disk itself shrinks on the Windows side:"
+		print "  Sparse VHD (one-time): wsl --manage $WSL_DISTRO_NAME --set-sparse true"
+		print "    after that the trimmed blocks are reclaimed automatically."
+		print "  Otherwise: wsl --shutdown, then diskpart: select vdisk, attach readonly, compact vdisk."
+	else
+		info "Use --wsl to trim free blocks (sudo fstrim -av) so the virtual disk can shrink"
 	fi
 fi
 

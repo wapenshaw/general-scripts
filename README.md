@@ -23,7 +23,8 @@ macOS and Linux use **zsh**. Windows uses **PowerShell 7 + Windows Terminal**. F
 ./linux-update.zsh                   # ongoing maintenance: apt check, brew, rustup, uv, PATH/WSL checks
 ./linux-update.zsh --system         # also install apt/dnf updates (sudo)
 ./linux-update.zsh --bootstrap      # apply linux/Brewfile, rustup, uv Python + tools
-./linux-update.zsh --cleanup        # free disk (apt/brew/uv/npm caches, logs, /tmp) + sudo fstrim -av (sudo)
+./linux-update.zsh --cleanup        # free disk (apt/brew/uv/npm caches, logs, /tmp); general Linux (sudo)
+./linux-update.zsh --wsl            # WSL only: sudo fstrim -av so the VHDX can shrink (run after --cleanup)
 ./linux-update.zsh --cleanup --deep # also ~/.cache, npx, old Claude versions, idle Copilot sessions
 ```
 
