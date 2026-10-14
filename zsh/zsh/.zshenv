@@ -12,9 +12,25 @@ typeset -U path PATH
 # client over SSH runs `zsh -c` and would otherwise have no Homebrew on PATH, so
 # plugins fail with "fzf is not installed". Guarded: no-op if brew is absent.
 for _brew in /opt/homebrew/bin/brew /usr/local/bin/brew /home/linuxbrew/.linuxbrew/bin/brew; do
-  if [ -x "$_brew" ]; then eval "$("$_brew" shellenv)"; break; fi
+  if [[ -x "$_brew" ]]; then eval "$("$_brew" shellenv zsh)"; break; fi
 done
 unset _brew
+
+# shellenv prepends Homebrew's dirs. Move them behind everything under $HOME
+# (nvm's node, ~/.local/bin with uv's python/python3 shims, cargo, bun, tfenv) and
+# ahead of the system dirs, so brew never shadows those, even in a child shell
+# that inherited them from its parent. Python stays with uv and Node with nvm:
+# do not `brew install python node`. .zprofile calls this again after macOS path_helper.
+_path_brew_behind_home() {
+  [[ -n "${HOMEBREW_PREFIX:-}" ]] || return 0
+  local -a _brew=("$HOMEBREW_PREFIX/bin" "$HOMEBREW_PREFIX/sbin")
+  local -a _rest=(${path:|_brew})
+  local -i _i
+  for (( _i = 1; _i <= $#_rest; _i++ )); do
+    [[ "$_rest[_i]" == "$HOME"/* ]] || break
+  done
+  path=($_rest[1,_i-1] $_brew $_rest[_i,-1])
+}
 
 # XDG Base Directories — centralizes config/cache/data/state locations.
 # Defaults match the freedesktop spec; users can override by exporting before
@@ -36,6 +52,14 @@ else
   path=("$HOME/.local/bin" $path)
 fi
 
+# WSL2 behind Zscaler: the DNS tunnel black-holes AAAA (IPv6) queries, so every
+# getaddrinfo() asking for A+AAAA stalls ~20s while A alone answers in ~30ms.
+# glibc's no-aaaa skips the AAAA lookup (curl, git, node, python, npm). Go
+# tools (kubectl, terraform, gh) use Go's own resolver and may not honor it.
+if [[ -n "${WSL_DISTRO_NAME:-}" && " ${RES_OPTIONS:-} " != *" no-aaaa "* ]]; then
+  export RES_OPTIONS="${RES_OPTIONS:+$RES_OPTIONS }no-aaaa"
+fi
+
 # Assurant environment (sourced only when install.sh --assurant set ZSH_ASSURANT=1).
 if [[ "${ZSH_ASSURANT:-0}" == "1" ]]; then
   for _f in "$ZDOTDIR"/work/exports.zsh "$ZDOTDIR"/work/tools-extra.zsh; do
@@ -43,6 +67,8 @@ if [[ "${ZSH_ASSURANT:-0}" == "1" ]]; then
   done
   unset _f
 fi
+
+_path_brew_behind_home
 
 # Run last so Homebrew, user-local binaries, and work exports cannot shadow NVM.
 [[ -f "$ZDOTDIR/nvm-path.zsh" ]] && source "$ZDOTDIR/nvm-path.zsh"

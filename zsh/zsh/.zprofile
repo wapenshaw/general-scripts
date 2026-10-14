@@ -16,6 +16,11 @@ else
   path=("$HOME/.local/bin" $path)
 fi
 
+# Homebrew behind everything under $HOME again (the shellenv above re-prepended it).
+if (( $+functions[_path_brew_behind_home] )); then
+  _path_brew_behind_home
+fi
+
 # Assurant profile only: stable SSH agent socket at ~/.ssh/agent.sock
 # so zsh, VS Code, and git share the same agent.
 if [[ "${ZSH_ASSURANT:-0}" == "1" && -f "$ZDOTDIR/ssh-agent.zsh" ]]; then

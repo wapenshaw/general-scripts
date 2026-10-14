@@ -112,20 +112,23 @@ if [[ "$OSTYPE" == darwin* ]]; then
   clipcopy()  { pbcopy; }
   clippaste() { pbpaste; }
 elif command -v wslpath >/dev/null 2>&1; then
+  # Windows helpers by absolute path: wsl.conf sets appendWindowsPath=false, so
+  # bare *.exe names are not on PATH.
+  _win=/mnt/c/Windows
   open() {
     if command -v wslview >/dev/null 2>&1; then
       wslview "${1:-.}"
     else
-      cmd.exe /c start "" "${1:-.}" >/dev/null 2>&1
+      "$_win/System32/cmd.exe" /c start "" "${1:-.}" >/dev/null 2>&1
     fi
   }
 
   explore() {
-    explorer.exe "$(wslpath -w "${1:-.}")" >/dev/null 2>&1
+    "$_win/explorer.exe" "$(wslpath -w "${1:-.}")" >/dev/null 2>&1
   }
 
-  clipcopy()  { clip.exe; }
-  clippaste() { powershell.exe -NoProfile -Command Get-Clipboard 2>/dev/null | tr -d '\r'; }
+  clipcopy()  { "$_win/System32/clip.exe"; }
+  clippaste() { "$_win/System32/WindowsPowerShell/v1.0/powershell.exe" -NoProfile -Command Get-Clipboard 2>/dev/null | tr -d '\r'; }
 fi
 
 # =========================================================

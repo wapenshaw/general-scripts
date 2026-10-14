@@ -58,14 +58,21 @@ alias help='run-help'
 
 # System maintenance
 sysup() {
-  if [[ "$OSTYPE" == darwin* ]] && (( $+commands[brew] )); then
-    brew update && brew upgrade && brew cleanup
-  elif (( $+commands[apt] )); then
-    sudo apt update -y && sudo apt full-upgrade -y && sudo apt autoremove -y && sudo apt clean -y && sudo apt autoclean -y
-  else
+  local rc=0 ran=0
+  # Linux/WSL: apt owns the system; Homebrew (below) owns the CLI tools in linux/Brewfile.
+  if [[ "$OSTYPE" != darwin* ]] && (( $+commands[apt] )); then
+    ran=1
+    sudo apt update -y && sudo apt full-upgrade -y && sudo apt autoremove -y && sudo apt clean -y && sudo apt autoclean -y || rc=1
+  fi
+  if (( $+commands[brew] )); then
+    ran=1
+    brew update && brew upgrade && brew cleanup || rc=1
+  fi
+  if (( ! ran )); then
     print -u2 'No supported package manager found (brew or apt).'
     return 1
   fi
+  return $rc
 }
 
 # Interactive-only conveniences. Claude Code's shell (CLAUDECODE=1) keeps the plain tools:
