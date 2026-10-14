@@ -110,7 +110,7 @@ Options go under `pluginConfigs.<name>.options` in `settings.json`.
 
 | Plugin | What it does |
 | --- | --- |
-| `cache-cold-compact` | Compacts an idle session shortly before its prompt cache goes cold, so the next prompt re-caches a summary instead of the whole transcript. `/cold-compact` shows state; `/cold-compact off` pauses it for the session. Options: `ttlMinutes` (60; set 5 on the 5-minute cache), `leadMinutes` (5), `minContextTokens` (50000), `showStatus` (true). |
+| `cache-cold-compact` | Compacts an idle session shortly before its prompt cache goes cold, so the next prompt re-caches a summary instead of the whole transcript. **Every** compaction (this one, the engine's threshold, `/compact`) is rewritten to write a detailed handoff document (`hooks/handoff.ts`); text typed after `/compact` is kept as extra emphasis. `/cold-compact` shows state; `/cold-compact off` pauses it for the session. Writes its state to `~/.claude/cold-compact/sessions/<session id>.json` for the status line (`compact in 43m` / `compacting…` / `compact off` / `compacted 142k→18k`; no file means not loaded). Options: `ttlMinutes` (60; set 5 on the 5-minute cache), `leadMinutes` (5), `minContextTokens` (50000), `showStatus` (true; pins a second countdown under the prompt, set false when the status line already shows it). The live copy is `~/.claude/local-plugins/cache-cold-compact/`; the folder here is a copy of it. |
 
 ## Shared MCPs
 

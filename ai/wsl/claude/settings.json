@@ -14,10 +14,7 @@
     "CLAUDE_CODE_GOAL_CHECKIN_MINUTES": "0",
     "BASH_MAX_OUTPUT_LENGTH": "12000",
     "MAX_MCP_OUTPUT_TOKENS": "10000",
-    "KEEPWARM_INTERVAL_MIN": "50",
-    "KEEPWARM_TTL_MIN": "60",
-    "KEEPWARM_MAX_BUMPS": "4",
-    "KEEPWARM_MIN_CONTEXT_TOKENS": "100000"
+    "CLAUDE_CODE_PLUGIN_DIRS": "/home/heaton/.claude/local-plugins/cache-cold-compact"
   },
   "permissions": {
     "defaultMode": "bypassPermissions"
@@ -60,17 +57,9 @@
   },
   "enabledPlugins": {
     "superpowers@claude-plugins-official": false,
-    "microsoft-docs@claude-plugins-official": true,
-    "keepwarm@keepwarm": true
+    "microsoft-docs@claude-plugins-official": true
   },
-  "extraKnownMarketplaces": {
-    "keepwarm": {
-      "source": {
-        "source": "github",
-        "repo": "Delitefully/claude-keepwarm"
-      }
-    }
-  },
+  "extraKnownMarketplaces": {},
   "modelSettings": {
     "claude-opus-5-5": {
       "effortLevel": "xhigh"
@@ -89,5 +78,15 @@
   "editorMode": "normal",
   "verbose": true,
   "preferredNotifChannel": "auto",
-  "useAutoModeDuringPlan": true
+  "useAutoModeDuringPlan": true,
+  "pluginConfigs": {
+    "cache-cold-compact": {
+      "options": {
+        "ttlMinutes": 60,
+        "leadMinutes": 5,
+        "minContextTokens": 50000,
+        "showStatus": false
+      }
+    }
+  }
 }

@@ -429,6 +429,45 @@ function main() {
   }
 
   // -------------------------------------------------------------------------
+  // Auto-compact (cache-cold-compact plugin)
+  //
+  // The plugin writes ~/.claude/cold-compact/sessions/<session id>.json
+  // whenever its state changes; no file means the plugin is not loaded and the
+  // segment is omitted. Times are epoch seconds.
+  // -------------------------------------------------------------------------
+
+  let compactSeg = '';
+  try {
+    const cc = JSON.parse(fs.readFileSync(
+      path.join(os.homedir(), '.claude', 'cold-compact', 'sessions', `${safeSessionId}.json`),
+      'utf8'
+    ));
+    const fireAt = asInt(cc?.fireAt, 0);
+    const lastAt = asInt(cc?.last?.at, 0);
+
+    if (cc?.state === 'compacting') {
+      compactSeg = `${BOLD}${YELLOW}compacting…${RESET}`;
+    } else if (cc?.state === 'paused') {
+      compactSeg = `${MUTED}compact off${RESET}`;
+    } else if (cc?.state === 'armed' && fireAt > 0) {
+      const remaining = fireAt - nowEpoch;
+      if (remaining <= 0) {
+        compactSeg = `${YELLOW}compact due${RESET}`;
+      } else {
+        const color = remaining < 300 ? YELLOW : CYAN;
+        compactSeg = `${color}compact in ${fmtDuration(remaining)}${RESET}`;
+      }
+    } else if (lastAt > 0 && nowEpoch - lastAt < 1800) {
+      const before = asInt(cc?.last?.before, 0);
+      const after = asInt(cc?.last?.after, 0);
+      const sizes = before > 0 && after > 0 ? ` ${fmtCount(before)}→${fmtCount(after)}` : '';
+      compactSeg = `${GREEN}compacted${sizes}${RESET}`;
+    } else {
+      compactSeg = `${MUTED}compact --${RESET}`;
+    }
+  } catch { }
+
+  // -------------------------------------------------------------------------
   // Personal Claude subscription limits
   // -------------------------------------------------------------------------
 
@@ -533,7 +572,8 @@ function main() {
     modelSeg,
     ctxSeg,
     idleSeg,
-    cacheSeg
+    cacheSeg,
+    compactSeg
   ];
 
   if (fiveHourSeg) segments.push(fiveHourSeg);

@@ -1,12 +1,20 @@
 import { atom, read, update } from 'claude-code'
 import type { EngineInterface, PluginOptions, Register } from 'claude-code'
 
-// Compacts an idle session shortly before its prompt cache goes cold.
+import { HANDOFF_PROMPT, withHandoff } from './handoff'
+
+// Compacts an idle session shortly before its prompt cache goes cold, and makes
+// every compaction (this one, the engine's threshold, /compact) write a detailed
+// handoff document instead of a generic summary.
 //
 // The cache entry for the conversation lives `ttl` after the last request
 // that read or wrote it. Compacting while it is still warm means the
 // summarizer reads the transcript from cache (cheap), and the next prompt
 // re-caches a short summary instead of the full transcript (expensive).
+//
+// Status line: a status line command runs as its own process and cannot ask the
+// plugin anything, so the plugin writes its state to
+// `~/.claude/cold-compact/sessions/<session id>.json` whenever it changes.
 
 const PLUGIN = 'cache-cold-compact'
 const TICK_MS = 30_000
@@ -16,12 +24,17 @@ const armedAt = atom({ plugin: 'cache-cold-compact', key: 'armedAt' } as const, 
 const isPaused = atom({ plugin: 'cache-cold-compact', key: 'isPaused' } as const, false)
 
 type Config = { ttlMs: number; fireAfterMs: number; minTokens: number; showStatus: boolean }
+type Last = { at: number; before: number; after: number }
+type StateName = 'idle' | 'armed' | 'compacting' | 'paused'
 
 // Set by register; module variables start over on every (re)load.
 let config: Config = { ttlMs: 60 * MINUTE, fireAfterMs: 55 * MINUTE, minTokens: 50_000, showStatus: true }
 let isTurnRunning = false
 let isCompacting = false
 let shownStatus: string | undefined
+let stateFile: string | undefined
+let publishedKey = ''
+let last: Last | null = null
 
 function numberOption(options: PluginOptions, key: string, fallback: number) {
   const value = Number(options[key])
@@ -33,22 +46,63 @@ function minutesLabel(ms: number) {
 }
 
 function setStatus($: EngineInterface, text: string | undefined) {
+  if (!config.showStatus && text !== undefined) return
   if (text === shownStatus) return
   shownStatus = text
   $.ui.status(text)
 }
 
+/** Resolves where the status line reads this session's state from; silent when it cannot. */
+async function resolveStateFile($: EngineInterface) {
+  try {
+    const [home, id] = await Promise.all([$.process.run(['printenv', 'HOME']), $.session.id()])
+    const dir = home.exitCode === 0 ? home.stdout.trim() : ''
+    stateFile = dir && id ? `${dir}/.claude/cold-compact/sessions/${id}.json` : undefined
+  } catch {
+    stateFile = undefined
+  }
+}
+
+/** Writes the state for the status line, skipping a write that would say the same thing. */
+async function publish($: EngineInterface, state: StateName, fireAtMs = 0) {
+  if (!stateFile) return
+  const fireAt = Math.floor(fireAtMs / 1000)
+  const key = `${state}|${fireAt}|${last?.at ?? 0}`
+  if (key === publishedKey) return
+  publishedKey = key
+
+  const now = Math.floor((await $.clock.now()) / 1000)
+  const body = { state, fireAt, ttlSeconds: Math.round(config.ttlMs / 1000), last, updatedAt: now }
+  try {
+    await $.fs.write(stateFile, `${JSON.stringify(body)}\n`)
+  } catch (error) {
+    $.ui.log(`${PLUGIN}: could not write ${stateFile}: ${String(error)}`, { to: 'debug' })
+  }
+}
+
+async function recordCompaction($: EngineInterface, before: number | undefined, after: number | undefined) {
+  const now = await $.clock.now()
+  last = { at: Math.floor(now / 1000), before: before ?? 0, after: after ?? 0 }
+}
+
 async function disarm($: EngineInterface) {
   await update($, armedAt, () => null)
   setStatus($, undefined)
+  await publish($, (await read($, isPaused)) ? 'paused' : 'idle')
 }
 
 async function tick($: EngineInterface) {
   if (isTurnRunning || isCompacting) return
 
   const since = await read($, armedAt)
-  if (since === null || (await read($, isPaused))) {
+  if (await read($, isPaused)) {
     setStatus($, undefined)
+    await publish($, 'paused')
+    return
+  }
+  if (since === null) {
+    setStatus($, undefined)
+    await publish($, 'idle')
     return
   }
 
@@ -61,6 +115,7 @@ async function tick($: EngineInterface) {
 
   if (idleMs < config.fireAfterMs) {
     setStatus($, config.showStatus ? `auto-compact in ${minutesLabel(config.fireAfterMs - idleMs)}` : undefined)
+    await publish($, 'armed', since + config.fireAfterMs)
     return
   }
 
@@ -72,13 +127,17 @@ async function tick($: EngineInterface) {
 
   isCompacting = true
   setStatus($, 'compacting before the prompt cache goes cold…')
+  await publish($, 'compacting')
   try {
-    const result = await $.session.compact()
+    // A plugin's own compact() skips its own session.compact hook, so the handoff
+    // prompt is passed explicitly here; the hook below covers every other trigger.
+    const result = await $.session.compact({ instructions: HANDOFF_PROMPT })
     if (result.skip !== undefined) {
       $.ui.toast(`Auto-compact skipped: ${result.skip}`)
     } else {
       const before = result.tokensBefore ?? context.tokens
       const after = result.tokensAfter
+      await recordCompaction($, before, after)
       const sizes = before && after ? ` (${Math.round(before / 1000)}k → ${Math.round(after / 1000)}k tokens)` : ''
       $.ui.toast(`Compacted before the prompt cache went cold${sizes}`, { timeoutMs: 8000 })
     }
@@ -108,13 +167,18 @@ export const register: Register = (on, options) => {
       name: 'cold-compact',
       description: 'Auto-compact before the prompt cache goes cold: status, or `on` / `off` for this session',
     })
+    await resolveStateFile($)
+    publishedKey = ''
+    await publish($, 'idle')
     $.clock.every(TICK_MS, () => void tick($))
 
     return next(e)
   })
 
-  on('turn.start', ($, e, next) => {
+  on('turn.start', async ($, e, next) => {
     isTurnRunning = true
+    // A turn is running: the cache is being used, nothing is counting down.
+    await publish($, (await read($, isPaused)) ? 'paused' : 'idle')
     return next(e)
   })
 
@@ -137,14 +201,22 @@ export const register: Register = (on, options) => {
     return result
   })
 
+  // Every compaction of the main conversation (engine threshold, /compact, a
+  // precompute) gets the handoff brief; the person's own text after /compact is kept.
   on('session.compact', async ($, e, next) => {
-    const result = await next(e)
+    const isMain = e.agentId === undefined
+    const result = await next(isMain ? { ...e, instructions: withHandoff(e.instructions) } : e)
+
     // Any compaction of the main conversation replaces the cached prefix.
-    if (e.agentId === undefined && e.trigger !== 'precompute' && result.skip === undefined) {
+    if (isMain && e.trigger !== 'precompute' && result.skip === undefined) {
+      await recordCompaction($, result.tokensBefore, result.tokensAfter)
       await disarm($)
     }
     return result
-  })
+  }).catch(($, e, next) =>
+    // If this hook ever fails, compact with what it was given rather than block compaction.
+    next(e),
+  )
 
   on('session.end', async ($, e, next) => {
     await disarm($)
@@ -161,7 +233,7 @@ export const register: Register = (on, options) => {
 
     const paused = await read($, isPaused)
     const since = await read($, armedAt)
-    const policy = `fires after ${minutesLabel(config.fireAfterMs)} idle (TTL ${minutesLabel(config.ttlMs)}), contexts ≥ ${Math.round(config.minTokens / 1000)}k tokens`
+    const policy = `fires after ${minutesLabel(config.fireAfterMs)} idle (TTL ${minutesLabel(config.ttlMs)}), contexts ≥ ${Math.round(config.minTokens / 1000)}k tokens; every compaction writes a handoff document`
     if (paused) return { text: `Auto-compact is off for this session; ${policy}.` }
     if (since === null) return { text: `Auto-compact is on, not armed (no large idle context); ${policy}.` }
 
