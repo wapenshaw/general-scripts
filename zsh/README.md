@@ -16,9 +16,10 @@ On a new machine, run the **platform bootstrap** from the repo root first so the
 # macOS — installs Homebrew if needed, then tools, then this config
 ./macos/install.zsh
 
-# Fedora (dnf) or Ubuntu (apt-get) — native packages + official fallbacks
+# Fedora (dnf) or Ubuntu (apt-get) — system prerequisites, Homebrew + linux/Brewfile, uv/rustup
 ./linux/install.sh                   # personal profile (default)
 ./linux/install.sh --assurant        # Assurant/Astra modules
+./linux/install.sh --wsl             # on WSL: also check/write /etc/wsl.conf (opt-in)
 ```
 
 Config-only (tools already installed):

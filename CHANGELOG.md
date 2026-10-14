@@ -9,6 +9,13 @@ Node with nvm.
 
 ### Added
 
+- **`linux/install.sh --wsl`** — opt-in WSL provisioning step (skipped with a notice outside WSL;
+  combine with `--skip-tools --skip-zsh` to run only this). Makes `/etc/wsl.conf` carry
+  `[boot] systemd=true` and `[interop] appendWindowsPath=false`, and `[user] default` when it is
+  unset: shows a diff, backs the file up, writes it with sudo, leaves every other key and comment
+  alone, and is a no-op when already correct. Reports `generateResolvConf=false` without a
+  nameserver in `/etc/resolv.conf`, and reads (never writes) the Windows-side `.wslconfig` for
+  `sparseVhd`, `vmIdleTimeout` and `dnsTunneling`. Changes apply after `wsl --shutdown`.
 - **`linux/Brewfile`** — bat, eza, fd, fzf, gh, git-delta, helm, hyperfine, jq, just, k9s,
   Azure kubelogin (tap), neovim, ripgrep, shellcheck, shfmt, starship, yq, zoxide. Documents
   what is deliberately not brewed (python, node, uv, terraform, rustup, go, kubectl/docker,

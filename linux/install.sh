@@ -16,6 +16,8 @@
 #   ./linux/install.sh --skip-zsh   # tools only
 #   ./linux/install.sh --skip-tools # zsh config only
 #   ./linux/install.sh --bash-only  # only the Homebrew hook for bash (~/.profile, ~/.bashrc)
+#   ./linux/install.sh --wsl        # also check/write /etc/wsl.conf (WSL only; sudo; see below)
+#   ./linux/install.sh --wsl --skip-tools --skip-zsh   # just the WSL step
 #
 # Package ownership:
 #   dnf / apt-get   system prerequisites (zsh, git, curl, compiler toolchain,
@@ -30,6 +32,11 @@
 #   rustup          rustc / cargo (PATH is owned by the zsh config; only
 #                   added when ~/.cargo/bin/cargo exists)
 #   bun             official installer (`bun upgrade`)
+#   --wsl           WSL only, opt-in. Makes /etc/wsl.conf carry [boot] systemd=true and
+#                   [interop] appendWindowsPath=false (and [user] default when unset),
+#                   backing the file up and showing a diff first. Reports the rest of
+#                   wsl.conf and the Windows-side .wslconfig, which it never writes.
+#                   Changes apply after `wsl --shutdown` (run from Windows).
 
 set -u
 set -o pipefail
@@ -42,6 +49,7 @@ DRY_RUN=0
 SKIP_ZSH=0
 SKIP_TOOLS=0
 BASH_ONLY=0
+WSL_SETUP=0
 STARSHIP_THEME="${ZSH_STARSHIP_THEME:-}"
 
 OS_ID=""
@@ -55,7 +63,7 @@ WARNINGS=()
 FAILURES=()
 
 usage() {
-  sed -n '2,32p' "$0"
+  sed -n '2,39p' "$0"
 }
 
 for arg in "$@"; do
@@ -67,6 +75,7 @@ for arg in "$@"; do
     --skip-zsh) SKIP_ZSH=1 ;;
     --skip-tools) SKIP_TOOLS=1 ;;
     --bash-only) BASH_ONLY=1 ;;
+    --wsl) WSL_SETUP=1 ;;
     --theme=*) STARSHIP_THEME="${arg#--theme=}" ;;
     -h|--help)
       usage
@@ -595,6 +604,176 @@ install_bash_brew() {
 }
 
 #
+# WSL (opt-in with --wsl). Makes /etc/wsl.conf carry the few keys this setup relies on and
+# reports the rest. The Windows-side .wslconfig lives outside the distro: it is only read.
+#
+
+WSL_CONF="${WSL_CONF:-/etc/wsl.conf}"
+
+is_wsl() {
+  [[ -n "${WSL_DISTRO_NAME:-}" ]] || grep -qi microsoft /proc/version 2>/dev/null
+}
+
+# ini_get FILE SECTION KEY: last value of KEY in [SECTION] (empty when unset or no file)
+ini_get() {
+  [[ -r "$1" ]] || return 0
+  awk -v sec="$2" -v key="$3" '
+    /^[[:space:]]*\[/ {
+      name = $0
+      gsub(/^[[:space:]]*\[|\][[:space:]]*$/, "", name)
+      insec = (name == sec)
+      next
+    }
+    insec && $0 ~ ("^[[:space:]]*" key "[[:space:]]*=") {
+      v = $0
+      sub(/^[^=]*=[[:space:]]*/, "", v)
+      sub(/[[:space:]]+$/, "", v)
+      val = v
+    }
+    END { print val }
+  ' "$1"
+}
+
+# ini_set FILE SECTION KEY VALUE: print FILE with KEY=VALUE in [SECTION] (replaced in
+# place, or added at the end of the section, or a new section). Other lines stay as is.
+ini_set() {
+  awk -v sec="$2" -v key="$3" -v val="$4" '
+    function flush() { if (insec && !done) { print key "=" val; done = 1 } }
+    /^[[:space:]]*\[/ {
+      flush()
+      name = $0
+      gsub(/^[[:space:]]*\[|\][[:space:]]*$/, "", name)
+      insec = (name == sec)
+      if (insec) seen = 1
+      print
+      next
+    }
+    insec && $0 ~ ("^[[:space:]]*" key "[[:space:]]*=") {
+      if (!done) { print key "=" val; done = 1 }
+      next
+    }
+    { print }
+    END {
+      flush()
+      if (!seen) { if (NR > 0) print ""; print "[" sec "]"; print key "=" val }
+    }
+  ' "$1"
+}
+
+# Run a command that writes under /etc: directly when the target is writable, else sudo.
+wsl_write() {
+  local description="$1"
+  shift
+  if [[ -w "$WSL_CONF" || ( ! -e "$WSL_CONF" && -w "$(dirname "$WSL_CONF")" ) ]]; then
+    run_cmd "$description" "$@"
+  else
+    run_sudo "$description" "$@"
+  fi
+}
+
+wsl_windows_home() {
+  local cmd=/mnt/c/Windows/System32/cmd.exe win
+  [[ -x "$cmd" ]] || return 1
+  win="$(cd /mnt/c 2>/dev/null && "$cmd" /c 'echo %USERPROFILE%' 2>/dev/null | tr -d '\r')"
+  [[ -n "$win" ]] || return 1
+  wslpath -u "$win" 2>/dev/null
+}
+
+wsl_check_conf() {
+  local wanted=(
+    "boot|systemd|true"
+    "interop|appendWindowsPath|false"
+  )
+  local item section key want cur tmp new changed=0 ts
+
+  tmp="$(mktemp)"
+  new="$(mktemp)"
+  if [[ -r "$WSL_CONF" ]]; then cp "$WSL_CONF" "$tmp"; else : > "$tmp"; fi
+
+  # [user] default is only filled in when missing, and never for root
+  if [[ "${EUID:-$(id -u)}" -ne 0 && -z "$(ini_get "$tmp" user default)" ]]; then
+    wanted+=("user|default|$(id -un)")
+  fi
+
+  for item in "${wanted[@]}"; do
+    IFS='|' read -r section key want <<< "$item"
+    cur="$(ini_get "$tmp" "$section" "$key")"
+    if [[ "${cur,,}" == "${want,,}" ]]; then
+      green "$WSL_CONF [$section] $key=$cur"
+      continue
+    fi
+    changed=1
+    yellow "$WSL_CONF [$section] $key is ${cur:-unset}, want $want"
+    ini_set "$tmp" "$section" "$key" "$want" > "$new" && cp "$new" "$tmp"
+  done
+
+  if [[ "$changed" -eq 1 ]]; then
+    printf '  proposed change:\n'
+    if [[ -e "$WSL_CONF" ]]; then diff -u "$WSL_CONF" "$tmp" | sed 's/^/    /'; else sed 's/^/    + /' "$tmp"; fi
+    ts="$(date +%Y%m%d%H%M%S)"
+    [[ -e "$WSL_CONF" ]] && wsl_write "Back up $WSL_CONF" cp -p "$WSL_CONF" "$WSL_CONF.bak-$ts"
+    wsl_write "Write $WSL_CONF" install -m 644 "$tmp" "$WSL_CONF"
+    yellow "wsl.conf changes apply after: wsl --shutdown (from Windows), then reopen the distro"
+  fi
+  rm -f "$tmp" "$new"
+
+  # Read-only: keys that are machine-specific and not ours to change
+  cur="$(ini_get "$WSL_CONF" network generateResolvConf)"
+  if [[ "${cur,,}" == "false" ]]; then
+    if grep -qs '^nameserver' /etc/resolv.conf; then
+      green "generateResolvConf=false and /etc/resolv.conf has a nameserver"
+    else
+      yellow "generateResolvConf=false but /etc/resolv.conf has no nameserver; DNS will not work"
+      add_warning "WSL: /etc/resolv.conf has no nameserver while generateResolvConf=false"
+    fi
+  fi
+  cur="$(ini_get "$WSL_CONF" user default)"
+  if [[ -n "$cur" && "$cur" != "$(id -un)" && "${EUID:-$(id -u)}" -ne 0 ]]; then
+    yellow "wsl.conf [user] default=$cur is not the current user ($(id -un))"
+  fi
+}
+
+wsl_check_windows() {
+  local winhome conf cur
+  if ! winhome="$(wsl_windows_home)" || [[ -z "$winhome" ]]; then
+    yellow "Cannot locate the Windows profile (interop disabled or /mnt/c missing); skipping .wslconfig checks"
+    return 0
+  fi
+  conf="$winhome/.wslconfig"
+  if [[ ! -r "$conf" ]]; then
+    yellow "No $conf (Windows side; create it there if you want memory/sparse settings)"
+    return 0
+  fi
+
+  info "Windows-side $conf (read only)"
+  cur="$(ini_get "$conf" experimental sparseVhd)"
+  if [[ "${cur,,}" == "true" ]]; then
+    green "sparseVhd=true: the VHDX shrinks on its own"
+  else
+    yellow "sparseVhd is ${cur:-unset}: from Windows run  wsl --manage ${WSL_DISTRO_NAME:-<distro>} --set-sparse true"
+  fi
+  cur="$(ini_get "$conf" wsl2 vmIdleTimeout)"
+  if [[ -n "$cur" ]]; then
+    green "vmIdleTimeout=$cur"
+  else
+    yellow "vmIdleTimeout is unset: add  vmIdleTimeout=3600000  under [wsl2] to keep the VM up for an hour after the last session"
+  fi
+  cur="$(ini_get "$conf" wsl2 dnsTunneling)"
+  printf '  dnsTunneling=%s (behind Zscaler the zsh config adds RES_OPTIONS=no-aaaa)\n' "${cur:-unset}"
+}
+
+setup_wsl() {
+  printf '\n\033[1m\033[34m--- %s ---\033[0m\n\n' "WSL"
+  if ! is_wsl; then
+    yellow "--wsl: this is not WSL; skipping"
+    return 0
+  fi
+  info "Distro: ${WSL_DISTRO_NAME:-unknown}"
+  wsl_check_conf
+  wsl_check_windows
+}
+
+#
 # System prerequisites (native package manager). Everything else is Homebrew.
 # Format: package  binary-to-look-for (empty = rely on the package database)
 #
@@ -729,6 +908,10 @@ if [[ "$BASH_ONLY" -eq 1 ]]; then
   SKIP_TOOLS=1
   SKIP_ZSH=1
   install_bash_brew
+fi
+
+if [[ "$WSL_SETUP" -eq 1 ]]; then
+  setup_wsl
 fi
 
 if [[ "$SKIP_TOOLS" -eq 0 ]]; then

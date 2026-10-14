@@ -223,7 +223,13 @@ Only needed if you use the `zsh/` half of this repo.
 wsl --install -d Ubuntu
 ```
 
-Then follow `zsh/README.md`.
+Then, inside the distro, run the Linux bootstrap with the WSL step:
+
+```bash
+./linux/install.sh --wsl            # add --assurant for the Assurant/Astra modules
+```
+
+`--wsl` is opt-in and only does anything under WSL. It makes `/etc/wsl.conf` carry `[boot] systemd=true` and `[interop] appendWindowsPath=false` (plus `[user] default` when unset) after showing a diff and backing the file up, and it reads the Windows-side `%USERPROFILE%\.wslconfig` to tell you about `sparseVhd` and `vmIdleTimeout`. It never writes `.wslconfig`; edit that on Windows. `wsl.conf` changes take effect after `wsl --shutdown` from PowerShell. Use `./linux/install.sh --wsl --skip-tools --skip-zsh` to run only that step on an existing install. Ongoing disk reclaim is `./linux-update.zsh --cleanup --wsl`. See `zsh/README.md` for the shell config.
 
 ---
 
@@ -240,4 +246,4 @@ Then follow `zsh/README.md`.
 | 7 | Apps via winget | `Install-Essentials.ps1` (installs starship + zoxide) |
 | 8 | Post-install scripts | Run the numbered scripts in order |
 | 9 | Restart PowerShell + reboot | close + reopen, then one full Windows reboot |
-| 10 | WSL (optional) | `wsl --install -d Ubuntu` |
+| 10 | WSL (optional) | `wsl --install -d Ubuntu`, then `./linux/install.sh --wsl` inside it |

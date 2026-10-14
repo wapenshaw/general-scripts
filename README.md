@@ -20,6 +20,7 @@ macOS and Linux use **zsh**. Windows uses **PowerShell 7 + Windows Terminal**. F
 ./linux/install.sh --assurant       # Assurant/Astra modules
 ./linux/install.sh --base           # explicit personal profile
 ./linux/install.sh --update         # also upgrade installed system packages
+./linux/install.sh --wsl            # WSL only: also check/write /etc/wsl.conf (systemd, appendWindowsPath) and read .wslconfig
 ./linux-update.zsh                   # ongoing maintenance: apt check, brew, rustup, uv, PATH/WSL checks
 ./linux-update.zsh --system         # also install apt/dnf updates (sudo)
 ./linux-update.zsh --bootstrap      # apply linux/Brewfile, rustup, uv Python + tools
