@@ -5,7 +5,7 @@ macOS and Linux use **zsh**. Windows uses **PowerShell 7 + Windows Terminal**. F
 | OS | First-run | Later updates | Shell config |
 |----|-----------|---------------|--------------|
 | **macOS** | [`macos/install.zsh`](./macos/install.zsh) — 4-stage workstation setup (env, runtimes, apps, data; see [`docs/MAC-SETUP.md`](./docs/MAC-SETUP.md)) | [`mac-update.zsh`](./mac-update.zsh) | [`zsh/install.sh`](./zsh/install.sh) (base by default) |
-| **Fedora / Ubuntu / WSL** | [`linux/install.sh`](./linux/install.sh) — `dnf` or `apt-get`, official fallbacks, then zsh | re-run `linux/install.sh --update` | [`zsh/install.sh`](./zsh/install.sh) (personal by default) |
+| **Fedora / Ubuntu / WSL** | [`linux/install.sh`](./linux/install.sh) — `dnf` or `apt-get` prerequisites, Homebrew + [`linux/Brewfile`](./linux/Brewfile), uv/rustup, then zsh | [`linux-update.zsh`](./linux-update.zsh) | [`zsh/install.sh`](./zsh/install.sh) (personal by default) |
 | **Windows 11** | [`powershell/tools/Install-Workstation.ps1`](./powershell/tools/Install-Workstation.ps1) — App Installer/winget + profile | [`Update-WinGetPackages.ps1`](./powershell/tools/Update-WinGetPackages.ps1) | [`Install-Profile.ps1`](./powershell/profile/Install-Profile.ps1) |
 
 ```bash
@@ -19,7 +19,12 @@ macOS and Linux use **zsh**. Windows uses **PowerShell 7 + Windows Terminal**. F
 ./linux/install.sh                  # personal (default)
 ./linux/install.sh --assurant       # Assurant/Astra modules
 ./linux/install.sh --base           # explicit personal profile
-./linux/install.sh --update         # also upgrade installed packages
+./linux/install.sh --update         # also upgrade installed system packages
+./linux-update.zsh                   # ongoing maintenance: apt check, brew, rustup, uv, PATH/WSL checks
+./linux-update.zsh --system         # also install apt/dnf updates (sudo)
+./linux-update.zsh --bootstrap      # apply linux/Brewfile, rustup, uv Python + tools
+./linux-update.zsh --cleanup        # free disk (apt/brew/uv/npm caches, logs, /tmp) + sudo fstrim -av (sudo)
+./linux-update.zsh --cleanup --deep # also ~/.cache, npx, old Claude versions, idle Copilot sessions
 ```
 
 ```powershell

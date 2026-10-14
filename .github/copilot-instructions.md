@@ -22,9 +22,13 @@ Zsh / platform bootstrap:
 ./mac-update.zsh                    # recurring Mac maintenance
 ./mac-update.zsh --bootstrap        # install Homebrew if missing + curated tools
 
-./linux/install.sh                  # Fedora/Ubuntu first-run: dnf or apt-get + zsh (personal)
+./linux/install.sh                  # Fedora/Ubuntu first-run: dnf/apt-get prerequisites + Homebrew (linux/Brewfile) + uv/rustup + zsh (personal)
 ./linux/install.sh --assurant
 ./linux/install.sh --update
+./linux-update.zsh                  # recurring Linux/WSL maintenance (apt check, brew, rustup, uv, PATH/WSL checks)
+./linux-update.zsh --system         # also install apt/dnf updates (sudo)
+./linux-update.zsh --bootstrap      # apply linux/Brewfile + rustup + uv Python/tools
+./linux-update.zsh --cleanup        # free disk space and `sudo fstrim -av`; `--deep` adds app caches/sessions
 
 ./zsh/install.sh                    # config only (personal on every OS)
 ./zsh/install.sh --assurant
@@ -61,7 +65,7 @@ for f in ./er605-openwrt/*.sh; do sh -n "$f"; done
 bash -n ./zsh/install.sh ./linux/install.sh
 
 # macOS bootstrap / maintenance
-zsh -n ./macos/install.zsh ./mac-update.zsh
+zsh -n ./macos/install.zsh ./mac-update.zsh ./linux-update.zsh
 
 # Single shell script
 sh -n ./er605-openwrt/er605v2_write_initramfs.sh
@@ -80,7 +84,7 @@ zsh -n ./zsh/zsh/.zshenv ./zsh/zsh/.zprofile ./zsh/zsh/.zshrc ./zsh/zsh/*.zsh ./
 - Put new reusable commands in `powershell/functions/` and startup configuration in `powershell/profile/modules/`; do not add a second profile loader.
 - Starship themes live at the repo root in `starship/` (e.g. `nova.toml`, `nordic.toml`). The zsh installer (`zsh/install.sh`) prompts for which one to copy to `~/.zsh/starship.toml`; the PowerShell `powershell/profile/Set-StarshipConfig.ps1` does the same for the Windows side (supports `-Theme <name>` and `$env:PS_STARSHIP_THEME` for non-interactive use).
 - `macos/install.zsh` is the Mac first-run orchestrator for environment/shell, runtimes, Brewfile apps, and app configuration stages. The runtime stage installs NVM/Node, uv Python, and official rustup with `--no-modify-path`; `mac-update.zsh` remains the recurring Mac updater.
-- `linux/install.sh` is the Linux first-run installer. It detects Fedora-family (`dnf`) vs Debian/Ubuntu (`apt-get`), installs the curated CLI packages one-by-one (a missing package is a warning, not an abort), falls back to official user-level installers for mise/uv/starship/zoxide/rustup, then runs `zsh/install.sh` (personal profile by default; `--assurant` is opt-in).
+- `linux/install.sh` is the Linux first-run installer. It detects Fedora-family (`dnf`) vs Debian/Ubuntu (`apt-get`), installs only system prerequisites natively (zsh, git, curl, compiler toolchain, direnv), then Homebrew (Linuxbrew) and the CLI tools in `linux/Brewfile` (a failed step is a warning, not an abort), the official uv/rustup/bun installers, uv's default Python 3.14, then runs `zsh/install.sh` (personal profile by default; `--assurant` is opt-in). `linux-update.zsh` is the Linux/WSL counterpart of `mac-update.zsh` (`--system` installs apt/dnf updates, `--bootstrap` applies the Brewfile, rustup and uv Python/tools, `--cleanup` frees disk space then runs `fstrim` so the WSL VHDX can shrink, `--deep` adds app caches and idle sessions, `--dry-run`); it also checks that brew-owned tools resolve into Homebrew and that Python stays with uv and Node with nvm. Never add python or node to `linux/Brewfile`.
 - `powershell/tools/Install-Workstation.ps1` is the Windows first-run orchestrator: repair/ensure winget, `Install-Essentials.ps1`, then `Install-Profile.ps1`. Drive layout, desired storage manifest and runtime setup stay in `docs/FRESH-INSTALL.md`. `-Assurant` aliases the profile installer's `-Work`; both `PS_ASSURANT` and `PS_WORK` reflect the selected mode.
 - `zsh/` is copied into the single runtime configuration directory `~/.zsh`. `zsh/install.sh` copies tracked config files there, manages a block in `/etc/zshenv` or `/etc/zsh/zshenv` to set `ZDOTDIR`, and excludes plugin/doc/meta files from the installed copy. Cargo PATH is added only when `~/.cargo/bin/cargo` is executable.
 - `zsh/zsh/.zshenv` owns non-interactive environment setup and Assurant environment modules. `zsh/zsh/.zshrc` sources modules in order, with Assurant aliases/functions enabled only when `ZSH_ASSURANT=1` is set by `./zsh/install.sh --assurant`.

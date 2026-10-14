@@ -12,7 +12,7 @@ Personal Windows 11 post-install + dev-environment toolbox. No build system, no 
 
 - `powershell/` — runnable utilities: `profile/` (install + startup, modular `modules/` with ordered `NN-name.ps1` files + `work/` for work mode, `Register-ProfileFunctions.ps1` lazy-loads `functions/`), `system/` (registry/network/shutdown), `tools/` (daily helpers), `diagnostics/` (probes), `functions/` (profile-loaded helpers + short aliases)
 - `zsh/` — modular macOS/Linux/WSL zsh config; `install.sh` deploys to `~/.zsh`
-- `macos/`, `linux/`, `mac-update.zsh` — platform bootstraps and Mac maintenance; Windows bootstrap is `powershell/tools/Install-Workstation.ps1`
+- `macos/`, `linux/` (incl. `Brewfile`), `mac-update.zsh`, `linux-update.zsh` — platform bootstraps and Mac/Linux(WSL) maintenance; Windows bootstrap is `powershell/tools/Install-Workstation.ps1`
 - `config/env/` — desired development storage manifest (`development.json`), directory documentation and historical environment snapshots
 - `ai/` — portable AI workspace and client configs: Claude (incl. local plugins in `ai/config/claude/plugins/`), Codex, Grok, OpenCode (`ai/opencode/`), Herdr (`ai/herdr/`), status lines, and shared MCP registry; uv-managed Python generates Windows/macOS client configs
 - `starship/`, `fonts/`, `windows-terminal/`, `extensions/`, `icons/` — config/asset payloads
@@ -29,7 +29,7 @@ pwsh -NoProfile -Command '$f=$false; Get-ChildItem ./powershell -Recurse -Filter
 ```bash
 sh -n ./er605-openwrt/*.sh
 bash -n ./zsh/install.sh ./linux/install.sh
-zsh -n ./macos/install.zsh ./mac-update.zsh
+zsh -n ./macos/install.zsh ./mac-update.zsh ./linux-update.zsh
 zsh -n ./zsh/zsh/.zshenv ./zsh/zsh/.zprofile ./zsh/zsh/.zshrc ./zsh/zsh/*.zsh ./zsh/zsh/work/*.zsh
 ```
 
