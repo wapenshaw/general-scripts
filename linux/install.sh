@@ -3,7 +3,7 @@
 #
 # Installs the system prerequisites from the native package manager, then
 # Homebrew (Linuxbrew) and the CLI tools in linux/Brewfile, the official
-# uv/rustup/bun installers, and finally the zsh config. Safe to re-run. A
+# uv/rustup/bun/Claude Code/Codex installers, and finally the zsh config. Safe to re-run. A
 # failed step never aborts the rest. Keep it current afterwards with
 # ./linux-update.zsh.
 #
@@ -32,6 +32,8 @@
 #   rustup          rustc / cargo (PATH is owned by the zsh config; only
 #                   added when ~/.cargo/bin/cargo exists)
 #   bun             official installer (`bun upgrade`)
+#   claude, codex   official standalone installers in ~/.local/bin (`claude update`,
+#                   `codex update`); linux-update.zsh migrates leftover casks
 #   --wsl           WSL only, opt-in. Makes /etc/wsl.conf carry [boot] systemd=true and
 #                   [interop] appendWindowsPath=false (and [user] default when unset),
 #                   backing the file up and showing a diff first. Reports the rest of
@@ -399,6 +401,40 @@ install_bun_official() {
   else
     yellow "Official bun installer failed (optional)"
     add_warning "bun official installer"
+  fi
+}
+
+# Claude Code and Codex: official standalone installers into ~/.local/bin; both
+# update themselves. Mirrors ai_cli_install in ai/standalone-cli.zsh, which
+# linux-update.zsh uses to migrate leftover Homebrew casks.
+install_ai_cli_official() {
+  local tool="$1" rc=0
+  [[ -L "$HOME/.local/bin/$tool" ]] && { green "$tool already installed in ~/.local/bin"; return 0; }
+  ensure_local_bin
+  info "Installing $tool via official standalone installer"
+  case "$tool" in
+    claude)
+      if [[ "$DRY_RUN" -eq 1 ]]; then
+        print_command sh -c 'curl -fsSL https://claude.ai/install.sh | bash'
+        return 0
+      fi
+      curl -fsSL https://claude.ai/install.sh | bash || rc=$?
+      ;;
+    codex)
+      if [[ "$DRY_RUN" -eq 1 ]]; then
+        print_command sh -c 'curl -fsSL https://chatgpt.com/codex/install.sh | CODEX_NON_INTERACTIVE=1 sh'
+        return 0
+      fi
+      # Another codex on PATH makes the installer edit shell profiles; hide it.
+      curl -fsSL https://chatgpt.com/codex/install.sh |
+        PATH="$HOME/.local/bin:/usr/bin:/bin:/usr/sbin:/sbin" CODEX_NON_INTERACTIVE=1 sh || rc=$?
+      ;;
+  esac
+  if [[ "$rc" -eq 0 ]]; then
+    green "Installed $tool → ~/.local/bin"
+  else
+    yellow "Official $tool installer failed"
+    add_warning "$tool official installer"
   fi
 }
 
@@ -846,6 +882,8 @@ install_tools() {
   command_exists uv || install_uv_official
   [[ -x "$HOME/.cargo/bin/cargo" ]] || install_rustup_official
   command_exists bun || install_bun_official
+  install_ai_cli_official claude
+  install_ai_cli_official codex
 
   section_tools "uv Python"
   bootstrap_uv_python

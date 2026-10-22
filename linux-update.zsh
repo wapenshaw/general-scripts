@@ -471,7 +471,8 @@ Routine behavior:
   - Updates the NVM default within its current Node major, migrates global npm
     packages, and retains older Node versions for rollback.
   - Updates the standalone Bun installation with bun upgrade.
-  - Updates native Claude Code with claude update; Homebrew owns Codex.
+  - Moves Claude Code and Codex off Homebrew casks to their standalone
+    installers, then runs claude update and codex update.
   - Updates rustup and the installed Rust toolchain when rustup is present.
   - Updates uv, upgrades uv-managed Python installations and uv tools.
   - Runs Homebrew, rustup, uv, Python, PATH-order and WSL health checks.
@@ -498,6 +499,7 @@ WSL (detected from WSL_DISTRO_NAME; a plain run only reports, --wsl also acts):
 Bootstrap behavior:
   - Runs linux/install.sh --skip-zsh when Homebrew is missing.
   - Applies linux/Brewfile (Homebrew tools, Azure kubelogin tap).
+  - Installs Claude Code and Codex with their official standalone installers.
   - Installs rustup via the official installer without mutating shell rc files.
   - Installs Python 3.14 through uv as the global/default Python.
   - Installs Python CLI tools such as pre-commit and ruff through uv.
@@ -507,7 +509,8 @@ Tool ownership:
   Homebrew   Native CLI utilities in linux/Brewfile; never Python or Node
   NVM        Node.js and global Node packages
   Bun        Standalone Bun (bun upgrade)
-  Claude     Native installer (claude update); fastest release availability
+  Claude     Standalone installer (claude update); fastest release availability
+  Codex      Standalone installer (codex update)
   rustup     Rust toolchain (rustc, cargo, rustfmt, clippy)
   uv         uv itself (uv self update), Python installations, Python CLI tools
 HELP
@@ -870,7 +873,7 @@ if [[ -d "$NVM_DIR" ]]; then
 fi
 
 #
-# Bun and native Claude Code
+# Bun, Claude Code and Codex
 #
 
 section "Bun"
@@ -881,20 +884,9 @@ else
 	info "Standalone Bun is not installed; skipping its update"
 fi
 
-section "Claude Code"
-if command_exists claude; then
-	typeset CLAUDE_EXECUTABLE="$(command -v claude)"
-	if [[ "$CLAUDE_EXECUTABLE" == /home/linuxbrew/* ||
-		"$CLAUDE_EXECUTABLE" == "$HOME/.linuxbrew/"* ]]; then
-		info "Claude Code is managed by Homebrew and updated with brew upgrade"
-	elif [[ "$CLAUDE_EXECUTABLE" == "$HOME/.local/bin/claude" ]]; then
-		run_step "Update native Claude Code" "$CLAUDE_EXECUTABLE" update
-	else
-		info "Claude Code is managed outside the native installer; skipping its update"
-	fi
-else
-	info "Claude Code is not installed; skipping its update"
-fi
+section "Claude Code / Codex"
+source "$SCRIPT_DIR/ai/standalone-cli.zsh"
+ai_cli_maintain "$BOOTSTRAP_TOOLS"
 
 #
 # rustup / Cargo

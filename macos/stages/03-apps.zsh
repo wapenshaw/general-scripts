@@ -48,7 +48,7 @@ else
     fi
 fi
 
-source "$REPO/macos/lib/ai-cli.zsh"
+source "$REPO/ai/standalone-cli.zsh"
 
 for tool in "${AI_CLI_TOOLS[@]}"; do
     if ai_cli_is_standalone "$tool"; then

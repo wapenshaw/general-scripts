@@ -503,53 +503,8 @@ fi
 
 section "Claude Code / Codex"
 
-source "${0:A:h}/macos/lib/ai-cli.zsh"
-
-for ai_tool in "${AI_CLI_TOOLS[@]}"; do
-	ai_cask="$(ai_cli_brew_cask "$ai_tool" || true)"
-
-	# A remaining cask means the tool still needs migrating out of Homebrew.
-	if ! ai_cli_is_standalone "$ai_tool"; then
-		if [[ -n "$ai_cask" || "$BOOTSTRAP_TOOLS" == true ]]; then
-			run_step \
-				"Install $ai_tool with its standalone installer" \
-				ai_cli_install "$ai_tool"
-		else
-			warning "$ai_tool is not installed with its standalone installer"
-			print "Install it with:"
-			print "  ./mac-update.zsh --bootstrap"
-			add_warning "$ai_tool standalone install missing"
-			continue
-		fi
-	fi
-
-	if [[ -n "$ai_cask" ]]; then
-		if [[ "$DRY_RUN" == true ]] || ai_cli_is_standalone "$ai_tool"; then
-			run_step \
-				"Remove Homebrew cask $ai_cask (standalone install updates itself)" \
-				brew uninstall --cask --force "$ai_cask"
-		else
-			warning "Keeping Homebrew $ai_cask because the standalone install failed"
-			add_warning "$ai_tool is still installed through Homebrew"
-		fi
-	fi
-
-	if ai_cli_is_standalone "$ai_tool"; then
-		run_step \
-			"Update $ai_tool" \
-			"$HOME/.local/bin/$ai_tool" update
-
-		hash -r
-
-		if [[ "$(command -v "$ai_tool")" == "$HOME/.local/bin/$ai_tool" ]]; then
-			success "$ai_tool: $("$ai_tool" --version 2>&1 | head -n 1)"
-		else
-			warning "$ai_tool resolves to $(command -v "$ai_tool")"
-			warning "Expected the standalone launcher $HOME/.local/bin/$ai_tool"
-			add_warning "$ai_tool executable location"
-		fi
-	fi
-done
+source "${0:A:h}/ai/standalone-cli.zsh"
+ai_cli_maintain "$BOOTSTRAP_TOOLS"
 
 #
 # Node / NVM

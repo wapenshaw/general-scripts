@@ -106,7 +106,7 @@ Installs all curated applications defined in `macos/Brewfile`:
   - **Utilities**: `bartender`, `caffeine`, `dockdoor`, `dockey`, `iina`, `karabiner-elements`, `keepassxc`, `linearmouse`, `muesli`, `tinycast`, `updatest`
 * **VS Code Extensions**: Installs extensions when the `code` CLI is available.
 * **Claude Code and Codex**: Installed outside Homebrew with their official
-  standalone installers (`macos/lib/ai-cli.zsh`). Both put a launcher in
+  standalone installers (`ai/standalone-cli.zsh`). Both put a launcher in
   `~/.local/bin` and update themselves; `mac-update.zsh` also runs
   `claude update` and `codex update` and migrates any leftover casks.
 
