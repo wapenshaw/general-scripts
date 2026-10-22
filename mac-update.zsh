@@ -260,6 +260,8 @@ Examples:
 Routine behavior:
   - Checks for available macOS updates.
   - Updates and upgrades Homebrew packages.
+  - Moves Claude Code and Codex off Homebrew casks to their standalone
+    installers, then runs claude update and codex update.
   - Updates rustup and the installed Rust toolchain when rustup is present.
   - Upgrades uv-managed Python installations.
   - Upgrades Python CLI applications managed by uv.
@@ -269,13 +271,15 @@ Bootstrap behavior:
   - Installs Xcode Command Line Tools / Homebrew when they are missing.
   - Installs native developer tools through Homebrew (including starship, neovim).
   - Installs the uv executable through Homebrew.
+  - Installs Claude Code and Codex with their official standalone installers.
   - Installs rustup via the official installer without mutating shell rc files.
   - Installs Python 3.14 through uv as the global/default Python.
   - Installs Python CLI tools such as pre-commit and ruff through uv.
 
 Tool ownership:
   Homebrew  Native command-line utilities, uv, starship, neovim
-  NVM       Node.js and global Node packages
+  Vendor    Claude Code and Codex (~/.local/bin, self-updating)
+  NVM      Node.js and global Node packages
   rustup    Rust toolchain (rustc, cargo, rustfmt, clippy)
   uv        Python installations and Python CLI applications
   macOS     /usr/bin/python3; this is never modified
@@ -492,6 +496,60 @@ else
 	failure "Homebrew is not installed or is unavailable in PATH"
 	add_failure "Homebrew unavailable"
 fi
+
+#
+# Claude Code / Codex
+#
+
+section "Claude Code / Codex"
+
+source "${0:A:h}/macos/lib/ai-cli.zsh"
+
+for ai_tool in "${AI_CLI_TOOLS[@]}"; do
+	ai_cask="$(ai_cli_brew_cask "$ai_tool" || true)"
+
+	# A remaining cask means the tool still needs migrating out of Homebrew.
+	if ! ai_cli_is_standalone "$ai_tool"; then
+		if [[ -n "$ai_cask" || "$BOOTSTRAP_TOOLS" == true ]]; then
+			run_step \
+				"Install $ai_tool with its standalone installer" \
+				ai_cli_install "$ai_tool"
+		else
+			warning "$ai_tool is not installed with its standalone installer"
+			print "Install it with:"
+			print "  ./mac-update.zsh --bootstrap"
+			add_warning "$ai_tool standalone install missing"
+			continue
+		fi
+	fi
+
+	if [[ -n "$ai_cask" ]]; then
+		if [[ "$DRY_RUN" == true ]] || ai_cli_is_standalone "$ai_tool"; then
+			run_step \
+				"Remove Homebrew cask $ai_cask (standalone install updates itself)" \
+				brew uninstall --cask --force "$ai_cask"
+		else
+			warning "Keeping Homebrew $ai_cask because the standalone install failed"
+			add_warning "$ai_tool is still installed through Homebrew"
+		fi
+	fi
+
+	if ai_cli_is_standalone "$ai_tool"; then
+		run_step \
+			"Update $ai_tool" \
+			"$HOME/.local/bin/$ai_tool" update
+
+		hash -r
+
+		if [[ "$(command -v "$ai_tool")" == "$HOME/.local/bin/$ai_tool" ]]; then
+			success "$ai_tool: $("$ai_tool" --version 2>&1 | head -n 1)"
+		else
+			warning "$ai_tool resolves to $(command -v "$ai_tool")"
+			warning "Expected the standalone launcher $HOME/.local/bin/$ai_tool"
+			add_warning "$ai_tool executable location"
+		fi
+	fi
+done
 
 #
 # Node / NVM

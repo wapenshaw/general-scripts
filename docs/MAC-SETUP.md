@@ -102,9 +102,13 @@ Installs all curated applications defined in `macos/Brewfile`:
 * **CLI Utilities**: `bat`, `biome`, `bun`, `direnv`, `docker`, `eza`, `fd`, `ffmpeg`, `fzf`, `gh`, `git`, `git-delta`, `github-mcp-server`, `go`, `herdr`, `hyperfine`, `jq`, `just`, `lf`, `mole`, `neovim`, `opencode`, `pandoc`, `ripgrep`, `shellcheck`, `shfmt`, `starship`, `tmux`, `tree`, `uv`, `yq`, `zoxide`, `openusage`
 * **GUI Applications (Casks)**:
   - **Terminal / Dev**: `ghostty`, `docker-desktop`, `drawio`, `markedit`
-  - **AI / LLM Clients**: `claude-code`, `codex`, `codexbar`, `witsy`
+  - **AI / LLM Clients**: `codexbar`, `witsy`
   - **Utilities**: `bartender`, `caffeine`, `dockdoor`, `dockey`, `iina`, `karabiner-elements`, `keepassxc`, `linearmouse`, `muesli`, `tinycast`, `updatest`
 * **VS Code Extensions**: Installs extensions when the `code` CLI is available.
+* **Claude Code and Codex**: Installed outside Homebrew with their official
+  standalone installers (`macos/lib/ai-cli.zsh`). Both put a launcher in
+  `~/.local/bin` and update themselves; `mac-update.zsh` also runs
+  `claude update` and `codex update` and migrates any leftover casks.
 
 ```bash
 ./macos/install.zsh --stage=3

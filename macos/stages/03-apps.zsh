@@ -2,7 +2,8 @@
 # macos/stages/03-apps.zsh — Stage 3: Applications & Package Manager
 #
 # Installs all curated CLI packages, taps, GUI applications (casks), and
-# extensions defined in macos/Brewfile.
+# extensions defined in macos/Brewfile, then Claude Code and Codex through
+# their self-updating standalone installers.
 set -euo pipefail
 
 STAGE_DIR="${0:A:h}"
@@ -46,5 +47,17 @@ else
         success "Brewfile bundle processing complete"
     fi
 fi
+
+source "$REPO/macos/lib/ai-cli.zsh"
+
+for tool in "${AI_CLI_TOOLS[@]}"; do
+    if ai_cli_is_standalone "$tool"; then
+        success "$tool is installed with its standalone installer"
+    else
+        run_cmd "Installing $tool with its standalone installer..." ai_cli_install "$tool" || {
+            warning "$tool could not be installed; re-run ./mac-update.zsh --bootstrap later."
+        }
+    fi
+done
 
 success "Stage 3: Applications & Package Manager complete"

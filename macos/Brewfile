@@ -45,8 +45,8 @@ brew "janekbaraniewski/tap/openusage"
 # GUI Applications (Casks)
 cask "bartender"
 cask "caffeine"
-cask "claude-code"
-cask "codex"
+# Claude Code and Codex are not casks: macos/lib/ai-cli.zsh installs them with
+# their self-updating standalone installers.
 cask "codexbar"
 cask "dockdoor"
 cask "docker-desktop"
