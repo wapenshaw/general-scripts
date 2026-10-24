@@ -39,6 +39,9 @@ On a brand-new Windows box, follow **[docs/FRESH-INSTALL.md](./docs/FRESH-INSTAL
 
 Cargo/rustup PATH is added only when the `cargo` binary exists (zsh: `~/.cargo/bin/cargo`; PowerShell: `$env:CARGO_HOME\bin\cargo.exe` or `~\.cargo\bin\cargo.exe`). `rustup self uninstall` therefore drops it off PATH.
 
+Hardware identifiers, replacement parts and dated battery health records live in
+[`devices/`](./devices/README.md).
+
 ## AI client configuration
 
 [ai/README.md](./ai/README.md) provides portable **Claude Code, Codex, Grok and
