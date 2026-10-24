@@ -39,3 +39,6 @@ brew "shfmt"
 brew "starship"
 brew "yq"
 brew "zoxide"
+
+# Google platform tools for USB and wireless Android/Google TV debugging.
+cask "android-platform-tools"
