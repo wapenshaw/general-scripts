@@ -441,7 +441,8 @@ Usage:
   ./linux/install.sh           First-run Linux bootstrap (system packages + Homebrew + tools + zsh)
 
 Options:
-  --system      Install system package updates (apt or dnf). Uses sudo.
+  --system      Install system package updates (apt or dnf; dnf also cleans its
+                package cache afterwards). Uses sudo.
   --cleanup     Free disk space (apt/dnf caches, unused packages, old logs and /tmp,
                 brew/uv/npm/pip caches). General Linux. Uses sudo.
   --deep        With --cleanup, also sweep ~/.cache (except uv, pre-commit, ruff),
@@ -630,6 +631,9 @@ dnf)
 		prime_sudo
 		run_step "Upgrade dnf packages" sudo dnf upgrade -y
 		run_step "Remove unused dnf packages" sudo dnf autoremove -y
+		# Downloaded RPMs are never reused once installed; keep metadata so the
+		# next check-update stays fast.
+		run_step "Clean the dnf package cache" sudo dnf clean packages
 	else
 		# dnf check-update exits 100 when updates are available.
 		dnf check-update >/dev/null 2>&1
@@ -1253,7 +1257,12 @@ else
 	if [[ "$PM" == apt ]]; then
 		report_size "apt package cache" "$(path_size /var/cache/apt/archives)"
 	elif [[ "$PM" == dnf ]]; then
-		report_size "dnf cache" "$(path_size /var/cache/dnf)"
+		# dnf5 (Fedora 41+) caches under libdnf5; older dnf under dnf.
+		if [[ -d /var/cache/libdnf5 ]]; then
+			report_size "dnf cache" "$(path_size /var/cache/libdnf5)"
+		else
+			report_size "dnf cache" "$(path_size /var/cache/dnf)"
+		fi
 	fi
 
 	if command_exists journalctl && [[ -d /run/systemd/system ]]; then
