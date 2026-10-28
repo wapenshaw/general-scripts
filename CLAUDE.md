@@ -17,7 +17,7 @@ Personal Windows 11 post-install + dev-environment toolbox. No build system, no 
 - `ai/` — portable AI workspace and client configs: Claude (incl. local plugins in `ai/config/claude/plugins/`), Codex, Grok, OpenCode (`ai/opencode/`), Herdr (`ai/herdr/`), status lines, and shared MCP registry; uv-managed Python generates Windows/macOS client configs
 - `starship/`, `fonts/`, `windows-terminal/`, `extensions/`, `icons/` — config/asset payloads
 - `registry-tweaks/` — paired `dos/` + `undos/` `.reg` files
-- `er605-openwrt/` — TP-Link ER605 v2 OpenWrt flashing helpers (router-side)
+- `er605-openwrt/` — TP-Link ER605 v2 `rigwarl` (OpenWrt switch + Tailscale router): docs and router-side setup scripts
 
 ## Validate before committing
 
@@ -27,7 +27,7 @@ pwsh -NoProfile -Command '$f=$false; Get-ChildItem ./powershell -Recurse -Filter
 ```
 
 ```bash
-sh -n ./er605-openwrt/*.sh
+sh -n ./er605-openwrt/*.sh ./er605-openwrt/homewatch/*.sh
 bash -n ./zsh/install.sh ./linux/install.sh
 zsh -n ./macos/install.zsh ./mac-update.zsh ./linux-update.zsh
 zsh -n ./zsh/zsh/.zshenv ./zsh/zsh/.zprofile ./zsh/zsh/.zshrc ./zsh/zsh/*.zsh ./zsh/zsh/work/*.zsh

@@ -1,0 +1,11 @@
+# address(es)        name   (comma-separate several addresses: any reply counts;
+#                            prefix arp: for devices that ignore ping)
+# Only always-on devices belong here; phones, TVs and PCs sleep and would alert nightly.
+# Remove the leading # to watch a device again.
+#1.1.1.1,8.8.8.8     internet
+#10.10.1.1           xx530v
+#10.10.1.100         hall-ap
+arp:10.10.1.150      aruna-206
+#10.10.1.20          santa
+#10.10.1.50          tapo-plug-1
+#10.10.1.51          tapo-plug-2

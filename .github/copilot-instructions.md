@@ -1,6 +1,6 @@
 # AI Coding Agent Guide
 
-This repo is a personal toolbox, not an application: Windows-focused PowerShell utilities, shell/profile configuration payloads, Starship/font/terminal assets, browser-extension snippets, and a TP-Link ER605 v2 OpenWrt flashing helper. There is no repo-wide package manager, build system, or test harness; validate the specific script family you touch.
+This repo is a personal toolbox, not an application: Windows-focused PowerShell utilities, shell/profile configuration payloads, Starship/font/terminal assets, browser-extension snippets, and the setup scripts for a TP-Link ER605 v2 running OpenWrt. There is no repo-wide package manager, build system, or test harness; validate the specific script family you touch.
 
 ## Commands
 
@@ -47,8 +47,8 @@ pwsh -File ./powershell/tools/Install-Workstation.ps1 -Assurant
 OpenWrt ER605 workflows run on the router, not from the workstation:
 
 ```sh
-sh ./er605-openwrt/er605-mtd-backup.sh
-sh ./er605-openwrt/er605v2_write_initramfs.sh openwrt-initramfs.bin
+sh ./er605-openwrt/rigwarl-clean.sh      # run detached: it reloads the network
+sh ./er605-openwrt/rigwarl-services.sh   # after copying homewatch/ to /etc/homewatch/
 ```
 
 Script-level validation:
@@ -61,7 +61,7 @@ pwsh -NoProfile -Command '$failed=$false; Get-ChildItem ./powershell -Recurse -F
 pwsh -NoProfile -Command '$tokens=$null; $errors=$null; $null = [System.Management.Automation.Language.Parser]::ParseFile((Resolve-Path ./powershell/profile/Set-DevPackagePaths.ps1).Path,[ref]$tokens,[ref]$errors); if ($errors) { $errors | Format-List; exit 1 }'
 
 # POSIX shell entry points
-for f in ./er605-openwrt/*.sh; do sh -n "$f"; done
+for f in ./er605-openwrt/*.sh ./er605-openwrt/homewatch/*.sh; do sh -n "$f"; done
 
 # Bash entry points
 bash -n ./zsh/install.sh ./linux/install.sh
@@ -70,7 +70,7 @@ bash -n ./zsh/install.sh ./linux/install.sh
 zsh -n ./macos/install.zsh ./mac-update.zsh ./linux-update.zsh
 
 # Single shell script
-sh -n ./er605-openwrt/er605v2_write_initramfs.sh
+sh -n ./er605-openwrt/rigwarl-services.sh
 
 # Zsh config modules
 zsh -n ./zsh/zsh/.zshenv ./zsh/zsh/.zprofile ./zsh/zsh/.zshrc ./zsh/zsh/*.zsh ./zsh/zsh/work/*.zsh
@@ -92,7 +92,7 @@ zsh -n ./zsh/zsh/.zshenv ./zsh/zsh/.zprofile ./zsh/zsh/.zshrc ./zsh/zsh/*.zsh ./
 - `zsh/zsh/.zshenv` owns non-interactive environment setup and Assurant environment modules. `zsh/zsh/.zshrc` sources modules in order, with Assurant aliases/functions enabled only when `ZSH_ASSURANT=1` is set by `./zsh/install.sh --assurant`.
 - `zsh/zsh/nvm-path.zsh` owns active/default NVM version selection and PATH priority, shared with Mac maintenance and reapplied after login/interactive PATH setup. `macos/lib/nvm.zsh` removes only legacy version-pinned NVM links; install/update scripts must not recreate those links or remove Homebrew's runtime dependencies. Preserve custom `NVM_DIR` and honor `--dry-run`.
 - `zsh/zsh/plugins.zsh` auto-clones plugins on first shell launch into `~/.zsh/plugins/`; do not vendor plugin checkouts into the repo.
-- `er605-openwrt/` contains router-side BusyBox/POSIX shell helpers plus the guide. The flashing script locates UBI volumes named `kernel` and `kernel.b` and writes the initramfs image to both; the backup script writes MTD backups to an NTFS USB mount.
+- `er605-openwrt/` documents the ER605 v2 `rigwarl` (switch, Tailscale subnet router/exit node, DNS ad blocking, device watchdog) and holds its router-side BusyBox/POSIX shell scripts. BusyBox there lacks `timeout`, `arping` and `comm`. Never commit the root password, ntfy topic/token or config backups; those live in gitignored `devices/private/tp-link-er605/`.
 - `fonts/`, `windows-terminal/`, `extensions/`, and root Starship theme files are payload/config assets consumed manually by the scripts or external tools.
 - `opencode/` packages the OpenCode configuration for cross-machine portability (Windows/Linux/macOS): `config/` holds sanitized config payloads (`CONTEXT7_API_KEY` and GitHub token read from env vars), `skills/` deploys to `~/.config/opencode/skills/`, and `agent-skills/` deploys to `~/.agents/skills/`. Install with `Install-OpenCodeConfig.ps1` (Windows) or `install.sh` (Linux/macOS); both support uninstall and back up changed target files before overwrite. Never commit real API keys here; the live machine's `antigravity-accounts.json` is intentionally excluded.
 - `config/env/development.json` is the desired User environment/storage manifest. nvm v2 owns Node, standalone pnpm avoids Corepack, and uv owns Python. Historical snapshots under `config/env/snapshots` are backup data. Export defaults outside the repo; Import previews unless `-Apply` is explicit.
