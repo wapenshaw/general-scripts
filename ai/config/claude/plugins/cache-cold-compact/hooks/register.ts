@@ -55,12 +55,26 @@ function setStatus($: EngineInterface, text: string | undefined) {
 /** Resolves where the status line reads this session's state from; silent when it cannot. */
 async function resolveStateFile($: EngineInterface) {
   try {
-    const [home, id] = await Promise.all([$.process.run(['printenv', 'HOME']), $.session.id()])
-    const dir = home.exitCode === 0 ? home.stdout.trim() : ''
+    const id = await $.session.id()
+    const dir = await homeDir($)
     stateFile = dir && id ? `${dir}/.claude/cold-compact/sessions/${id}.json` : undefined
   } catch {
     stateFile = undefined
   }
+}
+
+/** HOME on macOS/Linux; Windows has no printenv or HOME outside Git Bash, so fall back to USERPROFILE. */
+async function homeDir($: EngineInterface) {
+  for (const argv of [['printenv', 'HOME'], ['cmd', '/d', '/c', 'echo %USERPROFILE%']]) {
+    try {
+      const out = await $.process.run(argv)
+      const dir = out.exitCode === 0 ? out.stdout.trim() : ''
+      if (dir && !dir.includes('%')) return dir.replaceAll('\\', '/')
+    } catch {
+      // Not on this platform; try the next one.
+    }
+  }
+  return ''
 }
 
 /** Writes the state for the status line, skipping a write that would say the same thing. */
