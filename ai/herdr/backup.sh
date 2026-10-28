@@ -3,7 +3,6 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-REPO_DIR="$(cd "$SCRIPT_DIR/../.." && pwd)"
 
 XDG_CONFIG="${XDG_CONFIG_HOME:-$HOME/.config}"
 HERDR_CONFIG_DIR="$XDG_CONFIG/herdr"
@@ -15,16 +14,11 @@ cyan()   { printf '\033[36m::\033[0m %s\n' "$1"; }
 
 cyan "Backing up Herdr core configuration..."
 if [[ -f "$HERDR_CONFIG_DIR/config.toml" ]]; then
-    cp "$HERDR_CONFIG_DIR/config.toml" "$SCRIPT_DIR/config.toml"
-    green "Backed up config.toml"
+    # Radar's managed blocks hold machine paths; its configure action rewrites them on install.
+    sed '/^# >>> herdr-radar/,/^# <<< herdr-radar/d' "$HERDR_CONFIG_DIR/config.toml" > "$SCRIPT_DIR/config.toml"
+    green "Backed up config.toml (without Radar's managed blocks)"
 else
     yellow "No config.toml found at $HERDR_CONFIG_DIR"
-fi
-
-cyan "Backing up Herdr plugins manifest..."
-if [[ -f "$HERDR_CONFIG_DIR/plugins.json" ]]; then
-    cp "$HERDR_CONFIG_DIR/plugins.json" "$SCRIPT_DIR/plugins.json"
-    green "Backed up plugins.json"
 fi
 
 cyan "Backing up herdr-auto-title config..."
@@ -36,10 +30,12 @@ fi
 cyan "Backing up plugin-specific configs..."
 mkdir -p "$SCRIPT_DIR/plugins/config"
 if [[ -d "$HERDR_CONFIG_DIR/plugins/config" ]]; then
-    # Copy plugin configs, dereferencing links or preserving files
+    # Copy plugin configs, dereferencing links or preserving files.
+    # herdr.auto-title only holds a link to config.env, which is backed up above.
     for plugin_dir in "$HERDR_CONFIG_DIR/plugins/config"/*; do
         if [[ -d "$plugin_dir" ]]; then
             pname="$(basename "$plugin_dir")"
+            [[ "$pname" == "herdr.auto-title" ]] && continue
             mkdir -p "$SCRIPT_DIR/plugins/config/$pname"
             for f in "$plugin_dir"/*; do
                 if [[ -f "$f" ]]; then
@@ -51,12 +47,13 @@ if [[ -d "$HERDR_CONFIG_DIR/plugins/config" ]]; then
     green "Backed up plugin config directories to $SCRIPT_DIR/plugins/config"
 fi
 
-# Mirror to macos/configs/herdr for centralized macOS workstation snapshots
-MACOS_HERDR_DIR="$REPO_DIR/macos/configs/herdr"
-mkdir -p "$MACOS_HERDR_DIR"
-[[ -f "$SCRIPT_DIR/config.toml" ]] && cp "$SCRIPT_DIR/config.toml" "$MACOS_HERDR_DIR/config.toml"
-[[ -f "$SCRIPT_DIR/plugins.json" ]] && cp "$SCRIPT_DIR/plugins.json" "$MACOS_HERDR_DIR/plugins.json"
-[[ -f "$SCRIPT_DIR/config.env" ]] && cp "$SCRIPT_DIR/config.env" "$MACOS_HERDR_DIR/config.env"
-green "Mirrored snapshots to macos/configs/herdr"
+cyan "Backing up Memex config..."
+if [[ -f "$HOME/.memex/config.toml" ]]; then
+    mkdir -p "$SCRIPT_DIR/memex"
+    cp "$HOME/.memex/config.toml" "$SCRIPT_DIR/memex/config.toml"
+    green "Backed up ~/.memex/config.toml"
+else
+    yellow "No ~/.memex/config.toml found (Memex is macOS/Linux only)"
+fi
 
 green "Herdr and plugin configs successfully backed up!"

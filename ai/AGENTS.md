@@ -4,9 +4,11 @@ This is a personal config-and-instructions collection, not a mirror of a user's
 home directory. Read `README.md` and the relevant tool's instructions before
 changing either these references or an installed environment.
 
-Portable installer defaults live under `config/` and `herdr/`; the customized
-WSL profile lives under `wsl/` and is applied manually. Keep those profiles
-separate rather than inserting WSL-specific paths into a shared default.
+Portable installer defaults live under `config/` and `herdr/` (Herdr, its plugin
+configs and Memex for every OS). The customized WSL profile lives under `wsl/`
+(Claude/Copilot) and `herdr/wsl/` (Herdr overlay) and is applied manually. Keep
+those profiles separate rather than inserting WSL-specific paths into a shared
+default.
 
 - Act on the requested tool and destination only. Personal is the default;
   configure work integrations only when explicitly requested.

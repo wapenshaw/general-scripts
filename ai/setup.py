@@ -17,6 +17,8 @@ import tomllib
 ROOT = Path(__file__).resolve().parent
 REPO = ROOT.parent
 CLIENTS = ("claude", "codex", "grok", "opencode")
+# Clients with preferences but no MCP definitions rendered by this script.
+EXTRA_CLIENTS = ("agy",)
 
 
 class MissingEnvironmentError(ValueError):
@@ -185,7 +187,7 @@ def atomic_write(path, content):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--clients", nargs="+", choices=CLIENTS, default=list(CLIENTS))
+    parser.add_argument("--clients", nargs="+", choices=CLIENTS + EXTRA_CLIENTS, default=list(CLIENTS + EXTRA_CLIENTS))
     parser.add_argument("--platform", choices=("windows", "macos", "linux"))
     parser.add_argument("--home", type=Path, help="Override destinations; ignores client home environment overrides")
     parser.add_argument("--output", type=Path, default=ROOT / "generated")
@@ -224,6 +226,7 @@ def main():
         "codex": env_home("CODEX_HOME", home / ".codex"),
         "grok": env_home("GROK_HOME", home / ".grok"),
         "opencode": env_home("XDG_CONFIG_HOME", home / ".config") / "opencode",
+        "agy": home / ".gemini" / "antigravity-cli",
     }
     node = (find_node() if platform == actual_platform else None) or "node"
     # Always quote Windows paths, including paths with shell metacharacters.
@@ -231,6 +234,19 @@ def main():
     planned = {}
     for client in args.clients:
         client_root = client_roots[client]
+        if client == "agy":
+            # Antigravity runs the title command per state change. It passes
+            # quotes through literally, so the script path must stay bare.
+            script = client_root / "title.py"
+            if any(char.isspace() for char in str(script)):
+                print(f"Antigravity cannot launch a title script under a path with whitespace: {script}", file=sys.stderr)
+                raise ValueError("whitespace in Antigravity path")
+            python = "python" if platform == "windows" else "python3"
+            title = {"title": {"type": "command", "command": f"{python} {script.as_posix()}"}}
+            planned[script] = (ROOT / "config/antigravity/title.py").read_text(encoding="utf-8-sig")
+            target = client_root / "settings.json"
+            planned[target] = encode(target, merge(load_config(target) if args.install else {}, title))
+            continue
         if client == "opencode":
             source = ROOT / "opencode/config/opencode.json"
         else:

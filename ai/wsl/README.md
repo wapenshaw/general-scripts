@@ -13,8 +13,13 @@ does not deploy this profile; merge its settings only for a requested WSL setup.
 |---|---|---|
 | `copilot/` | UI/model/subagent settings, Herdr hook, centered session status line | `~/.copilot/` |
 | `claude/` | UI/model settings, public plugin preferences, status line and custom hooks | `~/.claude/` |
-| `herdr/` | Main config, plugin configs, title-fix patches and setup instructions | `~/.config/herdr/` |
-| `memex/` | Local indexing and resume settings | `~/.memex/config.toml` |
+| [`../herdr/wsl/`](../herdr/wsl/README.md) | Herdr overlay: main config (Ayu Dark, Radar layout), title-fix patches and setup instructions | `~/.config/herdr/` |
+
+All Herdr files, including this profile's overlay, live under [`../herdr/`](../herdr/README.md).
+Radar and Memex settings are not OS specific, so they sit with the shared defaults:
+plugin configs in [`../herdr/plugins/config/`](../herdr/plugins/config/) and
+Memex's own config in [`../herdr/memex/`](../herdr/memex/config.toml)
+(`~/.memex/config.toml`). `../herdr/install.sh` deploys both.
 
 Private MCP servers, organization marketplaces, work-specific skills and project
 launchers stay local. Configuring a work tool on request does not authorize
@@ -27,7 +32,7 @@ are also excluded. There is no source-path/checksum snapshot manifest here.
 Herdr uses Ctrl+A, Ayu Dark and login Zsh shells. Ctrl+Alt Up/Down navigate agents;
 Left/Right navigate tabs; H/J/K/L navigate panes. Ctrl+A then M toggles Memex's
 non-modal sidebar, Shift+M moves the current pane to a new tab, and T opens
-Theme Picker. See [herdr/README.md](herdr/README.md) for installation and recovery.
+Theme Picker. See [../herdr/wsl/README.md](../herdr/wsl/README.md) for installation and recovery.
 
 Memex has embeddings disabled. Its resume commands use the recorded project's
 directory and create a tab in the workspace where Memex is open, rather than
@@ -51,7 +56,7 @@ choices, not permission to enable them on a different machine without asking.
 
 Inspect and back up the destination first, then merge only the requested
 settings. Preserve unrelated local hooks, plugins and work integrations. Some
-config commands and the Radar workaround still contain `/home/heaton` or a
+config commands and the Radar workaround patch still contain `/home/heaton` or a
 specific NVM version: adapt them to the destination's actual paths before use.
 Do not replace entire settings files merely to apply one preference.
 

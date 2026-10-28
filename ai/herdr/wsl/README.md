@@ -1,8 +1,10 @@
-# Herdr configuration and setup
+# Herdr WSL overlay
 
 `config.toml` contains the preferred keybindings, Ayu Dark palette, login Zsh
-shells and Radar layout. `plugins/config/` contains user-owned Radar and Memex
-settings. These are reference configs, not a live plugin registry or a backup.
+shells and Radar layout. The Radar and Memex plugin settings are shared across
+operating systems and live one level up in [../](../README.md) (plugin configs
+under `plugins/config/`, Memex's own config at [../memex/](../memex/config.toml)).
+These are reference configs, not a live plugin registry or a backup.
 
 ## Plugins and dependencies
 
@@ -44,7 +46,7 @@ changes. Locate the current checkout, inspect upstream behavior, and check the
 patch there:
 
 ```sh
-git apply --check /path/to/ai/wsl/herdr/patches/auto-title-local-changes.patch
+git apply --check /path/to/ai/herdr/wsl/patches/auto-title-local-changes.patch
 ```
 
 Only apply a compatible patch. If upstream changed, port missing behavior rather
@@ -57,8 +59,8 @@ herdr plugin action invoke herdr.auto-title.restart
 ```
 
 Radar's supported suffix filter is
-`plugins/config/hhdebb.herdr-radar/title-hook.cjs`, referenced by its neighboring
-`config.toml`. It survives updates. Keep `follow_appearance = false` to preserve
+`../plugins/config/hhdebb.herdr-radar/title-hook.cjs`, referenced by its
+neighboring `config.toml` with a config-relative path. It survives updates. Keep `follow_appearance = false` to preserve
 Ayu Dark.
 
 `patches/radar-node-path.patch` records a workaround for a server started without
@@ -71,10 +73,11 @@ server; do not install system Node over an existing NVM setup.
 
 Preserve destination files first. Install missing dependencies/plugins and copy
 the requested user plugin configs to their matching Herdr config directories.
-Adapt absolute paths in the main config, Radar hook setting, and Memex resume
-templates. Deploy `../memex/config.toml` to `~/.memex/config.toml`; keep embeddings
-disabled and explicit working agent executable paths if the server PATH is
-minimal. Use `nicosuave.memex.toggle`, not its modal palette, for the M shortcut.
+Adapt absolute paths in the main config. The shared installer `../install.sh`
+installs Radar and Memex, copies their plugin configs, and deploys
+`../memex/config.toml` to `~/.memex/config.toml`; keep embeddings disabled and
+explicit working agent executable paths (for example `$HOME/.local/bin/claude`) in the
+local `~/.memex/config.toml` if the server PATH is minimal. Use `nicosuave.memex.toggle`, not its modal palette, for the M shortcut.
 
 Validate and reload changed main settings without terminating panes:
 

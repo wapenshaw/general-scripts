@@ -136,10 +136,10 @@ Installs all curated applications defined in `macos/Brewfile`:
   - Deploys Codex `config.toml`.
   - Runs OpenCode configuration installer.
 * **Herdr Workspace Multiplexer & Plugins**:
-  - Deploys `~/.config/herdr/config.toml` (Catppuccin theme, symbol status indicators, `prefix+t` theme picker keybind).
-  - Deploys `~/.config/herdr-auto-title/config.env` and plugin configurations (`usagebar`, symlinks).
-  - Installs GitHub plugin `wapenshaw/herdr-theme-picker` (ref `go-side-by-side`).
-  - Auto-clones `https://github.com/wapenshaw/herdr-auto-title.git` to `~/Code/herdr-auto-title`, builds the Go binary, and links it via `herdr plugin link`.
+  - Deploys `~/.config/herdr/config.toml` (Ayu Dark palette, symbol status indicators, theme picker / Radar / Memex keybinds).
+  - Deploys `~/.config/herdr-auto-title/config.env` and plugin configurations (Radar, Memex), plus `~/.memex/config.toml`; installs Radar and Memex.
+  - Installs the official GitHub plugin `qintmb/herdr-theme-picker`.
+  - Installs the official `kryptamine/herdr-auto-title` plugin via `herdr plugin install` (a local checkout can be linked by passing its path to `ai/herdr/install.sh`).
   - Configures agent integration lifecycle hooks (`antigravity-cli`, `claude`, `codex`, `copilot`, `opencode`).
 
 ```bash

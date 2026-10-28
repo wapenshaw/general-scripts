@@ -4,6 +4,28 @@ onboarding = false
 name = "catppuccin"
 auto_switch = false
 
+# Ayu Dark, as applied by Theme Picker on every machine.
+[theme.custom]
+panel_bg = "#0b0e14"
+sidebar_bg = "#090b11"
+active_row_bg = "#1e232b"
+selection_bg = "#1b3a5b"
+surface0 = "#1e232b"
+surface1 = "#686868"
+surface_dim = "#0a0c12"
+overlay0 = "#686868"
+overlay1 = "#c7c7c7"
+text = "#bfbdb6"
+subtext0 = "#c7c7c7"
+accent = "#53bdfa"
+mauve = "#cda1fa"
+green = "#7fd962"
+yellow = "#f9af4f"
+red = "#ea6c73"
+blue = "#53bdfa"
+teal = "#90e1c6"
+peach = "#f07178"
+
 [ui.sound]
 enabled = true
 
@@ -15,7 +37,39 @@ show_agent_labels_on_pane_borders = true
 agent_panel_sort = "spaces"
 status_indicators = "symbols"
 
+[keys]
+prefix = "ctrl+a"
+focus_pane_left = ["prefix+h", "ctrl+alt+h"]
+focus_pane_down = ["prefix+j", "ctrl+alt+j"]
+focus_pane_up = ["prefix+k", "ctrl+alt+k"]
+focus_pane_right = ["prefix+l", "ctrl+alt+l"]
+previous_agent = ["ctrl+alt+up"]
+next_agent = ["ctrl+alt+down"]
+previous_workspace = ["ctrl+shift+alt+up"]
+next_workspace = ["ctrl+shift+alt+down"]
+previous_tab = ["prefix+p", "ctrl+alt+left", "ctrl+shift+alt+h", "ctrl+shift+alt+left"]
+next_tab = ["prefix+n", "ctrl+alt+right", "ctrl+shift+alt+l", "ctrl+shift+alt+right"]
+
 [[keys.command]]
 key = "prefix+t"
 type = "plugin_action"
 command = "herdr-theme-picker.open"
+description = "Theme picker"
+
+[[keys.command]]
+key = "alt+t"
+type = "plugin_action"
+command = "herdr-theme-picker.open"
+description = "Theme picker (direct)"
+
+[[keys.command]]
+key = "prefix+m"
+type = "plugin_action"
+command = "nicosuave.memex.toggle"
+description = "Toggle Memex agent history sidebar (runs on macOS/Linux servers)"
+
+[[keys.command]]
+key = "prefix+a"
+type = "plugin_action"
+command = "hhdebb.herdr-radar.view-toggle"
+description = "Cycle Radar agent order (active / recent / off)"

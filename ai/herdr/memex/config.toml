@@ -1,0 +1,4 @@
+embeddings = false
+claude_resume_cmd = 'cd {cwd_shell} && claude --resume "{session_id}"'
+copilot_resume_cmd = 'cd {cwd_shell} && copilot --resume "{session_id}"'
+herdr_resume = "tab"

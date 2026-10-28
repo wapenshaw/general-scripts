@@ -20,6 +20,9 @@ __pycache__/
 *.sock
 *.pid
 SNAPSHOT.json
-wsl/herdr/plugins.json
-wsl/herdr/theme-picker-applied
+herdr/wsl/plugins.json
+herdr/wsl/theme-picker-applied
 *.local.md
+
+# Per-machine plugin registry (absolute paths, local links)
+herdr/plugins.json

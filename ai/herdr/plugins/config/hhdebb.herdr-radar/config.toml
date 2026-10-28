@@ -1,0 +1,2 @@
+follow_appearance = false
+render_hook = "title-hook.cjs"

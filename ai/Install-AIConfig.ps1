@@ -11,8 +11,8 @@
 #requires -Version 7.0
 [CmdletBinding()]
 param(
-    [ValidateSet('claude', 'codex', 'grok', 'opencode')]
-    [string[]]$Clients = @('claude', 'codex', 'grok', 'opencode'),
+    [ValidateSet('claude', 'codex', 'grok', 'opencode', 'agy')]
+    [string[]]$Clients = @('claude', 'codex', 'grok', 'opencode', 'agy'),
     [switch]$Install,
     [string[]]$EnableMcp = @(),
     [string[]]$DisableMcp = @(),
