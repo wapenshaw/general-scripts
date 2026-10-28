@@ -12,3 +12,8 @@ ai/.env.*
 **/*.bak-*
 **/__pycache__/
 .DS_Store
+# Device credentials, config backups and firmware images
+devices/private/
+
+# Playwright MCP page snapshots/downloads (may contain LAN details)
+.playwright-mcp/
