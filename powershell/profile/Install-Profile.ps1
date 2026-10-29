@@ -3,13 +3,18 @@
     Installs a local PowerShell 7 profile and its dependencies.
 .DESCRIPTION
     Backs up deployment, writes an explicit module manifest and a thin AllHosts
-    entry point. Only selected modules load. Dependencies use an explicit local
-    store and are never installed at startup. Existing Starship config is retained.
+    entry point. The default profile keeps shell settings minimal, with aliases,
+    helpers, and Starship. Plugins are opt-in and never installed at startup.
+    Existing Starship config is retained.
 .PARAMETER Work
     Enable Assurant work modules, preserving installed private work configuration.
     -Assurant is an alias, matching the cross-platform workstation bootstraps.
 .PARAMETER Plugins
-    Modules to deploy/import. Default PSFzf; add posh-git for Git completion.
+    Optional modules to deploy/import. No plugins are installed by default.
+.PARAMETER ExcludeModules
+    Profile scripts not to deploy. The default omits profile-specific shell settings.
+.PARAMETER ExcludeFunctions
+    Function scripts not to deploy/register. The default omits selected helpers.
 .PARAMETER SkipPlugins
     Skip dependency deployment for offline installation.
 .PARAMETER StarshipTheme
@@ -17,9 +22,9 @@
 .PARAMETER Uninstall
     Restore entry points backed up on the first deployment with this installer.
 .EXAMPLE
-    ./Install-Profile.ps1 -Work -Plugins PSFzf,posh-git
+    ./Install-Profile.ps1 -Work
 .EXAMPLE
-    ./Install-Profile.ps1 -Plugins PSFzf -SkipPlugins
+    ./Install-Profile.ps1 -Plugins PSFzf,posh-git
 #>
 #requires -Version 7.0
 [CmdletBinding()]
@@ -30,8 +35,26 @@ param(
     [string]$StarshipTheme,
     [string]$InstallDir = (Join-Path $HOME '.config/powershell'),
     [string]$ModuleDir = (Join-Path $HOME '.local/share/powershell/Modules'),
-    [string[]]$ExcludeModules = @(),
-    [string[]]$Plugins = @('PSFzf'),
+    [string[]]$ExcludeModules = @(
+        '01-history.ps1',
+        '02-exports.ps1',
+        '03-completion.ps1',
+        '04-fzf.ps1',
+        '05-tools.ps1',
+        '08-bindings.ps1'
+    ),
+    [string[]]$ExcludeFunctions = @(
+        'Enter-DevShell.ps1',
+        'Find-DuplicateMovieFiles.ps1',
+        'Install-Font.ps1',
+        'Invoke-CopilotResume.ps1',
+        'Register-AzCompleter.ps1',
+        'Set-KeyboardLayout.ps1',
+        'Test-SocksProxy.ps1',
+        'Test-Winget.ps1',
+        'Update-Modules.ps1'
+    ),
+    [string[]]$Plugins = @(),
     [switch]$SkipPlugins
 )
 $ErrorActionPreference = 'Stop'
@@ -76,12 +99,20 @@ if ($Uninstall) {
     Write-Host 'Restored prior entry points and configuration. New dependencies retained for recovery.'
     return
 }
+$invalidFunctions = @($ExcludeFunctions | Where-Object { $_ -notmatch '^[A-Za-z0-9_.-]+\.ps1$' })
+if ($invalidFunctions.Count -gt 0) {
+    throw "Excluded function names must be .ps1 file names: $($invalidFunctions -join ', ')"
+}
 foreach ($dir in @($InstallDir, $ModuleDir, (Join-Path $InstallDir 'modules'), (Join-Path $InstallDir 'functions'))) {
     New-Item -ItemType Directory -Path $dir -Force | Out-Null
 }
 if (-not (Test-Path -LiteralPath $statePath)) { @{ originalBackup = $backup } | ConvertTo-Json | Set-Content -LiteralPath $statePath }
 $core = @(Get-ChildItem -LiteralPath (Join-Path $PSScriptRoot 'modules') -Filter '*.ps1' -File |
-    Where-Object { $_.Name -match '^\d{2}-' -and $_.Name -notin $ExcludeModules } | Sort-Object Name)
+    Where-Object {
+        $_.Name -match '^\d{2}-' -and
+        $_.Name -notin $ExcludeModules -and
+        ($_.Name -ne '09-plugins.ps1' -or $Plugins.Count -gt 0)
+    } | Sort-Object Name)
 foreach ($file in $core) { Copy-Item -LiteralPath $file.FullName -Destination (Join-Path $InstallDir 'modules') -Force }
 $workModules = @()
 if ($Work) {
@@ -94,7 +125,18 @@ if ($Work) {
         $workModules += 'modules/work/' + $file.Name
     }
 }
-Copy-Item -Path (Join-Path $PSScriptRoot '../functions/*.ps1') -Destination (Join-Path $InstallDir 'functions') -Force
+$functionDir = Join-Path $InstallDir 'functions'
+$functionFiles = @(Get-ChildItem -LiteralPath (Join-Path $PSScriptRoot '../functions') -Filter '*.ps1' -File |
+    Where-Object { $_.Name -notin $ExcludeFunctions })
+foreach ($file in $functionFiles) {
+    Copy-Item -LiteralPath $file.FullName -Destination $functionDir -Force
+}
+foreach ($name in $ExcludeFunctions) {
+    $excludedPath = Join-Path $functionDir $name
+    if (Test-Path -LiteralPath $excludedPath) {
+        Remove-Item -LiteralPath $excludedPath -Force
+    }
+}
 Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'Register-ProfileFunctions.ps1') -Destination $InstallDir -Force
 if (-not $SkipPlugins) {
     foreach ($name in $Plugins) {

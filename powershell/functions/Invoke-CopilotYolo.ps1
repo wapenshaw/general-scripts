@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-    Wraps `copilot --yolo --resume` for quick re-entry into the GitHub Copilot CLI.
+    Resumes the GitHub Copilot CLI with YOLO mode enabled.
 
 .DESCRIPTION
     Defines the CopilotYolo function (alias: yolo) which runs `copilot --yolo --resume`.

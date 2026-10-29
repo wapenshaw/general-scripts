@@ -149,23 +149,26 @@ These are the repo scripts that need to run once on a fresh box, in this order. 
 1. **`Install-Profile.ps1`** deploys a local PowerShell 7 profile and dependencies.
    Skip this step if `Install-Workstation.ps1` already deployed it in step 7.
    It backs up the live setup, installs configuration under `~/.config/powershell`,
-   deploys plugins to `~/.local/share/powershell/Modules`, and writes a thin AllHosts
-   entry point. `installed-profile.json` selects modules explicitly; excluded or
-   stale files never load. Work configuration loads before the prompt.
+   optionally deploys plugins to `~/.local/share/powershell/Modules`, and writes a thin
+   AllHosts entry point. `installed-profile.json` selects modules explicitly; excluded
+   or stale files never load. The default keeps convenience aliases, UV helpers, and
+   Starship, without third-party plugins or custom history/environment/keybinding settings.
+   Work configuration loads before the prompt.
    ```powershell
    pwsh -NoProfile -File ./powershell/profile/Install-Profile.ps1
    ```
    **Flags:** `-Work` (alias `-Assurant`) enables work settings while preserving private installed
-   files; `-Plugins PSFzf,posh-git` adds Git completion; `-SkipPlugins` skips
+   files; `-Plugins PSFzf,posh-git` opts into plugins/Git completion; `-SkipPlugins` skips
    dependency deployment; `-StarshipTheme <name>` explicitly replaces the theme;
-   `-ExcludeModules <names>` changes the load manifest; `-InstallDir` and
-   `-ModuleDir` override local locations; `-Uninstall` restores the original setup.
+   `-ExcludeModules <names>` changes the load manifest; `-ExcludeFunctions <files>` omits
+   selected helper scripts; `-InstallDir` and `-ModuleDir` override local locations;
+   `-Uninstall` restores the original setup.
 
-   Startup imports PSFzf without installing packages or changing gallery trust.
-   Existing Starship configuration is retained. Script/command invocations skip
-   interactive setup; opt in with `PS_PROFILE_IN_SCRIPTS=1`. Use `vsdev` when MSVC
-   and Windows SDK variables are needed. Ordinary terminals have no automatic
-   developer-shell activation, mise activation, or conda initialization.
+   No plugins are installed by default. Existing Starship configuration is retained.
+   Script/command invocations skip interactive setup; opt in with
+   `PS_PROFILE_IN_SCRIPTS=1`. Ordinary terminals have no automatic developer-shell
+   activation, mise activation, or conda initialization; launch a developer shell
+   separately when MSVC and Windows SDK variables are needed.
 
    Windows Terminal, VS Code terminals and the PowerShell extension console share
    the AllHosts profile. Separate ConsoleHost/VS Code profile files are backed up

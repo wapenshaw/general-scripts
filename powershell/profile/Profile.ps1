@@ -15,14 +15,16 @@ $script:ProfileInteractiveHost = $Host.Name -eq 'Visual Studio Code Host' -or
 if ($env:PS_PROFILE_IN_SCRIPTS -ne '1' -and -not $script:ProfileInteractiveHost -and
     ($script:ProfileLaunchArgs | Where-Object { $_ -match '^-(NonInteractive|Command|CommandWithArgs|EncodedCommand|File|c|f)$' })) { return }
 $script:ProfileConfig = Get-Content -LiteralPath (Join-Path $PSScriptRoot 'installed-profile.json') -Raw | ConvertFrom-Json
-# Prefer local dependencies while retaining externally managed module stores.
-$env:PSModulePath = (@($script:ProfileConfig.moduleDir) + @($env:PSModulePath -split ';')) |
-    Where-Object { $_ } | Select-Object -Unique | Join-String -Separator ';'
-try { Import-Module PSReadLine -ErrorAction Stop }
-catch { Write-Warning "PSReadLine: $($_.Exception.Message)" }
-$env:PS_WORK = if ($script:ProfileConfig.work) { '1' } else { '' }
-$env:PS_ASSURANT = $env:PS_WORK
 $script:ProfilePlugins = @($script:ProfileConfig.plugins)
+if ($script:ProfilePlugins.Count -gt 0) {
+    # Prefer local dependencies while retaining externally managed module stores.
+    $env:PSModulePath = (@($script:ProfileConfig.moduleDir) + @($env:PSModulePath -split ';')) |
+        Where-Object { $_ } | Select-Object -Unique | Join-String -Separator ';'
+}
+if ($script:ProfileConfig.work) {
+    $env:PS_WORK = '1'
+    $env:PS_ASSURANT = '1'
+}
 foreach ($relativePath in @($script:ProfileConfig.coreModules) + @($script:ProfileConfig.workModules)) {
     try { . (Join-Path $PSScriptRoot $relativePath) }
     catch {

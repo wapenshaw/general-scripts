@@ -39,20 +39,27 @@ the installer does not infer the intended JDK from PATH.
 - `installed-profile.json` explicitly selects modules; stale/excluded files do not run.
 - Plugins are deployed during installation to `$HOME\.local\share\powershell\Modules`.
   Existing external module stores remain discoverable.
-- Default plugin is PSFzf. Add Git completion with `-Plugins PSFzf,posh-git`.
+- No plugins are installed by default. Select them explicitly with `-Plugins PSFzf,posh-git`.
+- The default profile keeps the convenience aliases, UV helpers, and Starship prompt;
+  it omits profile-specific history, environment, completion, FZF, WinGet, and keybinding
+  settings. PowerShell's own interactive defaults remain in effect.
+- The installer excludes `Enter-DevShell.ps1`, `Find-DuplicateMovieFiles.ps1`,
+  `Install-Font.ps1`, `Register-AzCompleter.ps1`, `Set-KeyboardLayout.ps1`,
+  `Test-SocksProxy.ps1`, `Test-Winget.ps1`, and `Update-Modules.ps1` from the
+  installed profile by default. These standalone sources remain in the repository.
+- Copilot's `yolo` helper runs `copilot --yolo --resume`; the duplicate `cpr` helper
+  has been removed.
 - `-SkipPlugins` supports offline deployment; startup never installs modules.
 - Disable plugins with `PS_DISABLE_PLUGINS=1` or `PS_PLUGINS=none`.
 - `-Work` retains private installed work settings; prompt initialization is last.
-  `-Assurant` is an alias for `-Work`, matching the workstation bootstraps. Both
-  `PS_WORK` and `PS_ASSURANT` reflect the selected mode.
+  `-Assurant` is an alias for `-Work`, matching the workstation bootstraps. Work
+  mode sets `PS_WORK` and `PS_ASSURANT`.
 - Existing Starship config is retained unless `-StarshipTheme` is specified.
 - Command/script invocations skip interactive startup. Opt in with `PS_PROFILE_IN_SCRIPTS=1`.
   Interactive `-NoExit -Command` launches (including VS Code shell integration) and
   the PowerShell extension's VS Code host load the shared profile normally.
 - ConsoleHost and VS Code both use AllHosts; separate host profile files are removed
   during installation after being backed up.
-- Use `vsdev` / `Enter-DevShell` for the x64 Visual Studio developer environment.
-  Ordinary shells do not add compiler/SDK paths.
 - Windows PowerShell 5.1 has an independent minimal profile; Python/Conda is not
   activated by it. The PowerShell 7 loader is not compatible with Windows PowerShell 5.1.
 
@@ -90,14 +97,15 @@ If a command works in one shell but fails in another:
    Get-Command node -All | Select-Object Name, CommandType, Source, Definition
    $script:ProfileLoadErrors
    ```
-3. For missing aliases/functions (`z`, `vsdev`, `uvdev`), check profile loading and
+3. For missing aliases/functions (`ls`, `cat`, `grep`, `yolo`, `uvdev`), check profile loading and
    any `-NoProfile` launch argument. For missing external executables, compare
    `$env:Path` and command resolution. Check User, active VS Code profile, and
    workspace settings for terminal arguments/environment overrides. For the
    extension console, ensure `powershell.enableProfileLoading` is enabled and
    PowerShell 7 is selected.
-4. MSVC/SDK commands require `vsdev` in each shell where they are needed. This
-   process-local environment is deliberately not persisted to User PATH.
+4. The default profile does not activate a Visual Studio developer environment.
+   Launch a developer shell when MSVC/SDK commands are needed; those paths are
+   deliberately not persisted to User PATH.
 
 Startup does not rewrite the entire process PATH from registry values; session
 additions made by development tools remain available. Do not save a shell's
