@@ -63,6 +63,12 @@
     {
         "defaults":
         {
+            "bellStyle": ["audible", "taskbar"],
+            "bellSound":
+            [
+                "C:\\Code\\Scripts\\audio\\light-bulb-idea-twinkle-betacut-1-1-00-01.mp3",
+                "C:\\Code\\Scripts\\audio\\service-bell-aggressive-ding-ra-music-1-00-03.mp3"
+            ],
             "colorScheme": "One Half Dark"
         },
         "list":
