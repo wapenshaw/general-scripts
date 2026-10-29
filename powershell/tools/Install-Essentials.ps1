@@ -56,7 +56,6 @@ $EssentialsList = @(
     "Microsoft.PowerToys"
     "Microsoft.WindowsTerminal"
     "Git.Git"
-    "7zip.7zip"
     "Microsoft.VisualStudioCode"
     "Notepad++.Notepad++"
 )
@@ -73,10 +72,6 @@ $UtilitiesList = @(
     "sharkdp.fd"
     "muesli.duf"
     # System info / monitoring
-    "Fastfetch-cli.Fastfetch"
-    "aristocratos.btop4win"
-    "sharkdp.hyperfine"
-    "Gyan.FFmpeg"
     "Microsoft.Sysinternals.Suite"
     # VCS / dev workflow
     "JesseDuffield.lazygit"
@@ -90,7 +85,6 @@ $UtilitiesList = @(
     "MikeFarah.yq"
     "SQLite.SQLite"
     "Microsoft.AzureCLI"
-    "Stripe.StripeCli"
 )
 
 if ($List) {
