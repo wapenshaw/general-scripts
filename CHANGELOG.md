@@ -2,6 +2,15 @@
 
 Notable changes to this personal workstation toolbox. Newest first.
 
+## 2026-10-30
+
+### Added
+
+- **`cache-cold-compact` 0.2.0: `/handoff-compact [emphasis]`** compacts now with the
+  handoff-document prompt passed to `$.session.compact`, so it holds when another plugin's
+  `session.compact` hook runs first and the plugin's own rewrite of `/compact` is skipped.
+  Re-run `Install-AIConfig.ps1 -Install` / `install.sh --install` to deploy it.
+
 ## 2026-10-14
 
 Homebrew (Linuxbrew) on WSL owns the standalone CLI tools; Python stays with uv and

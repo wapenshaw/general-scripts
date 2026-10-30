@@ -1,6 +1,6 @@
 {
   "name": "cache-cold-compact",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Compacts an idle session shortly before its prompt cache goes cold, so the next prompt re-caches a summary instead of the whole transcript",
   "author": {
     "name": "wapenshaw"

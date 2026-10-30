@@ -181,6 +181,10 @@ export const register: Register = (on, options) => {
       name: 'cold-compact',
       description: 'Auto-compact before the prompt cache goes cold: status, or `on` / `off` for this session',
     })
+    await $.command.register({
+      name: 'handoff-compact',
+      description: 'Compact now with the handoff-document prompt; optional text adds emphasis',
+    })
     await resolveStateFile($)
     publishedKey = ''
     await publish($, 'idle')
@@ -235,6 +239,27 @@ export const register: Register = (on, options) => {
   on('session.end', async ($, e, next) => {
     await disarm($)
     return next(e)
+  })
+
+  // /compact with the handoff prompt passed explicitly, so it holds even when a
+  // hook earlier in the session.compact chain stops this plugin's hook from running.
+  on('command.run', { command: 'handoff-compact' }, async ($, e) => {
+    isCompacting = true
+    try {
+      const result = await $.session.compact({ instructions: withHandoff(e.args) })
+      if (result.skip !== undefined) return { text: `Handoff compact skipped: ${result.skip}` }
+      await recordCompaction($, result.tokensBefore, result.tokensAfter)
+      const sizes =
+        result.tokensBefore && result.tokensAfter
+          ? ` (${Math.round(result.tokensBefore / 1000)}k → ${Math.round(result.tokensAfter / 1000)}k tokens)`
+          : ''
+      return { text: `Compacted with the handoff prompt${sizes}.` }
+    } catch (error) {
+      return { text: `Handoff compact did not run: ${String(error)}` }
+    } finally {
+      isCompacting = false
+      await disarm($)
+    }
   })
 
   on('command.run', { command: 'cold-compact' }, async ($, e) => {
