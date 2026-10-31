@@ -93,7 +93,7 @@ fi
 compdef eza=ls
 
 # Core utils
-alias grep='rg --color=auto'
+alias grep='grep --color=auto'
 if command diff --color=auto /dev/null /dev/null >/dev/null 2>&1; then
   alias diff='diff --color=auto'
 fi
