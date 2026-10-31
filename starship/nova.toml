@@ -1,8 +1,13 @@
 add_newline = false
 palette = 'current'
 
-format = """[╭─](bold blue)$os$username$hostname$directory$git_branch$git_status$fill$python$nodejs$rust$lua$golang$haskell$ruby$package$aws$docker_context$jobs$cmd_duration
+# Right-side modules live in right_format (zsh RPROMPT) instead of a $fill-padded
+# first line: a full-width line reflows when the terminal shrinks and zsh's
+# resize redraw then leaves stacked prompt fragments behind.
+format = """[╭─](bold blue)$os$username$hostname$directory$git_branch$git_status
 [╰─](bold green)$character"""
+
+right_format = "$python$nodejs$rust$lua$golang$haskell$ruby$package$aws$docker_context$jobs$cmd_duration"
 
 # ─────────────────────────────────────────────────────────────────
 # Palettes
