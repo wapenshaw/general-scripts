@@ -2,6 +2,22 @@
 
 Notable changes to this personal workstation toolbox. Newest first.
 
+## 2026-11-01
+
+### Changed
+
+- **Claude settings: tunables move to env.** The compact window and subagent cache TTL are
+  set as `CLAUDE_CODE_AUTO_COMPACT_WINDOW=350000` and `CLAUDE_CODE_SUBAGENT_PROMPT_CACHE_TTL=5m`
+  (env took precedence over `autoCompactWindow` / `subagentPromptCacheTtl` anyway). Subagents
+  default to Haiku without `CLAUDE_CODE_SUBAGENT_MODEL_FORCE`, so an agent's own model choice
+  still applies. Model and effort stay settings: `CLAUDE_CODE_EFFORT_LEVEL` would lock `/effort`,
+  and `ANTHROPIC_MODEL` keeps a `/model` pick from becoming the default. Opus defaults to high
+  effort, `ENABLE_LSP_TOOL=1` everywhere, and `idleCompaction: false` leaves idle compaction to
+  `cache-cold-compact`.
+- **`setup.py` per-platform Claude env.** `--install` removes the retired keys (merging alone
+  never drops them), sets `SHELL=/bin/zsh` only on macOS/Linux and
+  `CLAUDE_CODE_USE_POWERSHELL_TOOL=1` only on Windows.
+
 ## 2026-10-30
 
 ### Added

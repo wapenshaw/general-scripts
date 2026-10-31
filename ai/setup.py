@@ -286,6 +286,17 @@ def main():
             env = desired.setdefault("env", {})
             kept = [entry for entry in env.get("CLAUDE_CODE_PLUGIN_DIRS", "").split(separator) if entry and Path(entry).parent != plugins_root]
             env["CLAUDE_CODE_PLUGIN_DIRS"] = separator.join(plugin_dirs + kept)
+            # merge() only adds keys: drop settings now set through env (env wins
+            # over them anyway) and env vars that are no longer wanted.
+            for key in ("autoCompactWindow", "subagentPromptCacheTtl"):
+                desired.pop(key, None)
+            env.pop("CLAUDE_CODE_SUBAGENT_MODEL_FORCE", None)
+            if platform == "windows":
+                env.pop("SHELL", None)
+                env["CLAUDE_CODE_USE_POWERSHELL_TOOL"] = "1"
+            else:
+                env.pop("CLAUDE_CODE_USE_POWERSHELL_TOOL", None)
+                env["SHELL"] = "/bin/zsh"
         if client == "opencode":
             desired.pop("shell", None)
             # Let the target OS select its shell instead of forcing pwsh on a Mac.

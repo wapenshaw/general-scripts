@@ -5,10 +5,14 @@
   "effortLevel": "medium",
   "modelSettings": {
     "claude-opus-5-5": {
+      "effortLevel": "high"
+    },
+    "claude-sonnet-5-5": {
       "effortLevel": "medium"
     }
   },
-  "autoCompactWindow": 350000,
+  "idleCompaction": false,
+  "switchModelsOnFlag": false,
   "tui": "fullscreen",
   "theme": "auto",
   "editorMode": "normal",
@@ -16,18 +20,23 @@
     "defaultMode": "bypassPermissions"
   },
   "skipDangerousModePermissionPrompt": true,
-  "subagentPromptCacheTtl": "5m",
+  "attribution": {
+    "commit": "",
+    "pr": "",
+    "sessionUrl": false
+  },
   "env": {
-    "CLAUDE_CODE_SUBAGENT_MODEL": "sonnet",
-    "CLAUDE_CODE_SUBAGENT_MODEL_FORCE": "1",
+    "CLAUDE_CODE_SUBAGENT_MODEL": "haiku",
+    "CLAUDE_CODE_SUBAGENT_PROMPT_CACHE_TTL": "5m",
     "CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH": "1",
     "CLAUDE_CODE_MAX_CONCURRENT_SUBAGENTS": "4",
     "CLAUDE_CODE_FORK_SUBAGENT": "0",
+    "CLAUDE_CODE_AUTO_COMPACT_WINDOW": "350000",
     "CLAUDE_CODE_ENABLE_PROMPT_SUGGESTION": "false",
     "CLAUDE_CODE_GOAL_CHECKIN_MINUTES": "0",
     "BASH_MAX_OUTPUT_LENGTH": "12000",
     "MAX_MCP_OUTPUT_TOKENS": "10000",
-    "SHELL": "/bin/zsh"
+    "ENABLE_LSP_TOOL": "1"
   },
   "statusLine": {
     "type": "command",
