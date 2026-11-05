@@ -45,6 +45,10 @@ CACHE_KEEP=(${=CACHE_KEEP_NAMES:-uv pre-commit ruff})
 # (uv python install --default). Python is never installed through Homebrew.
 UV_DEFAULT_PYTHON_VERSION="3.14"
 
+# Node major the NVM default tracks (keep in step with macos/stages/02-runtimes.zsh).
+# A default on an older major is moved here, migrating global npm packages.
+NODE_MAJOR="26"
+
 # Commands that linux/Brewfile owns. Each must resolve into the Homebrew prefix;
 # an older apt, /usr/local/bin or ~/.local/bin copy would shadow it and never be
 # updated by `brew upgrade`. Keep in step with linux/Brewfile.
@@ -179,13 +183,12 @@ update_nvm_node() {
 		set -e
 		export NVM_DIR="$1"
 		. "$NVM_DIR/nvm.sh" --no-use
+		major="$2"
 		current="$(nvm version default)" || current=N/A
 		if [[ ! "$current" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
 			printf "No installed NVM default to update: %s\n" "$current"
 			exit 0
 		fi
-		major="${current#v}"
-		major="${major%%.*}"
 		latest="$(nvm version-remote "$major")"
 		if [[ ! "$latest" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ || "$latest" != "v$major."* ]]; then
 			printf "Could not resolve the latest Node %s release.\n" "$major" >&2
@@ -195,9 +198,12 @@ update_nvm_node() {
 			printf "Node %s is up to date.\n" "$current"
 			exit 0
 		fi
+		if [[ "$current" != "v$major."* ]]; then
+			printf "Moving the NVM default from %s to Node %s (%s).\n" "$current" "$major" "$latest"
+		fi
 		nvm install "$latest" --reinstall-packages-from="$current" --skip-default-packages
 		nvm alias default "$latest"
-	' update-nvm-node "$1"
+	' update-nvm-node "$1" "$2"
 }
 
 # Puts Linuxbrew on PATH for this run. shellenv prepends, so ~/.local/bin (uv's
@@ -469,8 +475,8 @@ Routine behavior:
   - Lists available system package updates (installs them only with --system).
   - Updates and upgrades Homebrew packages, then removes unused dependencies.
   - Keeps the Azure kubelogin tap a shallow clone.
-  - Updates the NVM default within its current Node major, migrates global npm
-    packages, and retains older Node versions for rollback.
+  - Moves the NVM default to the latest Node 26 release (NODE_MAJOR), migrates global
+    npm packages, and retains older Node versions for rollback.
   - Updates the standalone Bun installation with bun upgrade.
   - Moves Claude Code and Codex off Homebrew casks to their standalone
     installers, then runs claude update and codex update.
@@ -849,8 +855,8 @@ if [[ -d "$NVM_DIR" ]]; then
 	section "Node / NVM"
 
 	if [[ -s "$NVM_DIR/nvm.sh" ]]; then
-		run_step "Update the NVM default within its current Node major" \
-			update_nvm_node "$NVM_DIR"
+		run_step "Update the NVM default to the latest Node $NODE_MAJOR" \
+			update_nvm_node "$NVM_DIR" "$NODE_MAJOR"
 	fi
 
 	# Share the shell's version selection and PATH rule without loading nvm.sh.
