@@ -2,6 +2,16 @@
 
 Notable changes to this personal workstation toolbox. Newest first.
 
+## 2026-11-06
+
+### Fixed
+
+- **`cache-cold-compact` 0.2.1: `/handoff-compact` runs again.** The host refuses
+  `$.session.compact` from inside a `command.run` hook (the command holds the turn), so the
+  command failed with `HooksError: ... called from a command.run hook`. It now queues the
+  compact with `$.clock.after` to run once the command returns, retries while a turn is still
+  settling, and reports the result as a toast.
+
 ## 2026-11-01
 
 ### Changed

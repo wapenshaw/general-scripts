@@ -164,6 +164,36 @@ async function tick($: EngineInterface) {
   }
 }
 
+async function runHandoffCompact($: EngineInterface, instructions: string, attempt: number): Promise<void> {
+  isCompacting = true
+  setStatus($, 'handoff compact running…')
+  try {
+    const result = await $.session.compact({ instructions })
+    if (result.skip !== undefined) {
+      $.ui.toast(`Handoff compact skipped: ${result.skip}`)
+      return
+    }
+    await recordCompaction($, result.tokensBefore, result.tokensAfter)
+    const sizes =
+      result.tokensBefore && result.tokensAfter
+        ? ` (${Math.round(result.tokensBefore / 1000)}k → ${Math.round(result.tokensAfter / 1000)}k tokens)`
+        : ''
+    $.ui.toast(`Compacted with the handoff prompt${sizes}.`, { timeoutMs: 8000 })
+  } catch (error) {
+    // compact() rejects while a turn runs; give the command's own turn time to settle.
+    if (attempt < 5) {
+      isCompacting = false
+      $.clock.after(1000, () => void runHandoffCompact($, instructions, attempt + 1))
+      return
+    }
+    $.ui.toast(`Handoff compact did not run: ${String(error)}`)
+  } finally {
+    isCompacting = false
+    setStatus($, undefined)
+    await disarm($)
+  }
+}
+
 export const register: Register = (on, options) => {
   const ttlMs = numberOption(options, 'ttlMinutes', 60) * MINUTE
   const leadMs = numberOption(options, 'leadMinutes', 5) * MINUTE
@@ -243,23 +273,12 @@ export const register: Register = (on, options) => {
 
   // /compact with the handoff prompt passed explicitly, so it holds even when a
   // hook earlier in the session.compact chain stops this plugin's hook from running.
+  // The host refuses session.compact from inside a command.run hook (the command
+  // holds the turn), so the compaction is scheduled to run once the command returns.
   on('command.run', { command: 'handoff-compact' }, async ($, e) => {
-    isCompacting = true
-    try {
-      const result = await $.session.compact({ instructions: withHandoff(e.args) })
-      if (result.skip !== undefined) return { text: `Handoff compact skipped: ${result.skip}` }
-      await recordCompaction($, result.tokensBefore, result.tokensAfter)
-      const sizes =
-        result.tokensBefore && result.tokensAfter
-          ? ` (${Math.round(result.tokensBefore / 1000)}k → ${Math.round(result.tokensAfter / 1000)}k tokens)`
-          : ''
-      return { text: `Compacted with the handoff prompt${sizes}.` }
-    } catch (error) {
-      return { text: `Handoff compact did not run: ${String(error)}` }
-    } finally {
-      isCompacting = false
-      await disarm($)
-    }
+    const instructions = withHandoff(e.args)
+    $.clock.after(250, () => void runHandoffCompact($, instructions, 0))
+    return { text: 'Handoff compact queued; compacting once this command finishes…' }
   })
 
   on('command.run', { command: 'cold-compact' }, async ($, e) => {
