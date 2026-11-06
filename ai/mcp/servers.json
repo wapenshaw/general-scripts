@@ -40,6 +40,14 @@
       "defaultEnabled": false,
       "observedIn": ["opencode"],
       "note": "Official remote server replaces the legacy npm GitHub server. Enable after supplying a PAT."
+    },
+    "repo-knowledge": {
+      "transport": "stdio",
+      "command": "repo-knowledge",
+      "args": ["serve"],
+      "defaultEnabled": false,
+      "observedIn": [],
+      "note": "Run plugins/repo-knowledge/install.sh first (installs the CLI and registers it). Each project opts in with a knowledge.toml at its root."
     }
   }
 }

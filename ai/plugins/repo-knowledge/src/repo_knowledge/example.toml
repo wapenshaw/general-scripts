@@ -1,0 +1,13 @@
+version = 1
+name = "My project"
+root = "." # Relative to this config file; place it in your project root.
+exclude = ["docs/private/**"]
+max_file_bytes = 2000000
+
+[[sources]]
+pattern = "docs/**/*.md"
+record_type = "document"
+
+[[sources]]
+pattern = "README.md"
+record_type = "document"

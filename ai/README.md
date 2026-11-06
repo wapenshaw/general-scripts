@@ -76,6 +76,7 @@ rendering/installation. To preview macOS from Windows, use
 | `config/grok/config.toml`, `statusline.js` | `~/.grok/` | Merge preferences and registry MCP entries |
 | `opencode/config/`, `package.json`, `skills/`, `themes/` | `~/.config/opencode/` | Reuse existing payload, merge main config and generated MCP entries |
 | `opencode/agent-skills/` | `~/.agents/skills/` | Deploy shared agent skills |
+| `plugins/<name>/` | Own `install.sh` (user level) | Cross-agent plugins: CLI + MCP server + shared skill, e.g. `repo-knowledge` |
 | `mcp/servers.json` | All four native MCP formats | One place to edit endpoint/command definitions |
 | `mcp/templates/windows/`, `macos/` | Reference fragments | Generated skeletons; macOS form also works on Linux |
 | `inventory.json` | Documentation only | MCP/plugin names from the original machine |
@@ -126,6 +127,7 @@ Options go under `pluginConfigs.<name>.options` in `settings.json`.
 | xAI Docs | Enabled | Imported from Grok; public documentation endpoint |
 | Playwright | Disabled | `--enable playwright`; Node/npx required |
 | GitHub | Disabled | `--enable github`; `GITHUB_PERSONAL_ACCESS_TOKEN` required |
+| repo-knowledge | Disabled | Local stdio server from [plugins/repo-knowledge](plugins/repo-knowledge/README.md); its `install.sh` registers it with each client, so `--enable` is only for clients it does not cover |
 
 `--enable` and `--disable` override registry defaults for that invocation. To make
 selection persistent across reinstalls, edit `defaultEnabled` in the registry.
