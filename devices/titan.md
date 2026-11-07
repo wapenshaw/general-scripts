@@ -10,7 +10,7 @@ Last inspected: **2026-10-25**. Times below use **Asia/Kolkata (IST, UTC+05:30)*
 | Motherboard | MSI MAG Z790 TOMAHAWK WIFI (**MS-7D91**) |
 | CPU | Intel Core i7-13700K |
 | Memory | 64 GB |
-| Graphics | NVIDIA GeForce RTX 5080; Intel UHD Graphics 770 (integrated) |
+| Graphics | NVIDIA GeForce RTX 5080 ([tuning record](titan-rtx-5080.md)); Intel UHD Graphics 770 (integrated) |
 | Operating system at inspection | Windows 11 Pro 26H2, build **26300.9711** |
 
 ## Incident: image right-click hang — 2026-10-24/25

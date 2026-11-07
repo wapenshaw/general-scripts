@@ -10,7 +10,7 @@ Personal Windows 11 post-install + dev-environment toolbox. No build system, no 
 
 ## Layout
 
-- `powershell/` — runnable utilities: `profile/` (install + startup, modular `modules/` with ordered `NN-name.ps1` files + `work/` for work mode, `Register-ProfileFunctions.ps1` lazy-loads `functions/`), `system/` (registry/network/shutdown), `tools/` (daily helpers), `diagnostics/` (probes), `functions/` (profile-loaded helpers + short aliases)
+- `powershell/` — runnable utilities: `profile/` (install + startup, modular `modules/` with ordered `NN-name.ps1` files + `work/` for work mode, `Register-ProfileFunctions.ps1` lazy-loads `functions/`), `system/` (registry/network/shutdown), `tools/` (daily helpers), `diagnostics/` (probes), `functions/` (profile-loaded helpers + short aliases), `rtx-5080/` (TITAN GPU tuning via mVolt+, load logging; record in `devices/titan-rtx-5080.md`)
 - `zsh/` — modular macOS/Linux/WSL zsh config; `install.sh` deploys to `~/.zsh`
 - `macos/`, `linux/` (incl. `Brewfile`), `mac-update.zsh`, `linux-update.zsh` — platform bootstraps and Mac/Linux(WSL) maintenance; Windows bootstrap is `powershell/tools/Install-Workstation.ps1`
 - `config/env/` — desired development storage manifest (`development.json`), directory documentation and historical environment snapshots

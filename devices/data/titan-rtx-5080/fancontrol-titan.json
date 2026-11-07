@@ -1,0 +1,942 @@
+{
+  "__VERSION__": "285",
+  "FanControl": {
+    "Controls": [
+      {
+        "NickName": "CPU Cooler",
+        "Identifier": "/lpc/nct6687d/control/0",
+        "IsHidden": false,
+        "Enable": true,
+        "SelectedFanCurve": {
+          "Name": "CPU Only"
+        },
+        "SelectedOffset": 0,
+        "PairedFanSensor": {
+          "Identifier": "/lpc/nct6687d/fan/0"
+        },
+        "SelectedStart": 0,
+        "SelectedStop": 0,
+        "MinimumPercent": 0,
+        "SelectedCommandStepUp": 8,
+        "SelectedCommandStepDown": 8,
+        "ManualControlValue": 50,
+        "ManualControl": false,
+        "ForceApply": false,
+        "Calibration": [
+          [
+            20,
+            561,
+            false
+          ],
+          [
+            30,
+            688,
+            false
+          ],
+          [
+            40,
+            911,
+            false
+          ],
+          [
+            50,
+            1101,
+            false
+          ],
+          [
+            60,
+            1298,
+            false
+          ],
+          [
+            70,
+            1475,
+            false
+          ],
+          [
+            80,
+            1644,
+            false
+          ],
+          [
+            90,
+            1788,
+            false
+          ],
+          [
+            100,
+            1948,
+            false
+          ]
+        ]
+      },
+      {
+        "NickName": "Pump (empty)",
+        "Identifier": "/lpc/nct6687d/control/1",
+        "IsHidden": true,
+        "Enable": false,
+        "SelectedFanCurve": null,
+        "SelectedOffset": 0,
+        "PairedFanSensor": null,
+        "SelectedStart": 0,
+        "SelectedStop": 0,
+        "MinimumPercent": 0,
+        "SelectedCommandStepUp": 8,
+        "SelectedCommandStepDown": 8,
+        "ManualControlValue": 50,
+        "ManualControl": false,
+        "ForceApply": false,
+        "Calibration": []
+      },
+      {
+        "NickName": "Case Fan 1",
+        "Identifier": "/lpc/nct6687d/control/2",
+        "IsHidden": false,
+        "Enable": true,
+        "SelectedFanCurve": {
+          "Name": "GPU"
+        },
+        "SelectedOffset": 0,
+        "PairedFanSensor": {
+          "Identifier": "/lpc/nct6687d/fan/2"
+        },
+        "SelectedStart": 22,
+        "SelectedStop": 16,
+        "MinimumPercent": 0,
+        "SelectedCommandStepUp": 8,
+        "SelectedCommandStepDown": 8,
+        "ManualControlValue": 50,
+        "ManualControl": false,
+        "ForceApply": false,
+        "Calibration": [
+          [
+            10,
+            0,
+            false
+          ],
+          [
+            20,
+            465,
+            false
+          ],
+          [
+            30,
+            688,
+            false
+          ],
+          [
+            40,
+            895,
+            false
+          ],
+          [
+            50,
+            1058,
+            false
+          ],
+          [
+            60,
+            1242,
+            false
+          ],
+          [
+            70,
+            1411,
+            false
+          ],
+          [
+            80,
+            1530,
+            false
+          ],
+          [
+            90,
+            1655,
+            false
+          ],
+          [
+            100,
+            1832,
+            false
+          ]
+        ]
+      },
+      {
+        "NickName": "Case Fan 2",
+        "Identifier": "/lpc/nct6687d/control/3",
+        "IsHidden": false,
+        "Enable": true,
+        "SelectedFanCurve": {
+          "Name": "GPU"
+        },
+        "SelectedOffset": 0,
+        "PairedFanSensor": {
+          "Identifier": "/lpc/nct6687d/fan/3"
+        },
+        "SelectedStart": 0,
+        "SelectedStop": 0,
+        "MinimumPercent": 0,
+        "SelectedCommandStepUp": 8,
+        "SelectedCommandStepDown": 8,
+        "ManualControlValue": 50,
+        "ManualControl": false,
+        "ForceApply": false,
+        "Calibration": [
+          [
+            10,
+            633,
+            false
+          ],
+          [
+            20,
+            650,
+            false
+          ],
+          [
+            30,
+            794,
+            false
+          ],
+          [
+            40,
+            918,
+            false
+          ],
+          [
+            50,
+            1039,
+            false
+          ],
+          [
+            60,
+            1169,
+            false
+          ],
+          [
+            70,
+            1303,
+            false
+          ],
+          [
+            80,
+            1456,
+            false
+          ],
+          [
+            90,
+            1594,
+            false
+          ],
+          [
+            100,
+            1741,
+            false
+          ]
+        ]
+      },
+      {
+        "NickName": "NVMe Fan 1",
+        "Identifier": "/lpc/nct6687d/control/4",
+        "IsHidden": false,
+        "Enable": true,
+        "SelectedFanCurve": {
+          "Name": "NVME Graph"
+        },
+        "SelectedOffset": 0,
+        "PairedFanSensor": {
+          "Identifier": "/lpc/nct6687d/fan/4"
+        },
+        "SelectedStart": 25,
+        "SelectedStop": 16,
+        "MinimumPercent": 0,
+        "SelectedCommandStepUp": 8,
+        "SelectedCommandStepDown": 8,
+        "ManualControlValue": 50,
+        "ManualControl": false,
+        "ForceApply": false,
+        "Calibration": [
+          [
+            10,
+            0,
+            false
+          ],
+          [
+            20,
+            414,
+            false
+          ],
+          [
+            30,
+            628,
+            false
+          ],
+          [
+            40,
+            826,
+            false
+          ],
+          [
+            50,
+            994,
+            false
+          ],
+          [
+            60,
+            1167,
+            false
+          ],
+          [
+            70,
+            1320,
+            false
+          ],
+          [
+            80,
+            1464,
+            false
+          ],
+          [
+            90,
+            1585,
+            false
+          ],
+          [
+            100,
+            1706,
+            false
+          ]
+        ]
+      },
+      {
+        "NickName": "NVMe Fan 2",
+        "Identifier": "/lpc/nct6687d/control/5",
+        "IsHidden": false,
+        "Enable": true,
+        "SelectedFanCurve": {
+          "Name": "NVME Graph"
+        },
+        "SelectedOffset": 0,
+        "PairedFanSensor": {
+          "Identifier": "/lpc/nct6687d/fan/5"
+        },
+        "SelectedStart": 25,
+        "SelectedStop": 16,
+        "MinimumPercent": 0,
+        "SelectedCommandStepUp": 8,
+        "SelectedCommandStepDown": 8,
+        "ManualControlValue": 50,
+        "ManualControl": false,
+        "ForceApply": false,
+        "Calibration": [
+          [
+            10,
+            0,
+            false
+          ],
+          [
+            20,
+            412,
+            false
+          ],
+          [
+            30,
+            630,
+            false
+          ],
+          [
+            40,
+            832,
+            false
+          ],
+          [
+            50,
+            1000,
+            false
+          ],
+          [
+            60,
+            1166,
+            false
+          ],
+          [
+            70,
+            1323,
+            false
+          ],
+          [
+            80,
+            1469,
+            false
+          ],
+          [
+            90,
+            1592,
+            false
+          ],
+          [
+            100,
+            1726,
+            false
+          ]
+        ]
+      },
+      {
+        "NickName": "System #5 (empty)",
+        "Identifier": "/lpc/nct6687d/control/6",
+        "IsHidden": true,
+        "Enable": false,
+        "SelectedFanCurve": null,
+        "SelectedOffset": 0,
+        "PairedFanSensor": null,
+        "SelectedStart": 0,
+        "SelectedStop": 0,
+        "MinimumPercent": 0,
+        "SelectedCommandStepUp": 8,
+        "SelectedCommandStepDown": 8,
+        "ManualControlValue": 50,
+        "ManualControl": false,
+        "ForceApply": false,
+        "Calibration": []
+      },
+      {
+        "NickName": "Case Fan 3",
+        "Identifier": "/lpc/nct6687d/control/7",
+        "IsHidden": false,
+        "Enable": true,
+        "SelectedFanCurve": {
+          "Name": "Core Max"
+        },
+        "SelectedOffset": 0,
+        "PairedFanSensor": {
+          "Identifier": "/lpc/nct6687d/fan/7"
+        },
+        "SelectedStart": 28,
+        "SelectedStop": 16,
+        "MinimumPercent": 0,
+        "SelectedCommandStepUp": 8,
+        "SelectedCommandStepDown": 8,
+        "ManualControlValue": 50,
+        "ManualControl": false,
+        "ForceApply": false,
+        "Calibration": [
+          [
+            10,
+            0,
+            false
+          ],
+          [
+            20,
+            341,
+            false
+          ],
+          [
+            30,
+            502,
+            false
+          ],
+          [
+            40,
+            657,
+            false
+          ],
+          [
+            50,
+            787,
+            false
+          ],
+          [
+            60,
+            914,
+            false
+          ],
+          [
+            70,
+            1029,
+            false
+          ],
+          [
+            80,
+            1136,
+            false
+          ],
+          [
+            90,
+            1240,
+            false
+          ],
+          [
+            100,
+            1342,
+            false
+          ]
+        ]
+      },
+      {
+        "NickName": "GPU Fan 1",
+        "Identifier": "NVApiWrapper/0-GB203-A/control/0",
+        "IsHidden": false,
+        "Enable": true,
+        "SelectedFanCurve": {
+          "Name": "GPU Card"
+        },
+        "SelectedOffset": 0,
+        "PairedFanSensor": {
+          "Identifier": "NVApiWrapper/0-GB203-A/fan/0"
+        },
+        "SelectedStart": 9,
+        "SelectedStop": 6,
+        "MinimumPercent": 0,
+        "SelectedCommandStepUp": 8,
+        "SelectedCommandStepDown": 8,
+        "ManualControlValue": 50,
+        "ManualControl": false,
+        "ForceApply": false,
+        "Calibration": [
+          [
+            0,
+            0,
+            false
+          ],
+          [
+            1,
+            1196,
+            false
+          ],
+          [
+            10,
+            1196,
+            false
+          ],
+          [
+            20,
+            1196,
+            false
+          ],
+          [
+            30,
+            1196,
+            false
+          ],
+          [
+            40,
+            1458,
+            false
+          ],
+          [
+            50,
+            1716,
+            false
+          ],
+          [
+            60,
+            1982,
+            false
+          ],
+          [
+            70,
+            2238,
+            false
+          ],
+          [
+            80,
+            2489,
+            false
+          ],
+          [
+            90,
+            2750,
+            false
+          ],
+          [
+            100,
+            2998,
+            false
+          ]
+        ]
+      },
+      {
+        "NickName": "GPU Fan 2",
+        "Identifier": "NVApiWrapper/0-GB203-A/control/1",
+        "IsHidden": false,
+        "Enable": true,
+        "SelectedFanCurve": {
+          "Name": "GPU Card"
+        },
+        "SelectedOffset": 0,
+        "PairedFanSensor": {
+          "Identifier": "NVApiWrapper/0-GB203-A/fan/1"
+        },
+        "SelectedStart": 9,
+        "SelectedStop": 6,
+        "MinimumPercent": 0,
+        "SelectedCommandStepUp": 8,
+        "SelectedCommandStepDown": 8,
+        "ManualControlValue": 50,
+        "ManualControl": false,
+        "ForceApply": false,
+        "Calibration": [
+          [
+            0,
+            0,
+            false
+          ],
+          [
+            1,
+            1195,
+            false
+          ],
+          [
+            10,
+            1195,
+            false
+          ],
+          [
+            20,
+            1195,
+            false
+          ],
+          [
+            30,
+            1197,
+            false
+          ],
+          [
+            40,
+            1458,
+            false
+          ],
+          [
+            50,
+            1713,
+            false
+          ],
+          [
+            60,
+            1971,
+            false
+          ],
+          [
+            70,
+            2241,
+            false
+          ],
+          [
+            80,
+            2499,
+            false
+          ],
+          [
+            90,
+            2760,
+            false
+          ],
+          [
+            100,
+            2994,
+            false
+          ]
+        ]
+      },
+      {
+        "NickName": "GPU Fan 3",
+        "Identifier": "NVApiWrapper/0-GB203-A/control/2",
+        "IsHidden": false,
+        "Enable": true,
+        "SelectedFanCurve": {
+          "Name": "GPU Card"
+        },
+        "SelectedOffset": 0,
+        "PairedFanSensor": {
+          "Identifier": "NVApiWrapper/0-GB203-A/fan/2"
+        },
+        "SelectedStart": 9,
+        "SelectedStop": 6,
+        "MinimumPercent": 0,
+        "SelectedCommandStepUp": 8,
+        "SelectedCommandStepDown": 8,
+        "ManualControlValue": 50,
+        "ManualControl": false,
+        "ForceApply": false,
+        "Calibration": [
+          [
+            0,
+            0,
+            false
+          ],
+          [
+            1,
+            1198,
+            false
+          ],
+          [
+            10,
+            1198,
+            false
+          ],
+          [
+            20,
+            1198,
+            false
+          ],
+          [
+            30,
+            1198,
+            false
+          ],
+          [
+            40,
+            1461,
+            false
+          ],
+          [
+            50,
+            1715,
+            false
+          ],
+          [
+            60,
+            1984,
+            false
+          ],
+          [
+            70,
+            2231,
+            false
+          ],
+          [
+            80,
+            2494,
+            false
+          ],
+          [
+            90,
+            2760,
+            false
+          ],
+          [
+            100,
+            2984,
+            false
+          ]
+        ]
+      }
+    ],
+    "CustomSensors": [],
+    "FanCurves": [
+      {
+        "Name": "Flat",
+        "IsHidden": false,
+        "CommandMode": 0,
+        "Percent": 50
+      },
+      {
+        "Name": "CPU Only",
+        "IsHidden": false,
+        "CommandMode": 0,
+        "SelectedTempSource": {
+          "Identifier": "/intelcpu/0/temperature/1"
+        },
+        "MaximumFanSpeed": 100,
+        "MaximumTemperature": 70,
+        "MinimumFanSpeed": 50,
+        "MinimumTemperature": 35,
+        "HysteresisConfig": {
+          "ResponseTimeUp": 4,
+          "ResponseTimeDown": 4,
+          "HysteresisValueUp": 4,
+          "HysteresisValueDown": 4,
+          "IgnoreHysteresisAtLimits": true
+        }
+      },
+      {
+        "Name": "Core Max",
+        "IsHidden": false,
+        "CommandMode": 0,
+        "SelectedTempSource": {
+          "Identifier": "/intelcpu/0/temperature/0"
+        },
+        "Points": [
+          "40,25",
+          "80,80"
+        ],
+        "MaximumTemperature": 120,
+        "MinimumTemperature": 20,
+        "MaximumCommand": 100,
+        "HysteresisConfig": {
+          "ResponseTimeUp": 5,
+          "ResponseTimeDown": 5,
+          "HysteresisValueUp": 5,
+          "HysteresisValueDown": 5,
+          "IgnoreHysteresisAtLimits": true
+        }
+      },
+      {
+        "Name": "NVME Graph",
+        "IsHidden": false,
+        "CommandMode": 0,
+        "SelectedTempSource": {
+          "Identifier": "/nvme/4/temperature/0"
+        },
+        "Points": [
+          "40,20",
+          "80,80"
+        ],
+        "MaximumTemperature": 120,
+        "MinimumTemperature": 20,
+        "MaximumCommand": 100,
+        "HysteresisConfig": {
+          "ResponseTimeUp": 1,
+          "ResponseTimeDown": 1,
+          "HysteresisValueUp": 2,
+          "HysteresisValueDown": 2,
+          "IgnoreHysteresisAtLimits": true
+        }
+      },
+      {
+        "Name": "GPU",
+        "IsHidden": false,
+        "CommandMode": 0,
+        "SelectedTempSource": {
+          "Identifier": "NVApiWrapper/0-GB203-A/sensor/0"
+        },
+        "Points": [
+          "40,20",
+          "80,80"
+        ],
+        "MaximumTemperature": 120,
+        "MinimumTemperature": 20,
+        "MaximumCommand": 100,
+        "HysteresisConfig": {
+          "ResponseTimeUp": 1,
+          "ResponseTimeDown": 1,
+          "HysteresisValueUp": 2,
+          "HysteresisValueDown": 2,
+          "IgnoreHysteresisAtLimits": true
+        }
+      },
+      {
+        "Name": "GPU Card",
+        "IsHidden": false,
+        "CommandMode": 0,
+        "SelectedTempSource": {
+          "Identifier": "NVApiWrapper/0-GB203-A/sensor/0"
+        },
+        "Points": [
+          "54,0",
+          "55,30",
+          "60,50",
+          "64,70",
+          "68,90",
+          "71,100"
+        ],
+        "MaximumTemperature": 120,
+        "MinimumTemperature": 20,
+        "MaximumCommand": 100,
+        "HysteresisConfig": {
+          "ResponseTimeUp": 1,
+          "ResponseTimeDown": 3,
+          "HysteresisValueUp": 1,
+          "HysteresisValueDown": 4,
+          "IgnoreHysteresisAtLimits": true
+        }
+      }
+    ],
+    "FanSensors": [
+      {
+        "Identifier": "/lpc/nct6687d/fan/0",
+        "IsHidden": false,
+        "NickName": "CPU Cooler"
+      },
+      {
+        "Identifier": "/lpc/nct6687d/fan/1",
+        "IsHidden": true,
+        "NickName": "Pump (empty)"
+      },
+      {
+        "Identifier": "/lpc/nct6687d/fan/2",
+        "IsHidden": false,
+        "NickName": "Case Fan 1"
+      },
+      {
+        "Identifier": "/lpc/nct6687d/fan/3",
+        "IsHidden": false,
+        "NickName": "Case Fan 2"
+      },
+      {
+        "Identifier": "/lpc/nct6687d/fan/4",
+        "IsHidden": false,
+        "NickName": "NVMe Fan 1"
+      },
+      {
+        "Identifier": "/lpc/nct6687d/fan/5",
+        "IsHidden": false,
+        "NickName": "NVMe Fan 2"
+      },
+      {
+        "Identifier": "/lpc/nct6687d/fan/6",
+        "IsHidden": true,
+        "NickName": "System #5 (empty)"
+      },
+      {
+        "Identifier": "/lpc/nct6687d/fan/7",
+        "IsHidden": false,
+        "NickName": "Case Fan 3"
+      },
+      {
+        "Identifier": "NVApiWrapper/0-GB203-A/fan/0",
+        "IsHidden": false,
+        "NickName": "GPU Fan 1"
+      },
+      {
+        "Identifier": "NVApiWrapper/0-GB203-A/fan/1",
+        "IsHidden": false,
+        "NickName": "GPU Fan 2"
+      },
+      {
+        "Identifier": "NVApiWrapper/0-GB203-A/fan/2",
+        "IsHidden": false,
+        "NickName": "GPU Fan 3"
+      }
+    ],
+    "TemperatureSensors": []
+  },
+  "Sensors": {
+    "AdlxWrapperSettings": {
+      "Enabled": false
+    },
+    "DisabledPlugins": [],
+    "DisableStorageSensors": false,
+    "LibreHardwareMonitorSettings": {
+      "Controller": false,
+      "CPU": true,
+      "EmbeddedEC": false,
+      "ExcludeUsbStorage": false,
+      "GPU": true,
+      "Memory": true,
+      "Motherboard": true,
+      "PowerMonitor": false,
+      "PSU": false,
+      "Storage": true,
+      "StorageUpdateInterval": "00:01:00",
+      "ZeroRPMOverride": true
+    },
+    "NvAPIWrapperSettings": {
+      "Enabled": true,
+      "ZeroRPMOverride": true
+    }
+  },
+  "MainWindow": {
+    "Fahrenheit": false,
+    "HideCalibration": false,
+    "HideFanSpeedCards": true,
+    "HorizontalUIOrientation": false,
+    "PrimaryColor": "#FF607D8B",
+    "SecondaryColor": "#FFAEEA00",
+    "SelectedTheme": "",
+    "ShowHiddenCards": true,
+    "SyncThemeWithWindows": true,
+    "SyncTrayIconColorWithWindows": true,
+    "TrayIconColor": null,
+    "TrayIcons": []
+  }
+}
