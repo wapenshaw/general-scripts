@@ -2,6 +2,29 @@
 
 Notable changes to this personal workstation toolbox. Newest first.
 
+## 2026-11-07
+
+### Added
+
+- **`cache-cold-compact` 0.3.1: compacts ahead of the engine.** On Team/Enterprise accounts
+  `cc-plugin-sec-default` passes `session.compact` past the plugin, so the engine's threshold
+  compactions got the generic summary. The plugin now compacts with the handoff prompt at the
+  end of a turn once context reaches `preemptPercent` (default 75%) of the auto-compact window,
+  capped under the engine's own threshold; `0` turns it off.
+- **`powershell/rtx-5080/`**: TITAN RTX 5080 tuning helpers (mVolt+ undervolt, XBAR,
+  Afterburner V/F curve, tuning sweep, `nvidia-smi` load logging). Record in
+  `devices/titan-rtx-5080.md`.
+- **Device records**: iQOO 12, and MPC-HC HDR playback on TITAN
+  (`devices/titan-hdr-playback.md`: DirectVobSub as subtitle renderer forced 8-bit NV12 and
+  dropped HDR/Dolby Vision metadata).
+
+### Changed
+
+- **`cache-cold-compact`: `/handoff-compact` replaces the 0.2.1 deferral.** The command queues
+  the compact and it runs at `turn.complete` or from a 2 s clock poll (up to 30 tries, ~60 s,
+  instead of 5 tries over ~5 s), sharing one `compactWith()` path with the idle and preempt
+  compactions.
+
 ## 2026-11-06
 
 ### Fixed
