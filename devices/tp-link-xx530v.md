@@ -321,6 +321,7 @@ config backups are in the local-only
 | IP | Device | MAC (masked) | Reservation | IP & MAC binding |
 | --- | --- | --- | --- | --- |
 | .10 | TITAN desktop | `04:7C:16:…:9A` (MSI) | yes | yes |
+| .25 | iQOO 12 phone (device MAC on `Nunu`; added 2026-11-07) | `00:9C:C0:…:19` | yes | yes |
 | .35 | LG-Nunu | `B4:B2:91:…:54` (LG) | yes | yes |
 | .50, .51 | Tapo P110 smart plugs | `5C:E9:31:…:7D`, `20:23:51:…:5B` (TP-Link) | yes | yes |
 | .100 | TP-Link-Hall access point | `1C:3B:F3:…:FC` (TP-Link) | yes | yes |
@@ -337,11 +338,12 @@ binding in place fails with error 5401 and can leave a duplicate entry. Delete
 the old binding and add a new one instead.
 
 Only globally unique (vendor) MACs are pinned. Devices using locally
-administered (randomized) MACs (second hex digit 2, 6, A or E), such as santa,
-the Mac and the Android phone, were deliberately unpinned because their MAC can
+administered (randomized) MACs (second hex digit 2, 6, A or E), such as santa
+and the Mac, were deliberately unpinned because their MAC can
 change and silently orphan the entry. They take pool addresses (or keep an
 address set on the device). To pin one, switch it to its hardware MAC for this
-network first, then add both a reservation and a binding.
+network first, then add both a reservation and a binding. The iQOO 12 was
+switched this way on 2026-11-07 and pinned at .25.
 
 ## Wi-Fi channels — 2026-10-29
 

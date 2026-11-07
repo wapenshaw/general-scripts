@@ -9,7 +9,8 @@ Last inspected: **2026-10-29**. Times below use **Asia/Kolkata (IST, UTC+05:30)*
 | Model | iQOO 12 (**I2220**, project PD2307F, global/India `_EX_` build) |
 | Operating system at inspection | OriginOS 6 on Android 16 (SDK 36), build **PD2307F_EX_A_16.2.18.1.W30** |
 | Security patch | 2026-09-01 |
-| LAN address | **10.10.1.152** (Wi-Fi) |
+| LAN address | **10.10.1.25** (Wi-Fi, DHCP reservation and IP & MAC binding since 2026-11-07) |
+| Wi-Fi MAC on `Nunu` | `00:9C:C0:…:19`, the device MAC (privacy set to Device MAC, not randomized) |
 | Users | 0 (owner), 999 (App clone) |
 
 ## Default apps
@@ -30,13 +31,16 @@ Android 11+ wireless debugging uses a random port and needs a one-time pairing
 per PC.
 
 ```powershell
-adb mdns services                       # finds _adb-tls-connect at 10.10.1.152:<port>
+adb mdns services                      # finds _adb-tls-connect at 10.10.1.25:<port>
 # Phone: Developer options → Wireless debugging → Pair device with pairing code
-adb pair 10.10.1.152:<pair-port> <code> # only once per PC
-adb connect 10.10.1.152:<connect-port>  # port changes each time wireless debugging is toggled
+adb pair 10.10.1.25:<pair-port> <code> # only once per PC
+adb connect 10.10.1.25:<connect-port>  # port changes each time wireless debugging is toggled
 ```
 
-TITAN is paired (2026-10-29). Android turns wireless debugging off at every
+TITAN is paired (re-paired 2026-11-07). If `adb connect` prints only `failed to
+connect` while the port is open, check `%TEMP%\adb.log` (set `ADB_TRACE=adb`).
+`SSLV3_ALERT_CERTIFICATE_UNKNOWN` means the phone has dropped the pairing, so pair
+again. Android turns wireless debugging off at every
 reboot, and the connect port changes each time it comes back (42857 → 35675
 across the 2026-10-29 reboot). The pairing survives, so only `adb mdns
 services` + `adb connect` are needed again.
@@ -202,6 +206,38 @@ another home app in Settings → Apps → Default apps → Home app.
    Home app, or switch navigation to 3 buttons and back to gestures.
 4. Fallback: 3-button navigation. The Home key always launches the default
    HOME activity.
+
+## Issue: fast idle drain from Phone Link wakeups — 2026-11-07
+
+**Symptom:** about 2.3%/h drain with the screen off (1,237 mAh over 22 h,
+learned capacity about 2,406 mAh). The CPU was awake 12 h of the 22 h screen-off.
+
+**Cause:** Phone Link on TITAN (`CrossDeviceService` and `PhoneExperienceHost`)
+kept sending UDP to the phone every 2–3 s, to ports with no listener. `dumpsys
+connmetrics` → `WakeupStats(wlan0)` showed 57,499 wakeups in 46 h, and 48,454
+of them had `no uid`: they matched no socket and the phone dropped them after
+waking. batterystats showed the same as `wifi wakeup` (34,781 times) and
+`qcom_rx_wakelock` (4 h). The phone had just moved from .152 to .153, so the PC
+was probably still sending to the old session. This is likely but not proven.
+
+**How it was traced:** `WakeupEvent` lines give `srcIp`/`srcPort`. Matching the
+port with `Get-NetUDPEndpoint` on TITAN pointed to the two Phone Link processes.
+Leave out the adb session's own port (uid 2000).
+
+**Fix:** stop both processes on TITAN and reopen Phone Link (`ms-phone:`). In
+the 3 min with the screen off afterwards there were 0 wakeups from Phone Link,
+down from 60–80. Phone Link stays in use. The fixed address (.25) is meant to
+stop a stale session coming back.
+
+```powershell
+Get-Process PhoneExperienceHost,CrossDeviceService | Stop-Process -Force
+Start-Process ms-phone:
+```
+
+Smaller drains found at the same time:
+- GMS in the App clone user (u999) holding `*location*` for 1 h 17 m
+- Amazon Shopping's `BackupUploaderService` job, 50 min
+- Google Fit and Digital Wellbeing `SigCollector`, about 800 wakeups each
 
 ## Root — assessed 2026-10-29: not possible
 
