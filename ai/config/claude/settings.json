@@ -1,11 +1,12 @@
 {
   "$schema": "https://json.schemastore.org/claude-code-settings.json",
-  "cleanupPeriodDays": 90,
+  "cleanupPeriodDays": 30,
   "model": "opus",
+  "advisorModel": "fable",
   "effortLevel": "medium",
   "modelSettings": {
     "claude-opus-5-5": {
-      "effortLevel": "high"
+      "effortLevel": "medium"
     },
     "claude-sonnet-5-5": {
       "effortLevel": "medium"
@@ -14,8 +15,18 @@
   "idleCompaction": false,
   "switchModelsOnFlag": false,
   "tui": "fullscreen",
-  "theme": "auto",
+  "theme": "dark-ansi",
   "editorMode": "normal",
+  "verbose": true,
+  "timeFormat": "24-hour",
+  "askUserQuestionTimeout": "never",
+  "worktree": {
+    "baseRef": "fresh"
+  },
+  "enabledPlugins": {
+    "frontend-design@claude-plugins-official": true,
+    "cc-plugin-you-should-know@builtin": true
+  },
   "permissions": {
     "defaultMode": "bypassPermissions"
   },
@@ -27,7 +38,6 @@
   },
   "env": {
     "CLAUDE_CODE_SUBAGENT_MODEL": "haiku",
-    "CLAUDE_CODE_SUBAGENT_PROMPT_CACHE_TTL": "5m",
     "CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH": "1",
     "CLAUDE_CODE_MAX_CONCURRENT_SUBAGENTS": "4",
     "CLAUDE_CODE_FORK_SUBAGENT": "0",
@@ -35,8 +45,7 @@
     "CLAUDE_CODE_ENABLE_PROMPT_SUGGESTION": "false",
     "CLAUDE_CODE_GOAL_CHECKIN_MINUTES": "0",
     "BASH_MAX_OUTPUT_LENGTH": "12000",
-    "MAX_MCP_OUTPUT_TOKENS": "10000",
-    "ENABLE_LSP_TOOL": "1"
+    "MAX_MCP_OUTPUT_TOKENS": "10000"
   },
   "statusLine": {
     "type": "command",

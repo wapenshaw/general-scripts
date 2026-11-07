@@ -125,7 +125,7 @@ Options go under `pluginConfigs.<name>.options` in `settings.json`.
 | Microsoft Learn | Enabled | Imported from Grok; public documentation endpoint |
 | OpenAI Docs | Enabled | Added to make OpenAI documentation available in every client |
 | xAI Docs | Enabled | Imported from Grok; public documentation endpoint |
-| Playwright | Disabled | `--enable playwright`; Node/npx required |
+| Playwright | Enabled | Node/npx required; `--disable playwright` to skip |
 | GitHub | Disabled | `--enable github`; `GITHUB_PERSONAL_ACCESS_TOKEN` required |
 | repo-knowledge | Disabled | Local stdio server from [plugins/repo-knowledge](plugins/repo-knowledge/README.md); its `install.sh` registers it with each client, so `--enable` is only for clients it does not cover |
 

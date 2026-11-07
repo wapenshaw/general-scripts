@@ -33,7 +33,7 @@
         "-y",
         "@playwright/mcp@latest"
       ],
-      "enabled": false
+      "enabled": true
     },
     "github": {
       "url": "https://api.githubcopilot.com/mcp/",
@@ -42,6 +42,14 @@
         "Authorization": "Bearer {env:GITHUB_PERSONAL_ACCESS_TOKEN}"
       },
       "oauth": false,
+      "enabled": false
+    },
+    "repo-knowledge": {
+      "type": "local",
+      "command": [
+        "repo-knowledge",
+        "serve"
+      ],
       "enabled": false
     }
   }

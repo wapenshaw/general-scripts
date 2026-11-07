@@ -18,6 +18,17 @@
     "xai-docs": {
       "url": "https://docs.x.ai/api/mcp",
       "type": "http"
+    },
+    "playwright": {
+      "command": "cmd.exe",
+      "args": [
+        "/d",
+        "/c",
+        "npx",
+        "-y",
+        "@playwright/mcp@latest"
+      ],
+      "type": "stdio"
     }
   }
 }

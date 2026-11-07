@@ -18,6 +18,14 @@
     "xai-docs": {
       "url": "https://docs.x.ai/api/mcp",
       "type": "http"
+    },
+    "playwright": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@playwright/mcp@latest"
+      ],
+      "type": "stdio"
     }
   }
 }

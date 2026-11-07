@@ -22,7 +22,7 @@ enabled = true
 [mcp_servers.playwright]
 command = "cmd.exe"
 args = ["/d", "/c", "npx", "-y", "@playwright/mcp@latest"]
-enabled = false
+enabled = true
 
 [mcp_servers.github]
 url = "https://api.githubcopilot.com/mcp/"
@@ -30,3 +30,8 @@ enabled = false
 
 [mcp_servers.github.headers]
 Authorization = "Bearer ${GITHUB_PERSONAL_ACCESS_TOKEN}"
+
+[mcp_servers.repo-knowledge]
+command = "repo-knowledge"
+args = ["serve"]
+enabled = false

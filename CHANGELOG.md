@@ -24,6 +24,20 @@ Notable changes to this personal workstation toolbox. Newest first.
   the compact and it runs at `turn.complete` or from a 2 s clock poll (up to 30 tries, ~60 s,
   instead of 5 tries over ~5 s), sharing one `compactWith()` path with the idle and preempt
   compactions.
+- **Claude defaults aligned across TITAN, lanaya and santa.** Opus effort `medium`,
+  `cleanupPeriodDays` 30, `advisorModel` fable, `askUserQuestionTimeout` never, 24-hour time,
+  verbose, `worktree.baseRef` fresh, `dark-ansi` theme; plugins `frontend-design`
+  (official marketplace) and `cc-plugin-you-should-know`. Dropped
+  `CLAUDE_CODE_SUBAGENT_PROMPT_CACHE_TTL` and `ENABLE_LSP_TOOL`; the installer now removes
+  them from existing installs.
+- **Playwright MCP is on by default** for every client (`--disable playwright` to skip).
+
+### Fixed
+
+- **Status line on macOS/Linux survives Node upgrades.** `setup.py` wrote the install-time
+  absolute node path (e.g. `~/.nvm/versions/node/v24.22.1/bin/node`) into the status-line
+  command, so santa's status line died when nvm moved to Node 26. It now installs
+  `statusline.sh`, which finds node (PATH, nvm default, Homebrew) each time it runs.
 
 ## 2026-11-06
 

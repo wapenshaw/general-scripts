@@ -30,7 +30,7 @@
       "transport": "stdio",
       "command": "npx",
       "args": ["-y", "@playwright/mcp@latest"],
-      "defaultEnabled": false,
+      "defaultEnabled": true,
       "observedIn": ["grok"]
     },
     "github": {
