@@ -1,6 +1,6 @@
 {
   "name": "cache-cold-compact",
-  "version": "0.2.1",
+  "version": "0.3.1",
   "description": "Compacts an idle session shortly before its prompt cache goes cold, so the next prompt re-caches a summary instead of the whole transcript",
   "author": {
     "name": "wapenshaw"
@@ -24,6 +24,12 @@
       "title": "Minimum context to bother compacting (tokens)",
       "description": "Smaller conversations are cheap to re-cache and are left alone",
       "default": 50000
+    },
+    "preemptPercent": {
+      "type": "number",
+      "title": "Compact with the handoff prompt at this % of the context window",
+      "description": "Of the auto-compact window (CLAUDE_CODE_AUTO_COMPACT_WINDOW, else the model's), checked at the end of each turn so the plugin's handoff compaction beats the engine's generic one (whose prompt cc-plugin-sec-default keeps plugins from changing on Team/Enterprise accounts). 75 sits just under the engine's summary precompute; always capped below the engine's own threshold; 0 turns it off",
+      "default": 75
     },
     "showStatus": {
       "type": "boolean",

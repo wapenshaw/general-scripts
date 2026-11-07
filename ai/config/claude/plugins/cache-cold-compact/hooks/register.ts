@@ -15,6 +15,13 @@ import { HANDOFF_PROMPT, withHandoff } from './handoff'
 // Status line: a status line command runs as its own process and cannot ask the
 // plugin anything, so the plugin writes its state to
 // `~/.claude/cold-compact/sessions/<session id>.json` whenever it changes.
+//
+// On a Team or Enterprise account the builtin cc-plugin-sec-default sits outermost
+// and sends session.compact on past the user tier (next.to "append"), so the
+// session.compact hook below never runs and the engine's own compactions get the
+// generic summary. Compactions this plugin starts carry the handoff prompt in the
+// call itself, so the plugin compacts first: at the end of any turn that leaves
+// the context near the engine's threshold, and for /handoff-compact.
 
 const PLUGIN = 'cache-cold-compact'
 const TICK_MS = 30_000
@@ -23,14 +30,20 @@ const MINUTE = 60_000
 const armedAt = atom({ plugin: 'cache-cold-compact', key: 'armedAt' } as const, null)
 const isPaused = atom({ plugin: 'cache-cold-compact', key: 'isPaused' } as const, false)
 
-type Config = { ttlMs: number; fireAfterMs: number; minTokens: number; showStatus: boolean }
+type Config = { ttlMs: number; fireAfterMs: number; minTokens: number; preemptPercent: number; showStatus: boolean }
 type Last = { at: number; before: number; after: number }
 type StateName = 'idle' | 'armed' | 'compacting' | 'paused'
+type Outcome = { sizes: string } | { skip: string } | { error: string }
 
 // Set by register; module variables start over on every (re)load.
-let config: Config = { ttlMs: 60 * MINUTE, fireAfterMs: 55 * MINUTE, minTokens: 50_000, showStatus: true }
+let config: Config = { ttlMs: 60 * MINUTE, fireAfterMs: 55 * MINUTE, minTokens: 50_000, preemptPercent: 75, showStatus: true }
 let isTurnRunning = false
 let isCompacting = false
+/** Emphasis text from /handoff-compact, waiting for its turn to end; undefined when none is queued. */
+let pendingHandoff: string | undefined
+let handoffTries = 0
+/** The engine compacts at the smaller of this and the model's window. */
+let windowFromEnv: number | undefined
 let shownStatus: string | undefined
 let stateFile: string | undefined
 let publishedKey = ''
@@ -63,18 +76,33 @@ async function resolveStateFile($: EngineInterface) {
   }
 }
 
-/** HOME on macOS/Linux; Windows has no printenv or HOME outside Git Bash, so fall back to USERPROFILE. */
-async function homeDir($: EngineInterface) {
-  for (const argv of [['printenv', 'HOME'], ['cmd', '/d', '/c', 'echo %USERPROFILE%']]) {
+/** An environment variable as Claude Code's children see it (settings env included); '' when unset. */
+async function envVar($: EngineInterface, name: string) {
+  // Native Windows has no printenv; cmd echoes %NAME% back unchanged when it is unset.
+  for (const argv of [['printenv', name], ['cmd', '/d', '/c', `echo %${name}%`]]) {
     try {
       const out = await $.process.run(argv)
-      const dir = out.exitCode === 0 ? out.stdout.trim() : ''
-      if (dir && !dir.includes('%')) return dir.replaceAll('\\', '/')
+      const value = out.exitCode === 0 ? out.stdout.trim() : ''
+      if (value && !value.includes('%')) return value
     } catch {
       // Not on this platform; try the next one.
     }
   }
   return ''
+}
+
+/** HOME on macOS/Linux; Windows has no HOME outside Git Bash, so fall back to USERPROFILE. */
+async function homeDir($: EngineInterface) {
+  const dir = (await envVar($, 'HOME')) || (await envVar($, 'USERPROFILE'))
+  return dir.replaceAll('\\', '/')
+}
+
+/** CLAUDE_CODE_AUTO_COMPACT_WINDOW ("350000", "350k", "1m") in tokens; undefined when unset or unreadable. */
+async function envCompactWindow($: EngineInterface) {
+  const match = /^(\d+(?:\.\d+)?)\s*([km])?$/i.exec(await envVar($, 'CLAUDE_CODE_AUTO_COMPACT_WINDOW'))
+  if (!match) return undefined
+  const scale = { k: 1_000, m: 1_000_000 }[match[2]?.toLowerCase() ?? ''] ?? 1
+  return Math.round(Number(match[1]) * scale) || undefined
 }
 
 /** Writes the state for the status line, skipping a write that would say the same thing. */
@@ -97,6 +125,73 @@ async function publish($: EngineInterface, state: StateName, fireAtMs = 0) {
 async function recordCompaction($: EngineInterface, before: number | undefined, after: number | undefined) {
   const now = await $.clock.now()
   last = { at: Math.floor(now / 1000), before: before ?? 0, after: after ?? 0 }
+}
+
+/** The window the engine's threshold compaction works from: the env cap, when set, under the model's own. */
+function engineWindow(modelWindow: number | undefined) {
+  if (windowFromEnv === undefined) return modelWindow
+  return modelWindow ? Math.min(modelWindow, windowFromEnv) : windowFromEnv
+}
+
+// Claude Code 2.1.316 compacts at window - 20k (output reserve) - 13k (buffer) and
+// starts precomputing that summary at 80% of window - 20k. 75% of the window lands
+// just under the precompute (262k of 350k), so a turn ending past it compacts with
+// the handoff prompt before the engine has spent anything on a generic summary.
+const ENGINE_RESERVE = 33_000
+const ENGINE_MARGIN = 5_000
+
+/** Context size at which a turn's end compacts ahead of the engine; undefined when off or unknown. */
+function preemptTokens(modelWindow: number | undefined) {
+  const window = engineWindow(modelWindow)
+  if (config.preemptPercent <= 0 || !window) return undefined
+  const byPercent = Math.floor((window * config.preemptPercent) / 100)
+  return Math.max(config.minTokens, Math.min(byPercent, window - ENGINE_RESERVE - ENGINE_MARGIN))
+}
+
+const HANDOFF_TRIES = 30
+const HANDOFF_POLL_MS = 2_000
+
+/**
+ * Runs a queued /handoff-compact. The engine refuses it while the command's turn
+ * is held, so this retries from the clock until that turn lets go.
+ */
+async function flushHandoff($: EngineInterface) {
+  if (pendingHandoff === undefined || isCompacting) return
+  const emphasis = pendingHandoff
+  const outcome = await compactWith($, withHandoff(emphasis))
+  if ('error' in outcome && ++handoffTries < HANDOFF_TRIES) return
+  pendingHandoff = undefined
+  handoffTries = 0
+  $.ui.toast(describe('Compacted with the handoff prompt', 'Handoff compact', outcome), { timeoutMs: 8000 })
+}
+
+function describe(done: string, name: string, outcome: Outcome) {
+  if ('sizes' in outcome) return `${done}${outcome.sizes}`
+  if ('skip' in outcome) return `${name} skipped: ${outcome.skip}`
+  return `${name} did not run: ${outcome.error}`
+}
+
+/** Compacts with the given instructions (they reach the summarizer whoever's hooks run first). */
+async function compactWith($: EngineInterface, instructions: string): Promise<Outcome> {
+  isCompacting = true
+  await publish($, 'compacting')
+  try {
+    const { context } = await $.session.usage()
+    // A plugin's own compact() skips its own session.compact hook, so the
+    // handoff prompt always travels in the call.
+    const result = await $.session.compact({ instructions })
+    if (result.skip !== undefined) return { skip: result.skip }
+    const before = result.tokensBefore ?? context.tokens
+    const after = result.tokensAfter
+    await recordCompaction($, before, after)
+    return { sizes: before && after ? ` (${Math.round(before / 1000)}k → ${Math.round(after / 1000)}k tokens)` : '' }
+  } catch (error) {
+    $.ui.log(`${PLUGIN}: compact did not run: ${String(error)}`, { to: 'debug' })
+    return { error: String(error) }
+  } finally {
+    isCompacting = false
+    await disarm($)
+  }
 }
 
 async function disarm($: EngineInterface) {
@@ -139,58 +234,11 @@ async function tick($: EngineInterface) {
     return
   }
 
-  isCompacting = true
   setStatus($, 'compacting before the prompt cache goes cold…')
-  await publish($, 'compacting')
-  try {
-    // A plugin's own compact() skips its own session.compact hook, so the handoff
-    // prompt is passed explicitly here; the hook below covers every other trigger.
-    const result = await $.session.compact({ instructions: HANDOFF_PROMPT })
-    if (result.skip !== undefined) {
-      $.ui.toast(`Auto-compact skipped: ${result.skip}`)
-    } else {
-      const before = result.tokensBefore ?? context.tokens
-      const after = result.tokensAfter
-      await recordCompaction($, before, after)
-      const sizes = before && after ? ` (${Math.round(before / 1000)}k → ${Math.round(after / 1000)}k tokens)` : ''
-      $.ui.toast(`Compacted before the prompt cache went cold${sizes}`, { timeoutMs: 8000 })
-    }
-  } catch (error) {
-    // A turn started between the check and the call; turn.complete re-arms.
-    $.ui.log(`${PLUGIN}: compact did not run: ${String(error)}`, { to: 'debug' })
-  } finally {
-    isCompacting = false
-    await disarm($)
-  }
-}
-
-async function runHandoffCompact($: EngineInterface, instructions: string, attempt: number): Promise<void> {
-  isCompacting = true
-  setStatus($, 'handoff compact running…')
-  try {
-    const result = await $.session.compact({ instructions })
-    if (result.skip !== undefined) {
-      $.ui.toast(`Handoff compact skipped: ${result.skip}`)
-      return
-    }
-    await recordCompaction($, result.tokensBefore, result.tokensAfter)
-    const sizes =
-      result.tokensBefore && result.tokensAfter
-        ? ` (${Math.round(result.tokensBefore / 1000)}k → ${Math.round(result.tokensAfter / 1000)}k tokens)`
-        : ''
-    $.ui.toast(`Compacted with the handoff prompt${sizes}.`, { timeoutMs: 8000 })
-  } catch (error) {
-    // compact() rejects while a turn runs; give the command's own turn time to settle.
-    if (attempt < 5) {
-      isCompacting = false
-      $.clock.after(1000, () => void runHandoffCompact($, instructions, attempt + 1))
-      return
-    }
-    $.ui.toast(`Handoff compact did not run: ${String(error)}`)
-  } finally {
-    isCompacting = false
-    setStatus($, undefined)
-    await disarm($)
+  const outcome = await compactWith($, HANDOFF_PROMPT)
+  // An error means a turn started between the check and the call; turn.complete re-arms.
+  if (!('error' in outcome)) {
+    $.ui.toast(describe('Compacted before the prompt cache went cold', 'Auto-compact', outcome), { timeoutMs: 8000 })
   }
 }
 
@@ -203,6 +251,8 @@ export const register: Register = (on, options) => {
     // so never fire before half the TTL of idle time has passed.
     fireAfterMs: Math.max(ttlMs - leadMs, ttlMs / 2),
     minTokens: numberOption(options, 'minContextTokens', 50_000),
+    // 0 turns it off; above 100 it could never fire.
+    preemptPercent: Math.min(100, Math.max(0, Number(options.preemptPercent ?? 75) || 0)),
     showStatus: options.showStatus !== false,
   }
 
@@ -216,9 +266,11 @@ export const register: Register = (on, options) => {
       description: 'Compact now with the handoff-document prompt; optional text adds emphasis',
     })
     await resolveStateFile($)
+    windowFromEnv = await envCompactWindow($)
     publishedKey = ''
     await publish($, 'idle')
     $.clock.every(TICK_MS, () => void tick($))
+    $.clock.every(HANDOFF_POLL_MS, () => void flushHandoff($))
 
     return next(e)
   })
@@ -235,9 +287,29 @@ export const register: Register = (on, options) => {
     if (e.agentId !== undefined) return result
 
     isTurnRunning = false
+    const { context } = await $.session.usage()
+
+    if (pendingHandoff !== undefined) {
+      await flushHandoff($)
+      return result
+    }
+
+    // Beat the engine's threshold compaction, whose summary skips the handoff
+    // prompt when cc-plugin-sec-default passes session.compact on past this plugin.
+    const preemptAt = preemptTokens(context.window)
+    if (preemptAt !== undefined && (context.tokens ?? 0) >= preemptAt && !(await read($, isPaused))) {
+      const outcome = await compactWith($, HANDOFF_PROMPT)
+      // Errors (e.g. headless sessions, where plugins cannot compact yet) are in the debug log.
+      if (!('error' in outcome)) {
+        $.ui.toast(describe('Compacted with the handoff prompt ahead of auto-compact', 'Handoff compact', outcome), {
+          timeoutMs: 8000,
+        })
+      }
+      return result
+    }
+
     // An aborted turn or API error may have sent no request; arm anyway, the
     // worst case is compacting a few minutes earlier than strictly needed.
-    const { context } = await $.session.usage()
     if ((context.tokens ?? 0) >= config.minTokens) {
       const now = await $.clock.now()
       await update($, armedAt, () => now)
@@ -251,6 +323,7 @@ export const register: Register = (on, options) => {
 
   // Every compaction of the main conversation (engine threshold, /compact, a
   // precompute) gets the handoff brief; the person's own text after /compact is kept.
+  // Skipped entirely while cc-plugin-sec-default is seated (see the top of the file).
   on('session.compact', async ($, e, next) => {
     const isMain = e.agentId === undefined
     const result = await next(isMain ? { ...e, instructions: withHandoff(e.instructions) } : e)
@@ -273,12 +346,11 @@ export const register: Register = (on, options) => {
 
   // /compact with the handoff prompt passed explicitly, so it holds even when a
   // hook earlier in the session.compact chain stops this plugin's hook from running.
-  // The host refuses session.compact from inside a command.run hook (the command
-  // holds the turn), so the compaction is scheduled to run once the command returns.
+  // The engine refuses a compact from command.run (it would compact under the turn
+  // this hook holds), so it is queued for turn.complete or the clock, whichever comes first.
   on('command.run', { command: 'handoff-compact' }, async ($, e) => {
-    const instructions = withHandoff(e.args)
-    $.clock.after(250, () => void runHandoffCompact($, instructions, 0))
-    return { text: 'Handoff compact queued; compacting once this command finishes…' }
+    pendingHandoff = e.args
+    return { text: 'Compacting with the handoff prompt as this turn ends…' }
   })
 
   on('command.run', { command: 'cold-compact' }, async ($, e) => {
@@ -291,7 +363,13 @@ export const register: Register = (on, options) => {
 
     const paused = await read($, isPaused)
     const since = await read($, armedAt)
-    const policy = `fires after ${minutesLabel(config.fireAfterMs)} idle (TTL ${minutesLabel(config.ttlMs)}), contexts ≥ ${Math.round(config.minTokens / 1000)}k tokens; every compaction writes a handoff document`
+    const { context } = await $.session.usage()
+    const preemptAt = preemptTokens(context.window)
+    const preempt =
+      preemptAt === undefined
+        ? 'no compaction ahead of auto-compact'
+        : `compacts at turn end from ${Math.round(preemptAt / 1000)}k of the ${Math.round((engineWindow(context.window) ?? 0) / 1000)}k auto-compact window (now ${Math.round((context.tokens ?? 0) / 1000)}k)`
+    const policy = `fires after ${minutesLabel(config.fireAfterMs)} idle (TTL ${minutesLabel(config.ttlMs)}), contexts ≥ ${Math.round(config.minTokens / 1000)}k tokens; ${preempt}; compactions it starts write a handoff document`
     if (paused) return { text: `Auto-compact is off for this session; ${policy}.` }
     if (since === null) return { text: `Auto-compact is on, not armed (no large idle context); ${policy}.` }
 
