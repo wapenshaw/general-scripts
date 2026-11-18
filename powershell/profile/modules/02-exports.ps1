@@ -45,3 +45,14 @@ $cargoExe = @(
 if ($cargoExe -and ($env:PATH -notlike "*$cargoBin*")) {
     $env:PATH = "$cargoBin;$env:PATH"
 }
+
+# Bun global binaries (bun add -g) — BUN_INSTALL wins over the default ~/.bun.
+$bunHome = if (-not [string]::IsNullOrWhiteSpace($env:BUN_INSTALL)) {
+    $env:BUN_INSTALL
+} else {
+    Join-Path $HOME '.bun'
+}
+$bunBin = Join-Path $bunHome 'bin'
+if ((Test-Path -LiteralPath $bunBin) -and ($env:PATH -notlike "*$bunBin*")) {
+    $env:PATH = "$bunBin;$env:PATH"
+}
