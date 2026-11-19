@@ -198,7 +198,12 @@ These are the repo scripts that need to run once on a fresh box, in this order. 
    Z:\Personal\general-scripts\powershell\system\Optimize-Shutdown.ps1
    ```
 
-6. **`Set-DlssIndicator.ps1`** *(optional, gaming)* - toggles the DLSS frame-generation indicator on/off. Requires NVIDIA App / NGX to be installed (the script silently no-ops with "Registry path not found" if the `HKLM:\SOFTWARE\NVIDIA Corporation\Global\NGXCore` key is missing). *Admin required.*
+6. **`Optimize-DevToolStartup.ps1`** - makes git, rg and claude start faster for coding agents. It puts Git for Windows' real `git.exe` (`ucrt64\bin`) ahead of the `Git\cmd` launcher in the Machine PATH, which saves one extra process per git call, and adds Defender process exclusions for git, Git Bash, rg and claude. It backs up the Machine PATH first and supports `-WhatIf`. Run it after Git, rg and Claude Code are installed. *Admin required.*
+   ```powershell
+   Z:\Personal\general-scripts\powershell\system\Optimize-DevToolStartup.ps1
+   ```
+
+7. **`Set-DlssIndicator.ps1`** *(optional, gaming)* - toggles the DLSS frame-generation indicator on/off. Requires NVIDIA App / NGX to be installed (the script silently no-ops with "Registry path not found" if the `HKLM:\SOFTWARE\NVIDIA Corporation\Global\NGXCore` key is missing). *Admin required.*
    ```powershell
    Z:\Personal\general-scripts\powershell\system\Set-DlssIndicator.ps1
    ```
