@@ -1,3 +1,4 @@
+# shellcheck shell=zsh
 # Assurant shell functions — only sourced when installed with --assurant.
 
 # Claude Code shortcut — opens in Common-Automation with full permissions

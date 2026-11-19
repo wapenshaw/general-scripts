@@ -1,3 +1,4 @@
+# shellcheck shell=bash
 # Stable SSH agent socket for work login shells.
 # Fixes a known socket path so VS Code, Git, and the shell all share the same agent.
 
@@ -20,6 +21,8 @@ fi
 if [ "$_ssh_agent_status" -eq 2 ]; then
   rm -f "$SSH_AUTH_SOCK" "$HOME/.ssh/agent.env"
   ssh-agent -a "$SSH_AUTH_SOCK" > "$HOME/.ssh/agent.env"
+  # agent.env is generated at runtime by ssh-agent above
+  # shellcheck source=/dev/null
   . "$HOME/.ssh/agent.env" >/dev/null
 fi
 

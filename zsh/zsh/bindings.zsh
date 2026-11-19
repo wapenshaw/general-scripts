@@ -58,7 +58,7 @@ bindkey '^F' _fzf_file_no_hidden  # Ctrl+F — file picker, no hidden files
 # Autosuggestions
 # =========================================================
 
-bindkey '^\' autosuggest-toggle  # Ctrl+\ — toggle on/off
+bindkey $'^\\' autosuggest-toggle  # Ctrl+\ — toggle on/off
 
 # =========================================================
 # Extra widgets (cherry-picked from zephyr/editor)
@@ -79,7 +79,7 @@ bindkey '^Z' symmetric-ctrl-z
 
 # Ctrl+X Ctrl+S — prepend sudo to current line
 function prepend-sudo {
-  if [[ "$BUFFER" != su(do|)\ * ]]; then
+  if [[ ! $BUFFER =~ '^su(do)? ' ]]; then
     BUFFER="sudo $BUFFER"
     (( CURSOR += 5 ))
   fi

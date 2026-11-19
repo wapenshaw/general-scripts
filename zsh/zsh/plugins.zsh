@@ -1,3 +1,4 @@
+# shellcheck shell=bash
 ZPLUGINDIR="$ZDOTDIR/plugins"
 
 # Auto-clone if missing, then source the plugin
@@ -9,6 +10,7 @@ _zplugin_load() {
     git clone --depth=1 "https://github.com/${1}/${2}" "$plugin_path" \
       || { echo "ERROR: failed to install ${2}" >&2; return 1; }
   fi
+  # shellcheck disable=SC1090 # plugin path is computed at runtime
   source "${plugin_path}/${2}.plugin.zsh"
 }
 

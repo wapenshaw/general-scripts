@@ -13,7 +13,7 @@ if [[ -d /usr/share/zsh/vendor-completions ]]; then
 fi
 
 # Rebuild dump at most once per day; -C skips security check on cache hit
-if [[ -n "$_zsh_completion_dump"(#qN.mh+24) ]]; then
+if [[ -n "$(find "$_zsh_completion_dump" -mmin +1440 2>/dev/null)" ]]; then
   compinit -d "$_zsh_completion_dump"
 else
   compinit -C -d "$_zsh_completion_dump"

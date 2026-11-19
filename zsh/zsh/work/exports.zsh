@@ -1,3 +1,5 @@
+# shellcheck shell=bash
+
 # Assurant environment — only sourced when installed with --assurant.
 # Corporate CA trust, workspace paths, Kubernetes config, Node TLS hardening.
 
@@ -12,7 +14,7 @@ export KUBECONFIG="${KUBECONFIG:-$HOME/.kube/config}"
 _ca_bundle=''
 if [[ "$OSTYPE" == darwin* ]]; then
   _ca_bundle='/etc/ssl/cert.pem'
-  if [[ ! -r "$_ca_bundle" ]] && (( $+commands[brew] )); then
+  if [[ ! -r "$_ca_bundle" ]] && command -v brew >/dev/null 2>&1; then
     _brew_prefix="$(brew --prefix)"
     [[ -r "$_brew_prefix/etc/ca-certificates/cert.pem" ]] && _ca_bundle="$_brew_prefix/etc/ca-certificates/cert.pem"
   fi
@@ -41,6 +43,6 @@ export TF_PLUGIN_CACHE_DIR="$HOME/.terraform.d/plugin-cache"
 [[ -d "$TF_PLUGIN_CACHE_DIR" ]] || mkdir -p "$TF_PLUGIN_CACHE_DIR"
 
 # Remove Windows Node pollution from WSL PATH
-path=(${path:#/mnt/c/Program\ Files/nodejs/*})
+path=("${(@)path:#/mnt/c/Program Files/nodejs/*}")
 
 unset _ca_bundle _brew_prefix

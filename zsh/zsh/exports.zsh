@@ -1,23 +1,24 @@
+# shellcheck shell=bash
 # Deduplicate PATH entries automatically
 typeset -U path PATH
 
 # Keep Homebrew available even when a terminal starts a non-login shell.
 if [[ "$OSTYPE" == darwin* ]]; then
-  path=(/opt/homebrew/bin /opt/homebrew/sbin /usr/local/bin $path)
+  path=(/opt/homebrew/bin /opt/homebrew/sbin /usr/local/bin "${path[@]}")
 fi
 
 # Local user binaries first, then rustup cargo if installed. Re-apply after
 # Homebrew so rustup wins over a Homebrew rustc. rustup self uninstall removes
 # the binary and this block becomes a no-op.
 if [[ -x "$HOME/.cargo/bin/cargo" ]]; then
-  path=("$HOME/.local/bin" "$HOME/.cargo/bin" $path)
+  path=("$HOME/.local/bin" "$HOME/.cargo/bin" "${path[@]}")
 else
-  path=("$HOME/.local/bin" $path)
+  path=("$HOME/.local/bin" "${path[@]}")
 fi
 
 # Bun and tfenv
 export BUN_INSTALL="$HOME/.bun"
-path=("$BUN_INSTALL/bin" "$HOME/.tfenv/bin" $path)
+path=("$BUN_INSTALL/bin" "$HOME/.tfenv/bin" "${path[@]}")
 
 # Editor
 export EDITOR="code --wait"
@@ -31,7 +32,8 @@ export UV_CACHE_DIR="$HOME/.cache/uv"
 
 # GPG (interactive shells only — tty is defined here)
 if [[ -t 0 || -t 1 ]]; then
-  export GPG_TTY="$(tty 2>/dev/null)"
+  GPG_TTY="$(tty 2>/dev/null)"
+  export GPG_TTY
 fi
 
 # Better man pages via bat
@@ -59,11 +61,13 @@ fi
 setopt NO_rm_star_silent  # prompt for confirmation before rm *
 setopt multios            # allow writing to multiple descriptors simultaneously
 
-# WORDCHARS — chars treated as part of a word for Ctrl+W / Alt+D
+# WORDCHARS — chars treated as part of a word for Ctrl+W / Alt+D.
+# Read by zle (not exported); ShellCheck cannot see that use.
+# shellcheck disable=SC2034
 WORDCHARS='*?_-.[]~&;!#$%^(){}<>'
 
 # LS_COLORS — used by completion menu and dircolors-aware tools
-if (( $+commands[dircolors] )); then
-  source <(dircolors --sh)
+if command -v dircolors >/dev/null 2>&1; then
+  eval "$(dircolors --sh)"
 fi
 export LS_COLORS="${LS_COLORS:-di=34:ln=35:so=32:pi=33:ex=31:bd=1;36:cd=1;33:su=30;41:sg=30;46:tw=30;42:ow=30;43}"

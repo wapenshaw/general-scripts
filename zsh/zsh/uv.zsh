@@ -1,3 +1,4 @@
+# shellcheck shell=bash
 # uv workflow helpers for Astra/Common Automation Python development.
 
 uvdev() (

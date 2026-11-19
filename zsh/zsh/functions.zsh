@@ -1,3 +1,4 @@
+# shellcheck shell=bash
 # Cross-platform shell helpers
 
 # =========================================================
@@ -134,11 +135,11 @@ elif [[ "$OSTYPE" == linux* ]]; then
   explore() { open "${1:-.}"; }
 
   clipcopy() {
-    if [[ -n "${WAYLAND_DISPLAY:-}" ]] && (( $+commands[wl-copy] )); then
+    if [[ -n "${WAYLAND_DISPLAY:-}" ]] && command -v wl-copy >/dev/null 2>&1; then
       command wl-copy
-    elif (( $+commands[xsel] )); then
+    elif command -v xsel >/dev/null 2>&1; then
       command xsel --clipboard --input
-    elif (( $+commands[xclip] )); then
+    elif command -v xclip >/dev/null 2>&1; then
       command xclip -selection clipboard
     else
       print -u2 'Install wl-clipboard, xsel or xclip for clipboard support.'
@@ -147,11 +148,11 @@ elif [[ "$OSTYPE" == linux* ]]; then
   }
 
   clippaste() {
-    if [[ -n "${WAYLAND_DISPLAY:-}" ]] && (( $+commands[wl-paste] )); then
+    if [[ -n "${WAYLAND_DISPLAY:-}" ]] && command -v wl-paste >/dev/null 2>&1; then
       command wl-paste --no-newline
-    elif (( $+commands[xsel] )); then
+    elif command -v xsel >/dev/null 2>&1; then
       command xsel --clipboard --output
-    elif (( $+commands[xclip] )); then
+    elif command -v xclip >/dev/null 2>&1; then
       command xclip -selection clipboard -o
     else
       print -u2 'Install wl-clipboard, xsel or xclip for clipboard support.'
@@ -173,7 +174,7 @@ up() {
   fi
   local dotdots=".."
   while (( --parents )); do dotdots+="/.."; done
-  cd "$dotdots"
+  cd "$dotdots" || return
 }
 
 # =========================================================
@@ -181,4 +182,4 @@ up() {
 # =========================================================
 
 # sedi — cross-platform sed -i (GNU and BSD/macOS compatible)
-sedi() { sed --version &>/dev/null && sed -i -- "$@" || sed -i "" "$@"; }
+sedi() { if sed --version &>/dev/null; then sed -i -- "$@"; else sed -i "" "$@"; fi; }

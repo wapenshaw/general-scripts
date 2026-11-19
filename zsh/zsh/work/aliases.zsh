@@ -1,3 +1,4 @@
+# shellcheck shell=zsh
 # Assurant aliases — only sourced when installed with --assurant.
 
 # Astra workspace navigation

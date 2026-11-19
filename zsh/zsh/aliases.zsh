@@ -1,3 +1,5 @@
+# shellcheck shell=bash
+
 # Navigation
 alias -- -='cd -'
 
@@ -28,7 +30,7 @@ lf() {
     local dir
     dir=$(cat "$tmp")
     rm -f "$tmp"
-    [ -d "$dir" ] && [ "$dir" != "$(pwd)" ] && cd "$dir"
+    [ -d "$dir" ] && [ "$dir" != "$(pwd)" ] && { cd "$dir" || return; }
   fi
 }
 
@@ -45,29 +47,35 @@ cheat() {
   fi
 }
 alias vim='nvim'
-alias colormap='for i in {0..255}; do print -Pn "%K{$i}  %k%F{$i}${(l:3::0:)i}%f " ${${(M)$((i%6)):#3}:+"\n"}; done'
+colormap() {
+  local i
+  for i in {0..255}; do
+    print -Pn "%K{$i}  %k%F{$i}$(printf '%03d' "$i")%f "
+    (( i % 6 == 3 )) && print
+  done
+}
 
 # Better help for shell builtins (man zshoptions, etc.)
-(( $+aliases[run-help] )) && unalias run-help
+alias run-help >/dev/null 2>&1 && unalias run-help
 autoload -Uz run-help
 alias help='run-help'
 
 # Python — ensure unversioned commands exist if only python3/pip3 are installed
-(( $+commands[python3] )) && ! (( $+commands[python] )) && alias python='python3'
-(( $+commands[pip3]    )) && ! (( $+commands[pip]    )) && alias pip='pip3'
+command -v python3 >/dev/null 2>&1 && ! command -v python >/dev/null 2>&1 && alias python='python3'
+command -v pip3 >/dev/null 2>&1 && ! command -v pip >/dev/null 2>&1 && alias pip='pip3'
 
 # System maintenance
 sysup() {
   local rc=0 ran=0
   # Linux: dnf/apt owns the system; Homebrew owns the CLI tools in linux/Brewfile.
-  if [[ "$OSTYPE" != darwin* ]] && (( $+commands[dnf] )); then
+  if [[ "$OSTYPE" != darwin* ]] && command -v dnf >/dev/null 2>&1; then
     ran=1
     sudo dnf upgrade --refresh -y && sudo dnf autoremove -y && sudo dnf clean all || rc=1
-  elif [[ "$OSTYPE" != darwin* ]] && (( $+commands[apt] )); then
+  elif [[ "$OSTYPE" != darwin* ]] && command -v apt >/dev/null 2>&1; then
     ran=1
     sudo apt update -y && sudo apt full-upgrade -y && sudo apt autoremove -y && sudo apt clean -y && sudo apt autoclean -y || rc=1
   fi
-  if (( $+commands[brew] )); then
+  if command -v brew >/dev/null 2>&1; then
     ran=1
     brew update && brew upgrade && brew cleanup || rc=1
   fi
