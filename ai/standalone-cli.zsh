@@ -1,3 +1,5 @@
+#!/usr/bin/env zsh
+
 # Claude Code and Codex use their official standalone installers instead of
 # Homebrew (macOS casks or Linuxbrew). Each puts a launcher in ~/.local/bin and
 # updates itself in the background; `claude update` / `codex update` force an
@@ -11,7 +13,7 @@
 # also needs run_step and add_warning from the update scripts.
 
 typeset -ga AI_CLI_TOOLS=(claude codex)
-typeset -gA AI_CLI_CASKS=(claude claude-code codex codex)
+typeset -gA AI_CLI_CASKS=([claude]=claude-code [codex]=codex)
 
 # True when the tool is the standalone install in ~/.local/bin.
 ai_cli_is_standalone() {
