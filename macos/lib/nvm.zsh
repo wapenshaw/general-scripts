@@ -1,3 +1,4 @@
+#!/usr/bin/env zsh
 # Remove only the version-pinned NVM links created by older Mac scripts.
 # Keep unrelated executables and links, including standalone pnpm installs.
 remove_legacy_nvm_links() {

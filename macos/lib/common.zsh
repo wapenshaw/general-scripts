@@ -1,4 +1,5 @@
 #!/usr/bin/env zsh
+# shellcheck shell=bash
 # macos/lib/common.zsh — shared helpers for macOS bootstrap stages
 autoload -U colors && colors
 

@@ -1,4 +1,5 @@
 #!/usr/bin/env zsh
+# shellcheck shell=bash
 # macos/stages/01-environment.zsh — Stage 1: Base Environment & Core Shell
 #
 # Sets up Xcode CLI tools, Homebrew, standard directories, developer fonts,
@@ -8,6 +9,7 @@ set -euo pipefail
 STAGE_DIR="${0:A:h}"
 REPO="${STAGE_DIR:h:h}"
 
+# shellcheck disable=SC1091
 source "$REPO/macos/lib/common.zsh"
 
 section "Stage 1: Base Environment & Core Shell"
@@ -34,7 +36,7 @@ if command_exists brew; then
 else
     info "Installing Homebrew..."
     if [[ "${DRY_RUN:-false}" == true ]]; then
-        print_dry '/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"'
+        print_dry "/bin/bash -c \"\$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)\""
     else
         /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
     fi
@@ -73,8 +75,8 @@ FONT_DEST="$HOME/Library/Fonts"
 mkdir -p "$FONT_DEST"
 if [[ -d "$REPO/fonts" ]]; then
     typeset -i font_count=0
-    for font_file in "$REPO/fonts"/**/*.(ttf|otf)(N); do
-        font_name="${font_file:t}"
+    while IFS= read -r font_file; do
+        font_name="${font_file##*/}"
         if [[ ! -f "$FONT_DEST/$font_name" ]]; then
             if [[ "${DRY_RUN:-false}" == true ]]; then
                 print_dry "cp $font_file $FONT_DEST/$font_name"
@@ -83,7 +85,7 @@ if [[ -d "$REPO/fonts" ]]; then
             fi
             (( font_count += 1 ))
         fi
-    done
+    done < <(find "$REPO/fonts" -type f \( -name '*.ttf' -o -name '*.otf' \) | sort)
     if ((font_count > 0)); then
         success "Installed $font_count developer fonts to $FONT_DEST"
     else

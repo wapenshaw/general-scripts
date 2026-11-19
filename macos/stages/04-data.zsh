@@ -1,4 +1,5 @@
 #!/usr/bin/env zsh
+# shellcheck shell=bash
 # macos/stages/04-data.zsh — Stage 4: App Configurations, Dotfiles & Data
 #
 # Configures Git identity, SSH directory permissions, Ghostty terminal settings,
