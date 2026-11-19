@@ -148,8 +148,14 @@ def yaml_loader():
 
 def encode(path, value):
     if path.suffix in (".yml", ".yaml"):
+        # Block style, source key order, no line wrapping: the safe dumper
+        # otherwise writes leaf maps/lists as wrapped flow style, sorted.
+        dumper = yaml_loader()
+        dumper.default_flow_style = False
+        dumper.sort_base_mapping_type_on_output = False
+        dumper.width = 4096
         stream = io.StringIO()
-        yaml_loader().dump(value, stream)
+        dumper.dump(value, stream)
         return stream.getvalue()
     return toml_dumps(value) if path.suffix == ".toml" else json.dumps(value, indent=2, ensure_ascii=False) + "\n"
 

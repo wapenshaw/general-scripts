@@ -2,6 +2,15 @@
 
 Notable changes to this personal workstation toolbox. Newest first.
 
+## 2026-11-19
+
+### Fixed
+
+- **omp `config.yml` stays hand-editable after `Install-AIConfig.ps1 -Install`.** `ai/setup.py`
+  dumped YAML through ruamel's safe dumper defaults: leaf maps and lists in wrapped flow style,
+  keys sorted. It now writes block style in source key order without line wrapping. Content is
+  unchanged.
+
 ## 2026-11-07
 
 ### Added
