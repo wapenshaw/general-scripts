@@ -6,6 +6,7 @@
 #   homewatch.sh          one check pass (cron)
 #   homewatch.sh boot     announce a (re)boot, e.g. after a power cut
 #   homewatch.sh status   print the current state of every host
+# shellcheck source=/dev/null # router-local config (secrets, ntfy topic); not in the repo
 . /etc/homewatch/homewatch.conf
 STATE=/tmp/homewatch
 QUEUE=$STATE/queue

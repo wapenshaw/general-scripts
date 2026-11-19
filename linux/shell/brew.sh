@@ -1,3 +1,4 @@
+# shellcheck shell=sh
 # Homebrew (Linuxbrew) on PATH for bash and sh. Deployed to ~/.config/shell/brew.sh by
 # linux/install.sh and sourced from ~/.profile and ~/.bashrc. zsh gets the same from
 # ~/.zsh/.zshenv, which bash never reads (agent tools such as Copilot CLI run bash).
