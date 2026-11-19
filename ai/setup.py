@@ -291,6 +291,9 @@ def main():
             target = omp_settings_path(client_root)
             current = load_config(target) if args.install else {}
             planned[target] = encode(target, merge(current, load_config(ROOT / "config/omp/config.yml")))
+            # Repo extensions are copied beside the live ones; herdr's managed extension is never touched.
+            for source in sorted((ROOT / "config/omp/extensions").glob("*.ts")):
+                planned[client_root / "extensions" / source.name] = source.read_text(encoding="utf-8-sig")
             continue
         if client == "agy":
             # Antigravity runs the title command per state change. It passes
