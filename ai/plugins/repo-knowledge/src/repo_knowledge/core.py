@@ -7,7 +7,7 @@ import re
 import tomllib
 import zipfile
 from collections import Counter
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 from .headers import parse_headers
@@ -90,7 +90,7 @@ class KnowledgeBase:
                 errors.append({"path": relative, "error": str(exc)})
         self._flag_stale_snapshots(records, contents)
         return {"schema_version": 1, "project": self.name,
-                "built_at": datetime.now(timezone.utc).isoformat(),
+                "built_at": datetime.now(UTC).isoformat(),
                 "records": records, "errors": errors,
                 "notice": "No supersession recorded does not establish current authority."}, contents
 

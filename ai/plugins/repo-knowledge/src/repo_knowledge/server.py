@@ -1,5 +1,7 @@
 """MCP adapter; the retrieval core has no client-specific behavior."""
-from typing import Any, Callable
+from collections.abc import Callable
+from typing import Any
+
 from mcp.server import MCPServer
 from mcp.server.mcpserver.exceptions import ToolError
 from mcp.types import ToolAnnotations

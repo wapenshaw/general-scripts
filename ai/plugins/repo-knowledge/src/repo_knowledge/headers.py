@@ -7,7 +7,7 @@ from pathlib import PurePosixPath
 
 # Plain, list ("- Key:") and bold ("**Key:**") header lines.
 HEADER = re.compile(r"^(?:-\s+)?(?:\*\*)?([A-Za-z][A-Za-z -]*):(?:\*\*)?\s*(.*)$")
-INLINE = re.compile(r"\(superseded\s+\d{4}-\d{2}-\d{2}:\s*[^)]+\)", re.I)
+INLINE = re.compile(r"\(superseded\s+\d{4}-\d{2}-\d{2}:\s*[^)]+\)", re.IGNORECASE)
 
 
 def normalize_status(raw: str, record_type: str) -> str:
@@ -43,7 +43,7 @@ def parse_headers(text: str, path: str, record_type: str) -> dict:
         stripped = line.strip()
         if stripped.startswith(("##", "```", "~~~")):
             break
-        if re.match(r"^SUPERSEDED\b", stripped, re.I):
+        if re.match(r"^SUPERSEDED\b", stripped, re.IGNORECASE):
             legacy_superseded = True
         match = HEADER.match(stripped)
         if match:
@@ -54,7 +54,7 @@ def parse_headers(text: str, path: str, record_type: str) -> dict:
             else:
                 headers[key] = value
     raw = headers.get("status", "")
-    legacy_superseded |= bool(re.match(r"SUPERSEDED\b", raw, re.I))
+    legacy_superseded |= bool(re.match(r"SUPERSEDED\b", raw, re.IGNORECASE))
     target = headers.get("superseded-by", "")
     scope = headers.get("superseded", "").lower()
     inline = [i for i, line in enumerate(text.splitlines(), 1) if INLINE.search(line)]

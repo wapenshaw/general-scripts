@@ -9,9 +9,9 @@ from __future__ import annotations
 
 import io
 import re
+import xml.etree.ElementTree as ET
 import zipfile
 from datetime import date, timedelta
-import xml.etree.ElementTree as ET
 
 NS = {"m": "http://schemas.openxmlformats.org/spreadsheetml/2006/main",
       "r": "http://schemas.openxmlformats.org/officeDocument/2006/relationships"}
@@ -55,7 +55,7 @@ def _styles(zf: zipfile.ZipFile) -> tuple[list[bool], list[bool]]:
     for xf in root.findall("m:cellXfs/m:xf", NS):
         fmt = int(xf.get("numFmtId", "0"))
         code = re.sub(r'"[^"]*"|\[[^\]]*\]', "", custom.get(fmt, ""))
-        is_date.append(fmt in DATE_FORMAT_IDS or bool(re.search(r"[dy]", code, re.I)))
+        is_date.append(fmt in DATE_FORMAT_IDS or bool(re.search(r"[dy]", code, re.IGNORECASE)))
         font = int(xf.get("fontId", "0"))
         is_struck.append(fonts[font] if font < len(fonts) else False)
     return is_date, is_struck

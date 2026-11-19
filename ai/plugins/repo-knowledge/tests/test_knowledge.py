@@ -1,3 +1,4 @@
+import os
 import sys
 import tempfile
 import unittest
@@ -191,7 +192,6 @@ class ImprovementTests(Fixture, unittest.TestCase):
 
 class ConfigDiscoveryTests(Fixture, unittest.TestCase):
     def test_nearest_knowledge_toml_upward_then_env(self):
-        import os
         from repo_knowledge.cli import find_config
         (self.root / "knowledge.toml").write_text(self.config.read_text())
         deep = self.root / "docs" / "a" / "b"

@@ -7,8 +7,7 @@ import sys
 from importlib.resources import files
 from pathlib import Path
 
-from .core import KnowledgeBase, SCOPES
-
+from .core import SCOPES, KnowledgeBase
 
 CONFIG_NAME = "knowledge.toml"
 
