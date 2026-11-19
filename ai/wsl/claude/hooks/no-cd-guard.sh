@@ -1,10 +1,9 @@
-#!/usr/bin/env zsh
+#!/usr/bin/env bash
 # PreToolUse: Bash — block bare `cd` that changes the persistent CWD.
 # The working directory persists across Claude Code Bash calls; changing it
 # breaks session tracking, context compaction, and $CLAUDE_PROJECT_DIR references.
 # Exception: cd inside a subshell (cd /path && ...) does NOT change the parent CWD.
 
-emulate -L zsh
 set -o pipefail
 
 payload=""
@@ -20,10 +19,10 @@ stripped="$(printf '%s' "$cmd" | sed 's/([^)]*)/SUBSHELL/g')"
 
 # Match bare cd: at start of command, after &&, after ;, or after a newline
 if printf '%s' "$stripped" | grep -qE '(^|&&|;|\n)[[:space:]]*cd[[:space:]]'; then
-  print -u2 "BLOCKED (no-cd-guard): Do not use 'cd' to change directories."
-  print -u2 "CWD persists across Bash calls — changing it breaks session tracking,"
-  print -u2 "context compaction, and \$CLAUDE_PROJECT_DIR hook references."
-  print -u2 "Use absolute paths instead, or wrap in a subshell: (cd /path && command)"
+  printf '%s\n' "BLOCKED (no-cd-guard): Do not use 'cd' to change directories." >&2
+  printf '%s\n' "CWD persists across Bash calls — changing it breaks session tracking," >&2
+  printf '%s\n' "context compaction, and \$CLAUDE_PROJECT_DIR hook references." >&2
+  printf '%s\n' "Use absolute paths instead, or wrap in a subshell: (cd /path && command)" >&2
   exit 2
 fi
 

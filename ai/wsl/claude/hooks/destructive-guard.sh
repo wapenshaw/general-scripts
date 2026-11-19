@@ -39,7 +39,7 @@ fi
 # Catastrophic filesystem removal, while still allowing things such as
 # rm -rf build/ or rm -rf .pytest_cache/.
 if printf '%s\n' "$flat" | grep -Eqi \
-  '(^|[;&|][[:space:]]*)(/bin/)?rm[[:space:]]+-(rf|fr|[^ ]*r[^ ]*f|[^ ]*f[^ ]*r)[[:space:]]+(/|~|\$HOME|\.|\.\.)([[:space:];|&]|$)'
+  '(^|[;&|][[:space:]]*)(/bin/)?rm[[:space:]]+-(rf|fr|[^ ]*r[^ ]*f|[^ ]*f[^ ]*r)[[:space:]]+(/|~|'"\\\$HOME"'|\.|\.\.)([[:space:];|&]|$)'
 then
   deny "Blocked catastrophic filesystem deletion."
 fi
