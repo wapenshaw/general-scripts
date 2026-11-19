@@ -6,7 +6,7 @@ typeset -U path PATH
 _nvm_path_first() {
   local _node_bin="${NVM_BIN:-}" _target _i
   local -a _node_bins
-  setopt local_options numeric_glob_sort
+  setopt local_options null_glob numeric_glob_sort
 
   if [[ -n "$_node_bin" && -x "$_node_bin/node" ]]; then
     path=("$_node_bin" $path)
@@ -27,23 +27,20 @@ _nvm_path_first() {
   fi
   _target="${_target#v}"
 
-  case "$_target" in
-    <->.<->.<->)
-      _node_bins=("$NVM_DIR/versions/node/v$_target/bin"(N))
-      ;;
-    <->|<->.<->)
-      _node_bins=("$NVM_DIR/versions/node"/v${_target}.*/bin(NOn))
-      ;;
-    node|stable|'*')
-      _node_bins=("$NVM_DIR/versions/node"/v*/bin(NOn))
-      ;;
-    *)
-      # Includes an explicit `system` default and unresolved aliases.
-      return 0
-      ;;
-  esac
+  if [[ "$_target" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+    _node_bins=("$NVM_DIR/versions/node/v$_target/bin")
+  elif [[ "$_target" =~ ^[0-9]+(\.[0-9]+)?$ ]]; then
+    _node_bins=($NVM_DIR/versions/node/v${_target}.*/bin)
+  elif [[ "$_target" == node || "$_target" == stable || "$_target" == '*' ]]; then
+    _node_bins=($NVM_DIR/versions/node/v*/bin)
+  else
+    # Includes an explicit `system` default and unresolved aliases.
+    return 0
+  fi
 
-  for _node_bin in "${_node_bins[@]}"; do
+  # Newest version first: glob results are sorted numerically ascending.
+  for (( _i = ${#_node_bins[@]}; _i >= 1; _i-- )); do
+    _node_bin="${_node_bins[_i]}"
     if [[ -x "$_node_bin/node" ]]; then
       path=("$_node_bin" $path)
       break
