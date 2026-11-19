@@ -1,4 +1,8 @@
 #!/usr/bin/env python3
+# /// script
+# requires-python = ">=3.11"
+# dependencies = ["pyyaml>=6"]
+# ///
 """Render or install portable AI preferences and MCP definitions (Python 3.11+)."""
 from __future__ import annotations
 
@@ -13,12 +17,13 @@ import shlex
 import shutil
 import sys
 import tomllib
+import yaml
 
 ROOT = Path(__file__).resolve().parent
 REPO = ROOT.parent
 CLIENTS = ("claude", "codex", "grok", "opencode")
 # Clients with preferences but no MCP definitions rendered by this script.
-EXTRA_CLIENTS = ("agy",)
+EXTRA_CLIENTS = ("agy", "omp")
 
 
 class MissingEnvironmentError(ValueError):
@@ -136,6 +141,8 @@ def render_mcps(registry, platform, enable, disable, templates=False):
 
 
 def encode(path, value):
+    if path.suffix == ".yml":
+        return yaml.safe_dump(value, sort_keys=False, allow_unicode=True)
     return toml_dumps(value) if path.suffix == ".toml" else json.dumps(value, indent=2, ensure_ascii=False) + "\n"
 
 
@@ -144,6 +151,8 @@ def load_config(path):
         return {}
     if path.suffix == ".toml":
         return tomllib.loads(path.read_text(encoding="utf-8-sig"))
+    if path.suffix == ".yml":
+        return yaml.safe_load(path.read_text(encoding="utf-8-sig")) or {}
     return read_json(path)
 
 
@@ -249,6 +258,7 @@ def main():
         "grok": env_home("GROK_HOME", home / ".grok"),
         "opencode": env_home("XDG_CONFIG_HOME", home / ".config") / "opencode",
         "agy": home / ".gemini" / "antigravity-cli",
+        "omp": env_home("PI_CODING_AGENT_DIR", home / ".omp" / "agent"),
     }
     node = (find_node() if platform == actual_platform else None) or "node"
     # Always quote Windows paths, including paths with shell metacharacters.
@@ -256,6 +266,12 @@ def main():
     planned = {}
     for client in args.clients:
         client_root = client_roots[client]
+        if client == "omp":
+            # oh-my-pi keeps its settings in YAML: merge portable preferences over the live file, as other clients do.
+            target = client_root / "config.yml"
+            current = load_config(target) if args.install else {}
+            planned[target] = encode(target, merge(current, load_config(ROOT / "config/omp/config.yml")))
+            continue
         if client == "agy":
             # Antigravity runs the title command per state change. It passes
             # quotes through literally, so the script path must stay bare.

@@ -1,6 +1,6 @@
 # Portable AI client setup
 
-Claude Code, Codex, Grok CLI and OpenCode preferences, plus the Antigravity CLI (`agy`)
+Claude Code, Codex, Grok CLI, OpenCode and oh-my-pi (`omp`) preferences, plus the Antigravity CLI (`agy`)
 conversation-title script, are captured here for Windows, macOS and Linux. One [MCP registry](mcp/servers.json) produces each client's native
 configuration. The [OpenCode package](opencode/README.md) provides
 OpenCode preferences, plugin configuration and skills.
@@ -38,7 +38,7 @@ integrations.
 ./ai/Install-AIConfig.ps1 -Install
 # Optional servers; GitHub requires GITHUB_PERSONAL_ACCESS_TOKEN in this environment
 ./ai/Install-AIConfig.ps1 -Install -EnableMcp github,playwright
-# A subset of clients (claude, codex, grok, opencode, agy)
+# A subset of clients (claude, codex, grok, opencode, agy, omp)
 ./ai/Install-AIConfig.ps1 -Install -Clients claude,codex
 ```
 
@@ -82,12 +82,13 @@ rendering/installation. To preview macOS from Windows, use
 | `inventory.json` | Documentation only | MCP/plugin names from the original machine |
 | `herdr/plugins/config/` | `<herdr config>/plugins/config/` | Radar and Memex plugin settings (Auto Title's `config.env` is synced from `herdr/config.env`); deployed by `herdr/install.sh` / `Install-HerdrConfig.ps1` |
 | `config/antigravity/title.py` | `~/.gemini/antigravity-cli/title.py` + `settings.json` `title` block | The `agy` client: shows each conversation's real title in the terminal, Herdr and Radar. See [config/antigravity/README.md](config/antigravity/README.md); no MCP entries are rendered for it |
+| `config/omp/config.yml` | `~/.omp/agent/config.yml` (or `$PI_CODING_AGENT_DIR/config.yml`) | Merge repo preferences over the live YAML, keeping unknown and local keys (repo wins on conflicts). PyYAML comes from `setup.py`'s inline metadata. The file is re-serialized, so YAML comments and key quoting are not preserved. Refresh the repo copy from the live file after changing settings in omp |
 | `herdr/memex/config.toml` | `~/.memex/config.toml` | Local indexing and resume settings (macOS/Linux; Memex has no Windows build); deployed by `herdr/install.sh` |
 | `herdr/wsl/` | Manual WSL Herdr overlay | Ayu Dark config, Radar layout and recovery patches; see [herdr/wsl/README.md](herdr/wsl/README.md) |
 | `wsl/` | Manual WSL Claude/Copilot references | Apply requested settings with `AGENTS.md`; not part of the portable installer |
 
-Environment overrides `CLAUDE_CONFIG_DIR`, `CODEX_HOME`, `GROK_HOME` and
-`XDG_CONFIG_HOME` are respected during normal setup. A custom `CLAUDE_CONFIG_DIR`
+Environment overrides `CLAUDE_CONFIG_DIR`, `CODEX_HOME`, `GROK_HOME`,
+`XDG_CONFIG_HOME` and `PI_CODING_AGENT_DIR` are respected during normal setup. A custom `CLAUDE_CONFIG_DIR`
 also places Claude's `.claude.json` inside that directory. Explicit `--home`
 ignores these overrides to make relocation predictable.
 

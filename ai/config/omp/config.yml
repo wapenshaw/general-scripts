@@ -1,0 +1,159 @@
+modelRoles:
+  smol: anthropic/claude-haiku-5-5:high
+  advisor: openai-codex/gpt-6.2-sol:high
+  memory: apple/on-device
+  web: openai-codex/gpt-6.1-terra:high
+  slow: anthropic/claude-opus-5-5:high
+  default: anthropic/claude-opus-5-5:high
+symbolPreset: nerd
+composer:
+  shape: box
+theme:
+  dark: titanium
+  light: light
+update:
+  auto: true
+setupVersion: 3
+disabledProviders:
+  - alibaba-coding-plan
+  - amazon-bedrock
+  - antigravity-cli
+  - azure
+  - bifrost
+  - cerebras
+  - charm-hyper
+  - cline-pass
+  - cloudflare-ai-gateway
+  - commandcode
+  - cursor
+  - deepseek
+  - factory-droid
+  - fireworks
+  - github-copilot
+  - google
+  - google-antigravity
+  - google-gemini-cli
+  - google-vertex
+  - groq
+  - huggingface
+  - kilo
+  - kimi-code
+  - kiro
+  - litellm
+  - llama.cpp
+  - lm-studio
+  - minimax
+  - minimax-cn
+  - minimax-code
+  - minimax-code-cn
+  - mistral
+  - modular
+  - moonshot
+  - muse-code
+  - nanogpt
+  - nvidia
+  - ollama
+  - ollama-cloud
+  - openrouter
+  - opencode
+  - qwen-portal
+  - together
+  - vercel-ai-gateway
+  - venice
+  - web
+  - workers-ai
+  - xai
+  - xiaomi
+  - xiaomi-token-plan-ams
+  - xiaomi-token-plan-cn
+  - xiaomi-token-plan-sgp
+  - zai
+  - zenmux
+compaction:
+  thresholdTokens: 400000
+  idleEnabled: true
+  idleThresholdTokens: 150000
+  idleTimeoutSeconds: 3000
+  modelThresholds:
+    anthropic/claude-haiku-5-5: 80%
+    anthropic/claude-haiku-4-5: 80%
+    anthropic/claude-haiku-4-5-20251001: 80%
+    anthropic/claude-opus-4-5: 80%
+    anthropic/claude-opus-4-5-20251101: 80%
+    anthropic/claude-sonnet-4-5: 80%
+    anthropic/claude-sonnet-4-5-20250929: 80%
+    openai-codex/gpt-5.6-luna: f350000
+    openai-codex/gpt-5.6-sol: f350000
+    openai-codex/gpt-5.6-terra: 80%
+    openai-codex/gpt-6-astra: f350000
+    openai-codex/gpt-6-luna: f350000
+    openai-codex/gpt-6-sol: f350000
+    openai-codex/gpt-6.1-sol: f350000
+    openai-codex/gpt-6.2-astra: f350000
+    openai-codex/gpt-6.2-sol: f350000
+enabledModels:
+  - anthropic/claude-opus-5-5
+  - anthropic/claude-sonnet-5-5
+  - anthropic/claude-haiku-5-5
+  - anthropic/claude-fable-5-2
+  - openai-codex/gpt-6.2-astra
+  - openai-codex/gpt-6.2-sol
+  - openai-codex/gpt-6-luna
+  - openai-codex/gpt-6.1-terra
+  - apple/on-device
+modelPresets:
+  claude:
+    modelRoles:
+      default: anthropic/claude-sonnet-5-5:high
+      smol: anthropic/claude-haiku-5-5:high
+      slow: anthropic/claude-opus-5-5:high
+      advisor: openai-codex/gpt-6.2-sol:high
+      memory: apple/on-device
+      web: openai-codex/gpt-6.1-terra:high
+  codex:
+    modelRoles:
+      default: openai-codex/gpt-6.2-sol:high
+      smol: openai-codex/gpt-6-luna:high
+      slow: openai-codex/gpt-6.2-astra:high
+      advisor: anthropic/claude-opus-5-5:high
+      memory: apple/on-device
+      web: openai-codex/gpt-6.1-terra:high
+  cheap:
+    modelRoles:
+      default: anthropic/claude-haiku-5-5:high
+      smol: anthropic/claude-haiku-5-5:high
+      slow: anthropic/claude-sonnet-5-5:high
+      advisor: anthropic/claude-sonnet-5-5:high
+      memory: apple/on-device
+      web: openai-codex/gpt-6-luna:high
+  current:
+    modelRoles:
+      default: anthropic/claude-haiku-5-5
+      smol: anthropic/claude-haiku-5-5:xhigh
+      advisor: openai-codex/gpt-6.2-sol:high
+      memory: apple/on-device
+      web: openai-codex/gpt-6.1-terra:medium
+    defaultThinkingLevel: high
+extendedContext: true
+advisor:
+  enabled: true
+enabledProviders:
+  - claude
+memory:
+  backend: mnemopi
+mnemopi:
+  llmMode: smol
+  noEmbeddings: true
+retry:
+  fallbackChains:
+    memory:
+      - local/qwen2.5-1.5b
+todo:
+  eager: preferred
+task:
+  agentModelOverrides:
+    reviewer: anthropic/claude-sonnet-5-5:high
+    scout: openai-codex/gpt-6.1-terra:low
+    security-reviewer: openai-codex/gpt-6.2-sol:high
+    task: openai-codex/gpt-6.1-terra:high
+  disabledAgents: []
