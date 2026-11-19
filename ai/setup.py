@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # /// script
 # requires-python = ">=3.11"
-# dependencies = ["pyyaml>=6"]
+# dependencies = ["ruamel.yaml>=0.18"]
 # ///
 """Render or install portable AI preferences and MCP definitions (Python 3.11+)."""
 from __future__ import annotations
@@ -9,6 +9,7 @@ from __future__ import annotations
 import argparse
 import copy
 import datetime as dt
+import io
 import json
 import os
 from pathlib import Path
@@ -17,7 +18,7 @@ import shlex
 import shutil
 import sys
 import tomllib
-import yaml
+from ruamel.yaml import YAML
 
 ROOT = Path(__file__).resolve().parent
 REPO = ROOT.parent
@@ -140,9 +141,16 @@ def render_mcps(registry, platform, enable, disable, templates=False):
     return result
 
 
+def yaml_loader():
+    # Preference files are YAML 1.2. PyYAML (YAML 1.1) reads keys such as `on` as booleans.
+    return YAML(typ="safe", pure=True)
+
+
 def encode(path, value):
     if path.suffix == ".yml":
-        return yaml.safe_dump(value, sort_keys=False, allow_unicode=True)
+        stream = io.StringIO()
+        yaml_loader().dump(value, stream)
+        return stream.getvalue()
     return toml_dumps(value) if path.suffix == ".toml" else json.dumps(value, indent=2, ensure_ascii=False) + "\n"
 
 
@@ -152,7 +160,7 @@ def load_config(path):
     if path.suffix == ".toml":
         return tomllib.loads(path.read_text(encoding="utf-8-sig"))
     if path.suffix == ".yml":
-        return yaml.safe_load(path.read_text(encoding="utf-8-sig")) or {}
+        return yaml_loader().load(path.read_text(encoding="utf-8-sig")) or {}
     return read_json(path)
 
 
