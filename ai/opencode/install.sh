@@ -178,9 +178,7 @@ mkdir -p "$CONFIG_TARGET/skills"
 mkdir -p "$SKILLS_TARGET"
 
 # Top-level package.json + config/*.json|jsonc into $CONFIG_TARGET/
-for f in package.json; do
-  copy_file "$SOURCE_DIR/$f" "$CONFIG_TARGET/$f"
-done
+copy_file "$SOURCE_DIR/package.json" "$CONFIG_TARGET/package.json"
 for f in "${CONFIG_FILES[@]}"; do
   [[ "$f" == "package.json" ]] && continue
   if [[ "$f" == themes/* ]]; then
