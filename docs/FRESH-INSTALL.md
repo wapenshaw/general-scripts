@@ -107,7 +107,7 @@ See [the shell setup guide](../powershell/profile/README.md).
 
 ### 7. Apps via winget
 
-From an elevated PowerShell 7 session, either run the one-shot workstation installer (packages **and** the profile from step 8.1):
+From an elevated PowerShell 7 session, either run the one-shot workstation installer (packages, the profile from step 8.1, and omp via its official installer since it has no winget package):
 
 ```powershell
 Z:\Personal\general-scripts\powershell\tools\Install-Workstation.ps1

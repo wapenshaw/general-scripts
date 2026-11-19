@@ -5,7 +5,9 @@
 .DESCRIPTION
     Parses `winget upgrade`, splits the list into available and excluded (matching
     -ExcludePackages by name or id), and upgrades everything else. Runs in either
-    interactive (per-package prompt) or batch (one prompt for all) mode.
+    interactive (per-package prompt) or batch (one prompt for all) mode. Then
+    installs omp (oh-my-pi) if missing or runs omp update (functions/Update-Omp.ps1),
+    since omp has no winget package.
 
 .PARAMETER ExcludePackages
     Names or package ids to skip. Default: Youtube, Filebot.
@@ -165,6 +167,22 @@ if ($availableUpgrades.Count -gt 0) {
 }
 else {
     Write-Host "`nNo packages to upgrade." -ForegroundColor DarkCyan
+}
+
+# omp has no winget package; it installs and updates through its own installer,
+# which downloads and runs a script, so it gets its own prompt.
+$ompScript = Join-Path (Split-Path -Parent $PSScriptRoot) 'functions\Update-Omp.ps1'
+if (Test-Path -LiteralPath $ompScript) {
+    $ompConfirmation = Read-Host "`nDo you want to install or update omp (oh-my-pi) with its official installer? (y/n) [Default: n]"
+    if ($ompConfirmation.ToLower() -eq "y") {
+        . $ompScript
+        if (-not (Update-Omp)) {
+            Write-Host "omp step failed" -ForegroundColor Red
+        }
+    }
+    else {
+        Write-Host "Skipping omp" -ForegroundColor Yellow
+    }
 }
 
 Write-Host "`nPress any key to exit..." -ForegroundColor Magenta

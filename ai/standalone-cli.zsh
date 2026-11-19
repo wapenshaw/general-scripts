@@ -1,25 +1,36 @@
 #!/usr/bin/env zsh
 
-# Claude Code and Codex use their official standalone installers instead of
-# Homebrew (macOS casks or Linuxbrew). Each puts a launcher in ~/.local/bin and
-# updates itself in the background; `claude update` / `codex update` force an
-# update on demand. Sourced by mac-update.zsh, linux-update.zsh and the macOS
-# bootstrap; linux/install.sh mirrors ai_cli_install in bash.
+# Claude Code, Codex and omp (oh-my-pi) use their official standalone
+# installers instead of Homebrew (macOS casks or Linuxbrew). Each puts its
+# command in ~/.local/bin and can update itself; `<tool> update` forces an
+# update on demand. Sourced by mac-update.zsh and linux-update.zsh (whose
+# --bootstrap is the macOS bootstrap path); linux/install.sh mirrors
+# ai_cli_install in bash.
 #
 #   claude  ~/.local/bin/claude -> ~/.local/share/claude/versions/<version>
 #   codex   ~/.local/bin/codex  -> ~/.codex/packages/standalone/current/bin/codex
+#   omp     ~/.local/bin/omp    (a plain binary, replaced in place; releases ship
+#                                almost daily and Homebrew has no formula)
 #
 # Callers provide command_exists, info, success and warning; ai_cli_maintain
 # also needs run_step and add_warning from the update scripts.
 
-typeset -ga AI_CLI_TOOLS=(claude codex)
+typeset -ga AI_CLI_TOOLS=(claude codex omp)
 typeset -gA AI_CLI_CASKS=([claude]=claude-code [codex]=codex)
+# Installed on every run when missing, not only with --bootstrap.
+typeset -ga AI_CLI_ALWAYS_INSTALL=(omp)
 
 # True when the tool is the standalone install in ~/.local/bin.
 ai_cli_is_standalone() {
     local tool="$1"
     local link="$HOME/.local/bin/$tool"
     local target
+
+    # omp's installer moves the binary into place instead of linking it.
+    if [[ "$tool" == omp ]]; then
+        [[ -f "$link" && -x "$link" && ! -L "$link" ]]
+        return
+    fi
 
     [[ -L "$link" ]] || return 1
     target="$(readlink "$link")" || return 1
@@ -44,6 +55,12 @@ ai_cli_install() {
             PATH="$HOME/.local/bin:/usr/bin:/bin:/usr/sbin:/sbin" \
                 CODEX_NON_INTERACTIVE=1 sh
         ;;
+    omp)
+        # Prebuilt binary, SHA-256 checked and smoke-tested by the installer.
+        # It only prints a PATH hint; it never edits shell profiles.
+        curl -fsSL https://omp.sh/install.sh |
+            PI_INSTALL_DIR="$HOME/.local/bin" sh -s -- --binary
+        ;;
     *)
         return 2
         ;;
@@ -61,7 +78,8 @@ ai_cli_brew_cask() {
 }
 
 # Migrates leftover Homebrew casks to the standalone installs, then updates
-# them. A missing tool is installed only when the first argument is true.
+# them. A missing tool is installed when the first argument is true or the
+# tool is in AI_CLI_ALWAYS_INSTALL.
 ai_cli_maintain() {
     local bootstrap="${1:-false}"
     local tool cask
@@ -70,7 +88,8 @@ ai_cli_maintain() {
         cask="$(ai_cli_brew_cask "$tool" || true)"
 
         if ! ai_cli_is_standalone "$tool"; then
-            if [[ -n "$cask" || "$bootstrap" == true ]]; then
+            if [[ -n "$cask" || "$bootstrap" == true ]] ||
+                (( ${AI_CLI_ALWAYS_INSTALL[(Ie)$tool]} )); then
                 run_step \
                     "Install $tool with its standalone installer" \
                     ai_cli_install "$tool"

@@ -480,6 +480,8 @@ Routine behavior:
   - Updates the standalone Bun installation with bun upgrade.
   - Moves Claude Code and Codex off Homebrew casks to their standalone
     installers, then runs claude update and codex update.
+  - Installs omp (oh-my-pi) with its official installer when missing, otherwise
+    runs omp update.
   - Updates rustup and the installed Rust toolchain when rustup is present.
   - Updates uv, upgrades uv-managed Python installations and uv tools.
   - Runs Homebrew, rustup, uv, Python, PATH-order and WSL health checks.
@@ -518,6 +520,7 @@ Tool ownership:
   Bun        Standalone Bun (bun upgrade)
   Claude     Standalone installer (claude update); fastest release availability
   Codex      Standalone installer (codex update)
+  omp        Official installer, plain binary (omp update); installed when missing
   rustup     Rust toolchain (rustc, cargo, rustfmt, clippy)
   uv         uv itself (uv self update), Python installations, Python CLI tools
 HELP
@@ -883,7 +886,7 @@ if [[ -d "$NVM_DIR" ]]; then
 fi
 
 #
-# Bun, Claude Code and Codex
+# Bun, Claude Code, Codex and omp
 #
 
 section "Bun"
@@ -894,7 +897,7 @@ else
 	info "Standalone Bun is not installed; skipping its update"
 fi
 
-section "Claude Code / Codex"
+section "Claude Code / Codex / omp"
 source "$SCRIPT_DIR/ai/standalone-cli.zsh"
 ai_cli_maintain "$BOOTSTRAP_TOOLS"
 

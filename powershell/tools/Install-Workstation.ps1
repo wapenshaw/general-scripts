@@ -9,6 +9,8 @@
       1. Ensure winget (App Installer) is available; try a repair if missing
       2. Install the curated winget packages via Install-Essentials.ps1
       3. Deploy the modular PowerShell profile via Install-Profile.ps1
+      4. Install omp (oh-my-pi) with its official installer, or update it
+         (functions/Update-Omp.ps1); omp has no winget package
 
     Each step continues after a failure so a missing package never blocks the
     profile install. Does not move special folders, import env snapshots, or
@@ -68,6 +70,7 @@ $ErrorActionPreference = 'Continue'
 $RepoRoot = Split-Path -Parent (Split-Path -Parent $PSScriptRoot)
 $EssentialsScript = Join-Path $PSScriptRoot 'Install-Essentials.ps1'
 $ProfileScript = Join-Path (Join-Path (Split-Path -Parent $PSScriptRoot) 'profile') 'Install-Profile.ps1'
+$OmpScript = Join-Path (Join-Path (Split-Path -Parent $PSScriptRoot) 'functions') 'Update-Omp.ps1'
 
 function Write-Step {
     param([string]$Message)
@@ -149,6 +152,7 @@ if (-not (Test-IsAdmin)) {
 
 $packageFailed = $false
 $profileFailed = $false
+$ompFailed = $false
 
 if (-not $SkipPackages) {
     Write-Step "winget packages"
@@ -209,6 +213,25 @@ if (-not $SkipProfile) {
     Write-Step "Skipping PowerShell profile (-SkipProfile)"
 }
 
+Write-Step "omp (oh-my-pi)"
+
+if (-not (Test-Path -LiteralPath $OmpScript)) {
+    Write-WarnStep "Update-Omp.ps1 missing at $OmpScript"
+    $ompFailed = $true
+} else {
+    try {
+        . $OmpScript
+        if (Update-Omp) {
+            Write-Ok "omp installed and current"
+        } else {
+            $ompFailed = $true
+        }
+    } catch {
+        Write-WarnStep "omp step failed: $($_.Exception.Message)"
+        $ompFailed = $true
+    }
+}
+
 Write-Host ""
 Write-Host "===========================================" -ForegroundColor Green
 Write-Host "  Bootstrap finished." -ForegroundColor Green
@@ -223,9 +246,10 @@ Write-Host "  - Set-DevPackagePaths.ps1 (desired storage manifest)"
 Write-Host "  - Install-NodeToolchain.ps1 and uv Python/tool setup"
 Write-Host "  - Registry / network / shutdown tweaks"
 
-if ($packageFailed -or $profileFailed) {
+if ($packageFailed -or $profileFailed -or $ompFailed) {
     Write-Host ""
     if ($packageFailed) { Write-WarnStep "Package step reported problems" }
     if ($profileFailed) { Write-WarnStep "Profile step reported problems" }
+    if ($ompFailed) { Write-WarnStep "omp step reported problems" }
     exit 1
 }

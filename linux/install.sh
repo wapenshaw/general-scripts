@@ -3,7 +3,7 @@
 #
 # Installs the system prerequisites from the native package manager, then
 # Homebrew (Linuxbrew) and the CLI tools in linux/Brewfile, the official
-# uv/rustup/bun/Claude Code/Codex installers, and finally the zsh config. Safe to re-run. A
+# uv/rustup/bun/Claude Code/Codex/omp installers, and finally the zsh config. Safe to re-run. A
 # failed step never aborts the rest. Keep it current afterwards with
 # ./linux-update.zsh.
 #
@@ -34,6 +34,8 @@
 #   bun             official installer (`bun upgrade`)
 #   claude, codex   official standalone installers in ~/.local/bin (`claude update`,
 #                   `codex update`); linux-update.zsh migrates leftover casks
+#   omp             official installer, prebuilt binary in ~/.local/bin (`omp update`);
+#                   linux-update.zsh installs it when missing and updates it
 #   --wsl           WSL only, opt-in. Makes /etc/wsl.conf carry [boot] systemd=true and
 #                   [interop] appendWindowsPath=false (and [user] default when unset),
 #                   backing the file up and showing a diff first. Reports the rest of
@@ -404,12 +406,17 @@ install_bun_official() {
   fi
 }
 
-# Claude Code and Codex: official standalone installers into ~/.local/bin; both
-# update themselves. Mirrors ai_cli_install in ai/standalone-cli.zsh, which
+# Claude Code, Codex and omp: official standalone installers into ~/.local/bin;
+# all update themselves. Mirrors ai_cli_install in ai/standalone-cli.zsh, which
 # linux-update.zsh uses to migrate leftover Homebrew casks.
 install_ai_cli_official() {
   local tool="$1" rc=0
-  [[ -L "$HOME/.local/bin/$tool" ]] && { green "$tool already installed in ~/.local/bin"; return 0; }
+  local bin="$HOME/.local/bin/$tool"
+  # claude and codex link into versioned dirs; omp's installer moves a plain binary.
+  if [[ -L "$bin" ]] || { [[ "$tool" == omp && -f "$bin" && -x "$bin" ]]; }; then
+    green "$tool already installed in ~/.local/bin"
+    return 0
+  fi
   ensure_local_bin
   info "Installing $tool via official standalone installer"
   case "$tool" in
@@ -428,6 +435,15 @@ install_ai_cli_official() {
       # Another codex on PATH makes the installer edit shell profiles; hide it.
       curl -fsSL https://chatgpt.com/codex/install.sh |
         PATH="$HOME/.local/bin:/usr/bin:/bin:/usr/sbin:/sbin" CODEX_NON_INTERACTIVE=1 sh || rc=$?
+      ;;
+    omp)
+      if [[ "$DRY_RUN" -eq 1 ]]; then
+        print_command sh -c 'curl -fsSL https://omp.sh/install.sh | PI_INSTALL_DIR="$HOME/.local/bin" sh -s -- --binary'
+        return 0
+      fi
+      # Prebuilt binary, SHA-256 checked and smoke-tested; never edits shell profiles.
+      curl -fsSL https://omp.sh/install.sh |
+        PI_INSTALL_DIR="$HOME/.local/bin" sh -s -- --binary || rc=$?
       ;;
   esac
   if [[ "$rc" -eq 0 ]]; then
@@ -884,6 +900,7 @@ install_tools() {
   command_exists bun || install_bun_official
   install_ai_cli_official claude
   install_ai_cli_official codex
+  install_ai_cli_official omp
 
   section_tools "uv Python"
   bootstrap_uv_python

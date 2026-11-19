@@ -262,6 +262,8 @@ Routine behavior:
   - Updates and upgrades Homebrew packages.
   - Moves Claude Code and Codex off Homebrew casks to their standalone
     installers, then runs claude update and codex update.
+  - Installs omp (oh-my-pi) with its official installer when missing, otherwise
+    runs omp update.
   - Updates rustup and the installed Rust toolchain when rustup is present.
   - Upgrades uv-managed Python installations.
   - Upgrades Python CLI applications managed by uv.
@@ -278,7 +280,7 @@ Bootstrap behavior:
 
 Tool ownership:
   Homebrew  Native command-line utilities, uv, starship, neovim
-  Vendor    Claude Code and Codex (~/.local/bin, self-updating)
+  Vendor    Claude Code, Codex and omp (~/.local/bin, self-updating)
   NVM      Node.js and global Node packages
   rustup    Rust toolchain (rustc, cargo, rustfmt, clippy)
   uv        Python installations and Python CLI applications
@@ -498,10 +500,10 @@ else
 fi
 
 #
-# Claude Code / Codex
+# Claude Code / Codex / omp
 #
 
-section "Claude Code / Codex"
+section "Claude Code / Codex / omp"
 
 source "${0:A:h}/ai/standalone-cli.zsh"
 ai_cli_maintain "$BOOTSTRAP_TOOLS"
