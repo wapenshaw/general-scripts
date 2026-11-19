@@ -6,6 +6,9 @@ modelRoles:
   slow: anthropic/claude-opus-5-5:high
   default: anthropic/claude-opus-5-5:high
 symbolPreset: nerd
+hideThinkingBlock: false
+omitThinking: false
+expandThinkingBlocks: true
 composer:
   shape: box
 theme:
