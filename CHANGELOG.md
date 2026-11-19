@@ -4,6 +4,13 @@ Notable changes to this personal workstation toolbox. Newest first.
 
 ## 2026-11-19
 
+### Added
+
+- **omp terminal title is the session label alone.** `ai/config/omp/extensions/title-label.ts`
+  replaces omp's `π > <label>` title with `<label>` through `ctx.ui.setTitle`, re-applied on
+  session start/switch, agent start/end, and idle `/rename`. `ai/setup.py` copies it to the omp
+  extensions directory beside Herdr's managed extension. Restart running omp sessions to pick it up.
+
 ### Fixed
 
 - **omp `config.yml` stays hand-editable after `Install-AIConfig.ps1 -Install`.** `ai/setup.py`
