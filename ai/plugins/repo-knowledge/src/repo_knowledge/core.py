@@ -45,7 +45,7 @@ class KnowledgeBase:
             if not pattern or Path(pattern).is_absolute() or ".." in Path(pattern).parts:
                 raise ValueError("Source patterns must be relative and stay within the root")
             if not isinstance(source.get("record_type"), str):
-                raise ValueError("Each source needs a record_type")
+                raise TypeError("Each source needs a record_type")
 
     def _files(self) -> dict[str, tuple[Path, str]]:
         found = {}
