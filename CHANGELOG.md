@@ -10,6 +10,29 @@ Notable changes to this personal workstation toolbox. Newest first.
   replaces omp's `π > <label>` title with `<label>` through `ctx.ui.setTitle`, re-applied on
   session start/switch, agent start/end, and idle `/rename`. `ai/setup.py` copies it to the omp
   extensions directory beside Herdr's managed extension. Restart running omp sessions to pick it up.
+- **omp (oh-my-pi) installs and updates itself from every setup path.** omp has no winget or
+  Homebrew package, so it stays on its official installer. `powershell/functions/Update-Omp.ps1`
+  (`Update-Omp`, supports `-WhatIf`) installs it when missing, otherwise runs `omp update`.
+  `Install-Workstation.ps1` runs it as a step; `Update-WinGetPackages.ps1` asks separately
+  (default `n`) because the installer downloads and runs a script. On macOS/Linux,
+  `ai/standalone-cli.zsh`, `linux/install.sh`, `linux-update.zsh` and `mac-update.zsh` install
+  the prebuilt binary into `~/.local/bin` when missing, otherwise run `omp update`.
+- **`powershell/system/Optimize-DevToolStartup.ps1`** (admin): puts Git for Windows' real
+  `git.exe` ahead of the `Git\cmd` launcher in the Machine PATH and adds Defender process
+  exclusions for git, rg, Git Bash and claude. Measured on TITAN: `git --version` 52.6 ms ->
+  30.4 ms. Step 6 of `docs/FRESH-INSTALL.md`.
+- **Device records**: TITAN i7-13700K undervolt and power limits (`devices/titan-cpu.md`);
+  iQOO 12 standby-drain cause corrected to Phone Link's keepalive to Link to Windows.
+
+### Changed
+
+- **omp shows thinking by default, on Windows and macOS/Linux.** `ai/config/omp/config.yml` now
+  sets `hideThinkingBlock: false`, `omitThinking: false` and `expandThinkingBlocks: true`.
+  `omitThinking` was the real blocker: it asks providers to send no thinking summary, so
+  unhiding the block alone showed nothing. Verified headless against Sonnet 5.5: `omitThinking`
+  true returned an empty thinking block, false returned summarized text. Sonnet decides per
+  prompt whether to think, so simple prompts can still show none. The shared config is the one
+  source for every platform, and `-Install` overwrites these three keys on each machine.
 
 ### Fixed
 
@@ -17,6 +40,15 @@ Notable changes to this personal workstation toolbox. Newest first.
   dumped YAML through ruamel's safe dumper defaults: leaf maps and lists in wrapped flow style,
   keys sorted. It now writes block style in source key order without line wrapping. Content is
   unchanged.
+
+## 2026-11-08
+
+### Changed
+
+- **Claude auto-compact window 350k → 467k** (`CLAUDE_CODE_AUTO_COMPACT_WINDOW=467000`), so
+  `cache-cold-compact`'s 75% handoff compaction lands at 350k, ahead of the engine's summary
+  precompute (~358k) and threshold (~434k). The plugin's `minContextTokens` is now 100000 in
+  the shared settings, so neither idle nor preemptive compaction touches contexts under 100k.
 
 ## 2026-11-07
 
