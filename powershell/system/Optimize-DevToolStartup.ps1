@@ -57,6 +57,18 @@ param(
 
 $ErrorActionPreference = 'Stop'
 
+# Inserts $Entry at $Index and joins with ';'. List.Insert avoids array slicing,
+# where `if {...}` output unwraps a single element to a string and `+` then
+# concatenates strings instead of building an array (dropping the separators).
+function Add-PathEntryBefore {
+    [OutputType([string])]
+    param([string[]]$Entries, [int]$Index, [string]$Entry)
+
+    $list = [System.Collections.Generic.List[string]]::new($Entries)
+    $list.Insert($Index, $Entry)
+    return $list -join ';'
+}
+
 # Git for Windows install root, from its registry key or from git on PATH.
 $gitRoot = (Get-ItemProperty 'HKLM:\SOFTWARE\GitForWindows' -ErrorAction SilentlyContinue).InstallPath
 if (-not $gitRoot) {
@@ -81,8 +93,7 @@ if (-not $SkipPath) {
     if ($idx -lt 0) {
         Write-Warning "$gitCmd is not in the Machine PATH; leaving PATH alone"
     } else {
-        $before = if ($idx -gt 0) { @($entries[0..($idx - 1)]) } else { @() }
-        $new = ($before + $gitReal + @($entries[$idx..($entries.Count - 1)])) -join ';'
+        $new = Add-PathEntryBefore -Entries $entries -Index $idx -Entry $gitReal
         $current = ($raw -split ';' | Where-Object { $_ }) -join ';'
 
         if ($new -eq $current) {
