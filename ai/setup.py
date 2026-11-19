@@ -147,7 +147,7 @@ def yaml_loader():
 
 
 def encode(path, value):
-    if path.suffix == ".yml":
+    if path.suffix in (".yml", ".yaml"):
         stream = io.StringIO()
         yaml_loader().dump(value, stream)
         return stream.getvalue()
@@ -159,9 +159,15 @@ def load_config(path):
         return {}
     if path.suffix == ".toml":
         return tomllib.loads(path.read_text(encoding="utf-8-sig"))
-    if path.suffix == ".yml":
+    if path.suffix in (".yml", ".yaml"):
         return yaml_loader().load(path.read_text(encoding="utf-8-sig")) or {}
     return read_json(path)
+
+
+def omp_settings_path(agent_dir):
+    # oh-my-pi reads config.yml first; an existing config.yaml is active only when config.yml is absent.
+    canonical, legacy = agent_dir / "config.yml", agent_dir / "config.yaml"
+    return legacy if not canonical.exists() and legacy.exists() else canonical
 
 
 def find_node():
@@ -276,7 +282,7 @@ def main():
         client_root = client_roots[client]
         if client == "omp":
             # oh-my-pi keeps its settings in YAML: merge portable preferences over the live file, as other clients do.
-            target = client_root / "config.yml"
+            target = omp_settings_path(client_root)
             current = load_config(target) if args.install else {}
             planned[target] = encode(target, merge(current, load_config(ROOT / "config/omp/config.yml")))
             continue
