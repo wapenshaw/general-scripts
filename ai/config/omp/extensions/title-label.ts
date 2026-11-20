@@ -36,7 +36,12 @@ export default function titleLabel(pi: ExtensionAPI): void {
 	};
 
 	pi.on("session_start", (_event: unknown, ctx: TitleContext) => attach(ctx));
-	pi.on("session_switch", (_event: unknown, ctx: TitleContext) => attach(ctx));
+	// /new emits session_switch, then the command controller writes the base title. Re-apply on the
+	// next tick so the label lands after that write.
+	pi.on("session_switch", (_event: unknown, ctx: TitleContext) => {
+		attach(ctx);
+		setTimeout(() => applyTitle(ctx), 0);
+	});
 	pi.on("session_shutdown", () => {
 		unsubscribe?.();
 		unsubscribe = undefined;
