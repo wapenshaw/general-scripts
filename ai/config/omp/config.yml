@@ -1,7 +1,7 @@
 modelRoles:
   smol: anthropic/claude-haiku-5-5:high
   advisor: openai-codex/gpt-6.2-sol:medium
-  memory: github-copilot/gpt-6-luna:xhigh
+  memory: openai-codex/gpt-6-luna:xhigh
   web: openai-codex/gpt-6.1-terra:high
   slow: anthropic/claude-opus-5-5:high
   default: anthropic/claude-opus-5-5:high
@@ -110,7 +110,7 @@ modelPresets:
       smol: anthropic/claude-haiku-5-5:high
       slow: anthropic/claude-opus-5-5:high
       advisor: openai-codex/gpt-6.2-sol:medium
-      memory: github-copilot/gpt-6-luna:xhigh
+      memory: openai-codex/gpt-6-luna:xhigh
       web: openai-codex/gpt-6.1-terra:high
   codex:
     modelRoles:
@@ -118,7 +118,7 @@ modelPresets:
       smol: openai-codex/gpt-6-luna:high
       slow: openai-codex/gpt-6.2-astra:high
       advisor: anthropic/claude-opus-5-5:high
-      memory: github-copilot/gpt-6-luna:xhigh
+      memory: openai-codex/gpt-6-luna:xhigh
       web: openai-codex/gpt-6.1-terra:high
   cheap:
     modelRoles:
@@ -126,14 +126,14 @@ modelPresets:
       smol: anthropic/claude-haiku-5-5:high
       slow: anthropic/claude-sonnet-5-5:high
       advisor: anthropic/claude-sonnet-5-5:high
-      memory: github-copilot/gpt-6-luna:xhigh
+      memory: openai-codex/gpt-6-luna:xhigh
       web: openai-codex/gpt-6-luna:high
   current:
     modelRoles:
       default: anthropic/claude-haiku-5-5
       smol: anthropic/claude-haiku-5-5:xhigh
       advisor: openai-codex/gpt-6.2-sol:medium
-      memory: github-copilot/gpt-6-luna:xhigh
+      memory: openai-codex/gpt-6-luna:xhigh
       web: openai-codex/gpt-6.1-terra:medium
     defaultThinkingLevel: high
 extendedContext: true

@@ -42,6 +42,9 @@ Notable changes to this personal workstation toolbox. Newest first.
   `task` agent override to `gpt-6.1-terra:medium`, and `retry.fallbackChains.advisor:
   anthropic/claude-fable-5-2:medium`. Verified headless with Codex rate-limited: the advisor
   request failed on Codex and the review completed on Fable 5.2.
+- **omp memory role uses `openai-codex/gpt-6-luna:xhigh` in every preset, not Copilot.** The
+  shared config had `github-copilot/gpt-6-luna:xhigh`; Copilot is in `disabledProviders` and
+  does not work on these machines, so the repo carries no `github-copilot` model entries.
 
 ### Fixed
 
