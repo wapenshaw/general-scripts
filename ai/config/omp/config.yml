@@ -1,6 +1,6 @@
 modelRoles:
   smol: anthropic/claude-haiku-5-5:high
-  advisor: openai-codex/gpt-6.2-sol:high
+  advisor: openai-codex/gpt-6.2-sol:medium
   memory: github-copilot/gpt-6-luna:xhigh
   web: openai-codex/gpt-6.1-terra:high
   slow: anthropic/claude-opus-5-5:high
@@ -109,7 +109,7 @@ modelPresets:
       default: anthropic/claude-sonnet-5-5:high
       smol: anthropic/claude-haiku-5-5:high
       slow: anthropic/claude-opus-5-5:high
-      advisor: openai-codex/gpt-6.2-sol:high
+      advisor: openai-codex/gpt-6.2-sol:medium
       memory: github-copilot/gpt-6-luna:xhigh
       web: openai-codex/gpt-6.1-terra:high
   codex:
@@ -132,13 +132,14 @@ modelPresets:
     modelRoles:
       default: anthropic/claude-haiku-5-5
       smol: anthropic/claude-haiku-5-5:xhigh
-      advisor: openai-codex/gpt-6.2-sol:high
+      advisor: openai-codex/gpt-6.2-sol:medium
       memory: github-copilot/gpt-6-luna:xhigh
       web: openai-codex/gpt-6.1-terra:medium
     defaultThinkingLevel: high
 extendedContext: true
 advisor:
   enabled: true
+  reviewMode: agent-end
 enabledProviders:
   - claude
 memory:
@@ -150,6 +151,8 @@ retry:
   fallbackChains:
     memory:
       - anthropic/claude-haiku-5-5:high
+    advisor:
+      - anthropic/claude-fable-5-2:medium
 todo:
   eager: preferred
 task:
@@ -157,7 +160,7 @@ task:
     reviewer: anthropic/claude-sonnet-5-5:high
     scout: openai-codex/gpt-6.1-terra:low
     security-reviewer: openai-codex/gpt-6.2-sol:high
-    task: openai-codex/gpt-6.1-terra:high
+    task: openai-codex/gpt-6.1-terra:medium
   disabledAgents: []
 statusLine:
   transparent: false
