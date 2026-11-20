@@ -1,14 +1,4 @@
-modelRoles:
-  smol: anthropic/claude-haiku-5-5:high
-  advisor: openai-codex/gpt-6.2-sol:high
-  memory: openai-codex/gpt-6-luna:xhigh
-  web: openai-codex/gpt-6.1-terra:high
-  slow: anthropic/claude-opus-5-5:high
-  default: anthropic/claude-opus-5-5:high
 symbolPreset: nerd
-hideThinkingBlock: false
-omitThinking: false
-expandThinkingBlocks: true
 composer:
   shape: box
 theme:
@@ -17,10 +7,23 @@ theme:
 update:
   auto: true
 setupVersion: 3
+modelRoles:
+  default: openai-codex/gpt-6.2-sol:high
+  smol: anthropic/claude-haiku-5-5:high
+  slow: anthropic/claude-sonnet-5-5:high
+  advisor: openai-codex/gpt-6.2-sol:high
+  memory: openai-codex/gpt-6-luna:xhigh
+  web: openai-codex/gpt-6.1-terra:high
+  vision: openai-codex/gpt-6.1-terra:medium
+  task: openai-codex/gpt-6-luna:xhigh
+hideThinkingBlock: false
+omitThinking: false
+expandThinkingBlocks: true
 disabledProviders:
   - alibaba-coding-plan
   - amazon-bedrock
   - antigravity-cli
+  - apple
   - azure
   - bifrost
   - cerebras
@@ -63,7 +66,6 @@ disabledProviders:
   - together
   - vercel-ai-gateway
   - venice
-  - web
   - workers-ai
   - xai
   - xiaomi
@@ -101,7 +103,7 @@ enabledModels:
   - anthropic/claude-fable-5-2
   - openai-codex/gpt-6.2-astra
   - openai-codex/gpt-6.2-sol
-  - openai-codex/gpt-6-luna
+  - openai-codex/gpt-6-luna:xhigh
   - openai-codex/gpt-6.1-terra
 modelPresets:
   claude:
@@ -112,14 +114,20 @@ modelPresets:
       advisor: openai-codex/gpt-6.2-sol:high
       memory: openai-codex/gpt-6-luna:xhigh
       web: openai-codex/gpt-6.1-terra:high
+      vision: openai-codex/gpt-6.1-terra:medium
+      task: openai-codex/gpt-6-luna:xhigh
+    defaultThinkingLevel: high
   codex:
     modelRoles:
       default: openai-codex/gpt-6.2-sol:high
-      smol: openai-codex/gpt-6-luna:high
-      slow: openai-codex/gpt-6.2-astra:high
+      smol: openai-codex/gpt-6-luna:xhigh
+      slow: openai-codex/gpt-6.2-sol:high
       advisor: anthropic/claude-opus-5-5:high
       memory: openai-codex/gpt-6-luna:xhigh
-      web: openai-codex/gpt-6.1-terra:high
+      web: openai-codex/gpt-6-luna:xhigh
+      vision: openai-codex/gpt-6.1-terra:medium
+      task: openai-codex/gpt-6-luna:xhigh
+    defaultThinkingLevel: high
   cheap:
     modelRoles:
       default: anthropic/claude-haiku-5-5:high
@@ -128,13 +136,8 @@ modelPresets:
       advisor: anthropic/claude-sonnet-5-5:high
       memory: openai-codex/gpt-6-luna:xhigh
       web: openai-codex/gpt-6-luna:high
-  current:
-    modelRoles:
-      default: anthropic/claude-haiku-5-5
-      smol: anthropic/claude-haiku-5-5:xhigh
-      advisor: openai-codex/gpt-6.2-sol:high
-      memory: openai-codex/gpt-6-luna:xhigh
-      web: openai-codex/gpt-6.1-terra:medium
+      vision: openai-codex/gpt-6.1-terra:medium
+      task: openai-codex/gpt-6-luna:xhigh
     defaultThinkingLevel: high
 extendedContext: true
 advisor:
@@ -156,11 +159,10 @@ retry:
 todo:
   eager: preferred
 task:
+  maxConcurrency: 3
+  maxRecursionDepth: 1
   agentModelOverrides:
-    reviewer: anthropic/claude-sonnet-5-5:high
-    scout: openai-codex/gpt-6.1-terra:low
     security-reviewer: openai-codex/gpt-6.2-sol:high
-    task: openai-codex/gpt-6-luna:xhigh
   disabledAgents: []
 statusLine:
   transparent: false
