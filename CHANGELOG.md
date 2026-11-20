@@ -38,8 +38,8 @@ Notable changes to this personal workstation toolbox. Newest first.
   `advisor.reviewMode: turn` reviews every tool round and the advisor investigates with its own
   `read`/`grep` calls; `task` subagents added 441 `gpt-6.1-terra:high` requests, and Codex then
   returned `usage_limit_reached`, which pauses the advisor until reset. `ai/config/omp/config.yml`
-  now sets `advisor.reviewMode: agent-end` (one review per run), advisor effort `medium`, the
-  `task` agent override to `gpt-6.1-terra:medium`, and `retry.fallbackChains.advisor:
+  now sets `advisor.reviewMode: agent-end` (one review per run), the `task` agent override to
+  `gpt-6-luna:xhigh`, and `retry.fallbackChains.advisor:
   anthropic/claude-fable-5-2:medium`. Verified headless with Codex rate-limited: the advisor
   request failed on Codex and the review completed on Fable 5.2.
 - **omp memory role uses `openai-codex/gpt-6-luna:xhigh` in every preset, not Copilot.** The
