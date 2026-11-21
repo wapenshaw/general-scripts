@@ -9,7 +9,8 @@ Notable changes to this personal workstation toolbox. Newest first.
 - **omp's browser tool opens a visible window.** `ai/config/omp/config.yml` sets
   `browser.headless: false`, so `browser.open` shows the page being driven (managed Chromium on
   Windows, the WebKit viewer on macOS). Pass `headed: false` per open, or use `/browser headless`
-  on macOS, to hide it again.
+  on macOS, to hide it again. `ai/setup.py` keeps `browser.headless: true` on Linux (headless
+  boxes and WSL have no display).
 - **omp terminal title is the session label alone.** `ai/config/omp/extensions/title-label.ts`
   replaces omp's `π > <label>` title with `<label>` through `ctx.ui.setTitle`, re-applied on
   session start/switch, agent start/end, and idle `/rename`. `ai/setup.py` copies it to the omp

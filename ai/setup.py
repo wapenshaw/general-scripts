@@ -290,7 +290,11 @@ def main():
             # oh-my-pi keeps its settings in YAML: merge portable preferences over the live file, as other clients do.
             target = omp_settings_path(client_root)
             current = load_config(target) if args.install else {}
-            planned[target] = encode(target, merge(current, load_config(ROOT / "config/omp/config.yml")))
+            desired = load_config(ROOT / "config/omp/config.yml")
+            if platform == "linux":
+                # Linux targets here are headless boxes and WSL: a visible browser has no display to open on.
+                desired.setdefault("browser", {})["headless"] = True
+            planned[target] = encode(target, merge(current, desired))
             # Repo extensions are copied beside the live ones; herdr's managed extension is never touched.
             for source in sorted((ROOT / "config/omp/extensions").glob("*.ts")):
                 planned[client_root / "extensions" / source.name] = source.read_text(encoding="utf-8-sig")
