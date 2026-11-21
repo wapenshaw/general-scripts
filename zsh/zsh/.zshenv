@@ -32,6 +32,9 @@ _path_brew_behind_home() {
   path=($_rest[1,_i-1] $_brew $_rest[_i,-1])
 }
 
+# omp: unload the local tiny model after 5 min idle (omp default is 15 min).
+export OMP_TINY_WORKER_IDLE_MS=300000
+
 # XDG Base Directories — centralizes config/cache/data/state locations.
 # Defaults match the freedesktop spec; users can override by exporting before
 # the shell starts (e.g. in /etc/environment).

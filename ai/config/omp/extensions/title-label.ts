@@ -2,7 +2,6 @@
 // run-state mark, and herdr shows it verbatim. ctx.ui.setTitle replaces the whole title,
 // so the brand and mark go; the working spinner is off while the override is set.
 // Lives beside herdr-omp-agent-state.ts, which herdr overwrites on update.
-import path from "node:path";
 import type { ExtensionAPI } from "@oh-my-pi/pi-coding-agent";
 
 type SessionManagerLike = {
@@ -11,15 +10,13 @@ type SessionManagerLike = {
 };
 
 type TitleContext = {
-	cwd?: string;
 	sessionManager?: SessionManagerLike;
 	ui?: { setTitle?: (title: string) => void };
 };
 
 function applyTitle(ctx: TitleContext): void {
 	const label = ctx.sessionManager?.getSessionName?.()?.trim();
-	const fallback = ctx.cwd ? path.basename(ctx.cwd) : "omp";
-	ctx.ui?.setTitle?.(label || fallback);
+	ctx.ui?.setTitle?.(label || "omp");
 }
 
 export default function titleLabel(pi: ExtensionAPI): void {
