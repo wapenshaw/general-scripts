@@ -140,6 +140,8 @@ modelPresets:
       task: openai-codex/gpt-6-luna:xhigh
     defaultThinkingLevel: high
 extendedContext: true
+browser:
+  headless: false
 advisor:
   enabled: true
   reviewMode: agent-end
