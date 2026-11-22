@@ -107,6 +107,31 @@ backups and may contain pre-existing credentials; keep them outside version cont
 Restore a numbered copy to its recorded path to undo an overwrite, or remove a file
 whose recorded `existed` value is false. Installation skips identical files.
 
+## OMP compaction for Copilot and Claude
+
+These are local profile settings, not portable installer defaults. In
+`~/.omp/agent/config.yml`, use `compaction.modelThresholds` with `f`-prefixed
+token counts for fixed triggers. Keep the standard model IDs in the picker;
+no `-1m` variant is needed for this policy.
+
+| Target | Use it for | What to watch |
+| --- | --- | --- |
+| 250K (`f250000`) | Copilot GPT Luna and Terra | A buffer below the 272K input pricing cutoff on models that use it. GPT-5.6 Luna switches tiers above 200K, so 250K can still incur long-context rates. |
+| 350K (`f350000`) | Copilot GPT Sol, Astra, and other non-Claude models | An extended-history trial. Watch for requests above the model's standard pricing cutoff; for GPT-6.2 Sol and Astra, that is 272K input, even though OMP reports a 400K total window. |
+| 400K (`f400000`) | Claude, direct Anthropic or via Copilot | Use where the route's window supports it. If the fixed point reaches or exceeds the window, OMP uses its reserve-based trigger instead; existing lower overrides for older direct Anthropic models still win. |
+
+Check the saved policy with `omp config get compaction.modelThresholds --json`
+and the effective trigger for an individual model in `/models`. Idle compaction
+is separately eligible at 100K on this policy, with the existing 50-minute
+fallback delay. A trigger is not a hard prompt or spending cap.
+
+For usage-based Copilot Enterprise, compare actual input, output, and cache
+usage in the GitHub billing dashboard against the
+[Copilot pricing tiers](https://docs.github.com/en/copilot/reference/copilot-billing/models-and-pricing).
+[GitHub AI Credits](https://docs.github.com/en/copilot/concepts/billing-and-usage/organizations-and-enterprises/billing)
+meter token usage at 1 credit = $0.01 USD. Copilot Enterprise draws from the
+shared pool first; any paid overage follows the enterprise's spending policy.
+
 ## Claude Code local plugins
 
 `config/claude/plugins/` holds function-hook plugins (Claude Code mods). Install
