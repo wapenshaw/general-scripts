@@ -1,17 +1,4 @@
-# Lenovo ThinkPad P15v Gen 1
-
-Last inspected: **2026-10-24**. Times below use **Asia/Kolkata (IST, UTC+05:30)**.
-
-## Device
-
-| Item | Value |
-| --- | --- |
-| Manufacturer | Lenovo |
-| Model | ThinkPad P15v Gen 1 |
-| Machine type / model | **20TQ004YMX** (type **20TQ**) |
-| Operating system at inspection | Fedora Linux 44 Workstation |
-| Integrated graphics | Intel UHD Graphics (Comet Lake) |
-| Discrete graphics | NVIDIA Quadro P620 |
+# Battery, charging and graphics power
 
 ## Battery replacement identifiers
 
