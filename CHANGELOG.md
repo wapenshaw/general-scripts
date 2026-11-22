@@ -27,6 +27,14 @@ Notable changes to this personal workstation toolbox. Newest first.
   playback and search-indexer records live under `devices/titan/`; the RTX 5080 data files moved
   to `devices/titan/rtx-5080/data/`. The text was moved verbatim, not rewritten.
 
+### Fixed
+
+- **`cache-cold-compact` 0.3.2: no more state folder on the wrong drive.** The plugin took `HOME` before
+  `USERPROFILE`. Under Git Bash `HOME` is an MSYS path (`/c/Users/<you>`), which Node resolves
+  against the current drive, so a Claude session run from `D:` wrote its status-line state to
+  `D:\c\Users\<you>\.claude\cold-compact\` instead of `C:\Users\<you>\.claude\cold-compact\`. On Windows
+  the plugin now uses `USERPROFILE` whenever it is a drive path; macOS/Linux still use `HOME`.
+
 ## 2026-11-19
 
 ### Added

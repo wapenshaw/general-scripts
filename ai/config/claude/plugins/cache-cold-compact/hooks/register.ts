@@ -91,9 +91,14 @@ async function envVar($: EngineInterface, name: string) {
   return ''
 }
 
-/** HOME on macOS/Linux; Windows has no HOME outside Git Bash, so fall back to USERPROFILE. */
+/**
+ * The home directory the status line reads from. On Windows USERPROFILE is the real path; Git Bash sets HOME
+ * to an MSYS path (/c/Users/me), which Node resolves against the current drive (D:\c\Users\me when Claude
+ * runs from D:), so USERPROFILE wins whenever it is a drive path. Elsewhere HOME.
+ */
 async function homeDir($: EngineInterface) {
-  const dir = (await envVar($, 'HOME')) || (await envVar($, 'USERPROFILE'))
+  const profile = await envVar($, 'USERPROFILE')
+  const dir = /^[a-zA-Z]:[\\/]/.test(profile) ? profile : await envVar($, 'HOME')
   return dir.replaceAll('\\', '/')
 }
 
