@@ -6,6 +6,10 @@ Notable changes to this personal workstation toolbox. Newest first.
 
 ### Added
 
+- **Optional Herdr start folder.** `zsh/zsh/herdr.zsh` and `powershell/profile/modules/07-herdr.ps1`
+  start terminals spawned by Herdr core in `HERDR_START_DIR` instead of the folder the app
+  inherited from the focused pane (a Windows folder shows up as `/mnt/c/...` in WSL). Off by
+  default: nothing happens unless `HERDR_START_DIR` is set.
 - **ThinkPad P15v login, keyring and sleep record** (`devices/thinkpad-p15v-gen-1/`):
   GDM autologin with the oo7 keyring unlocked from a TPM-sealed systemd credential (keyring-only
   password, not the login password, because `--user` blobs decrypt for any same-UID process);

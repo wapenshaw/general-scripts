@@ -2,6 +2,7 @@
 # Source order matters: exports before tools, fzf before bindings, plugins last.
 # Assurant modules (aliases, functions) are only sourced when ZSH_ASSURANT=1.
 
+source "$ZDOTDIR/herdr.zsh"     # Herdr terminals start in a fixed folder
 source "$ZDOTDIR/history.zsh"
 source "$ZDOTDIR/exports.zsh"
 source "$ZDOTDIR/completion.zsh"
