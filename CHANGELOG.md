@@ -6,6 +6,11 @@ Notable changes to this personal workstation toolbox. Newest first.
 
 ### Added
 
+- **`05-git-path.ps1`: PowerShell uses Git's real `git.exe`.** Git for Windows' `cmd\git.exe` is a
+  launcher that starts the real binary, so each git call creates two processes. The module puts
+  `ucrt64in` (or `mingw64in`) immediately before `Git\cmd` in the session PATH, after System32 so
+  `curl` is unchanged. A user PATH entry cannot do this because `Git\cmd` is on the machine PATH.
+  Interleaved A/B: 100 spawns 12.41 s with the launcher, 9.21 s with the real binary (26% faster).
 - **Optional Herdr start folder.** `zsh/zsh/herdr.zsh` and `powershell/profile/modules/07-herdr.ps1`
   start terminals spawned by Herdr core in `HERDR_START_DIR` instead of the folder the app
   inherited from the focused pane (a Windows folder shows up as `/mnt/c/...` in WSL). Off by
