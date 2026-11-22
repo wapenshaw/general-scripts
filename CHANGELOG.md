@@ -6,6 +6,11 @@ Notable changes to this personal workstation toolbox. Newest first.
 
 ### Added
 
+- **`Start-Wsl` / `Stop-Wsl`: keep WSL off until you start it.** WSL boots whenever anything calls
+  `wsl.exe` (an editor, Docker Desktop, a tool such as Herdr). `Stop-Wsl` runs `wsl --shutdown`, then
+  stops and disables `WSLService`, so a stray call fails with `Wsl/ERROR_SERVICE_DISABLED` instead of booting
+  the VM. `Start-Wsl` sets the service to Manual, starts it and boots a distro. Both need an elevated shell
+  and support `-WhatIf`; `Stop-Wsl -ShutdownOnly` leaves the service enabled.
 - **`05-git-path.ps1`: PowerShell uses Git's real `git.exe`.** Git for Windows' `cmd\git.exe` is a
   launcher that starts the real binary, so each git call creates two processes. The module puts
   `ucrt64\bin` (or `mingw64\bin`) immediately before `Git\cmd` in the session PATH, after System32 so
