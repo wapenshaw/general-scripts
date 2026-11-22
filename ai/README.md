@@ -111,14 +111,17 @@ whose recorded `existed` value is false. Installation skips identical files.
 
 These are local profile settings, not portable installer defaults. In
 `~/.omp/agent/config.yml`, use `compaction.modelThresholds` with `f`-prefixed
-token counts for fixed triggers. Keep the standard model IDs in the picker;
-no `-1m` variant is needed for this policy.
+token counts for fixed triggers. Keep the standard Copilot GPT selectors.
+For Claude on Copilot, select `claude-haiku-5.5`, `claude-sonnet-5.5-1m`, and
+`claude-opus-5.5-1m` for 1M windows. OMP's `-1m` selectors are local catalog
+variants that send the same upstream model IDs; without them, OMP uses 328K
+for Copilot Sonnet and Opus 5.5.
 
 | Target | Use it for | What to watch |
 | --- | --- | --- |
-| 250K (`f250000`) | Copilot GPT Luna and Terra | A buffer below the 272K input pricing cutoff on models that use it. GPT-5.6 Luna switches tiers above 200K, so 250K can still incur long-context rates. |
-| 350K (`f350000`) | Copilot GPT Sol, Astra, and other non-Claude models | An extended-history trial. Watch for requests above the model's standard pricing cutoff; for GPT-6.2 Sol and Astra, that is 272K input, even though OMP reports a 400K total window. |
-| 400K (`f400000`) | Claude, direct Anthropic or via Copilot | Use where the route's window supports it. If the fixed point reaches or exceeds the window, OMP uses its reserve-based trigger instead; existing lower overrides for older direct Anthropic models still win. |
+| 250K (`f250000`) | Copilot GPT-6 Luna and GPT-6.1 Terra | A buffer below their 272K input pricing cutoff. |
+| 350K (`f350000`) | Copilot GPT-6.2 Sol and Astra | Requests above 272K input use long-context rates even though OMP reports a 400K total window. |
+| 400K (`f400000`) | Direct Anthropic Claude and the 1M Copilot Claude variants | Copilot Haiku 5.5 uses long-context rates above 100K input; this trigger does not keep it in the default pricing tier. If a smaller route is selected, OMP can fall back to an earlier reserve-based trigger. |
 
 Check the saved policy with `omp config get compaction.modelThresholds --json`
 and the effective trigger for an individual model in `/models`. Idle compaction
