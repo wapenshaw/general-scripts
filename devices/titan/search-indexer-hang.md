@@ -1,27 +1,12 @@
-# TITAN (desktop)
+# Incident: image right-click hang — 2026-10-24/25
 
-Last inspected: **2026-10-25**. Times below use **Asia/Kolkata (IST, UTC+05:30)**.
-
-## Device
-
-| Item | Value |
-| --- | --- |
-| Hostname | **TITAN** |
-| Motherboard | MSI MAG Z790 TOMAHAWK WIFI (**MS-7D91**) |
-| CPU | Intel Core i7-13700K |
-| Memory | 64 GB |
-| Graphics | NVIDIA GeForce RTX 5080 ([tuning record](titan-rtx-5080.md)); Intel UHD Graphics 770 (integrated) |
-| Operating system at inspection | Windows 11 Pro 26H2, build **26300.9711** |
-
-## Incident: image right-click hang — 2026-10-24/25
-
-### Symptom
+## Symptom
 
 Right-clicking a picture (`.png`, `.jpg`) in File Explorer or Directory Opus
 showed a busy cursor and hung that window indefinitely. Right-click on other
 file types worked.
 
-### Diagnosis
+## Diagnosis
 
 The hang reproduced outside Explorer by building the shell context menu for an
 image from a separate process. Stack dumps (`cdb -pv`) showed:
@@ -49,11 +34,11 @@ No crash or hang events were logged for the Search processes.
 captured. The CrossDevice phone folders (below) were the first suspect, but
 the indexer also wedged after their scope rules were removed.
 
-### Changes applied
+## Changes applied
 
 | Change | How | Undo |
 | --- | --- | --- |
-| Blocked the Photos context menu extension ("Edit with Photos") | [`registry-tweaks/dos/Remove_Edit_with_Photos_context_menu.reg`](../registry-tweaks/dos/Remove_Edit_with_Photos_context_menu.reg) (HKLM `Shell Extensions\Blocked`), then restarted Explorer | [`registry-tweaks/undos/Add_Edit_with_Photos_context_menu.reg`](../registry-tweaks/undos/Add_Edit_with_Photos_context_menu.reg) |
+| Blocked the Photos context menu extension ("Edit with Photos") | [`registry-tweaks/dos/Remove_Edit_with_Photos_context_menu.reg`](../../registry-tweaks/dos/Remove_Edit_with_Photos_context_menu.reg) (HKLM `Shell Extensions\Blocked`), then restarted Explorer | [`registry-tweaks/undos/Add_Edit_with_Photos_context_menu.reg`](../../registry-tweaks/undos/Add_Edit_with_Photos_context_menu.reg) |
 | Removed 20 index include rules (below) | Windows Search crawl scope API (`ISearchCrawlScopeManager`) | Re-add in Indexing Options → Modify |
 | Excluded `C:\Users\tHeSiD\CrossDevice\` from the index | User exclude rule (same as unticking it in Indexing Options) | Indexing Options → Modify → tick `CrossDevice` |
 | Full index rebuild | `ISearchCatalogManager::Reset` | — |
@@ -77,7 +62,7 @@ build in about 0.5 s. Double-clicking images still opens Photos.
 | Exclude | `C:\Users\tHeSiD\CrossDevice\` |
 | Include | `E:\Downloads\`, `E:\Pictures\`, `E:\OneDrive\Pictures\`, `E:\Videos\` |
 
-### Where the stray index rules came from
+## Where the stray index rules came from
 
 **Phone folders (`CrossDevice\Muerta…`): Phone Link / Cross Device.** It
 exposes the phone as `C:\Users\tHeSiD\CrossDevice\Muerta (N)` (a new `N` per
@@ -100,7 +85,7 @@ seasons suggests manual browsing, such as Explorer's "Add to index" infobar or
 a search tool using Windows Search, but this is unconfirmed. The rules carried
 no timestamp or author, and they were deleted during cleanup.
 
-### Open items
+## Open items
 
 - [ ] Turn off **Settings → Bluetooth & devices → Mobile devices → "Show my
       mobile device in File Explorer"** to stop new `Muerta (N)` folders. Not
@@ -119,7 +104,7 @@ no timestamp or author, and they were deleted during cleanup.
 - [ ] "Edit with Paint" disappeared from the image menu after the cleanup
       (not blocked). Recheck once the index rebuild finishes.
 
-### Recover a wedged indexer
+## Recover a wedged indexer
 
 ```powershell
 sudo pwsh -c "Get-Process SearchIndexer,SearchProtocolHost,SearchFilterHost | Stop-Process -Force; Start-Service WSearch"

@@ -22,7 +22,7 @@
 
 .NOTES
     mVolt+ --status needs no elevation. The status JSON reports voltages in microvolts;
-    this script converts them to mV. Record: devices/titan-rtx-5080.md.
+    this script converts them to mV. Record: devices/titan/rtx-5080/README.md.
 #>
 [CmdletBinding()]
 param(

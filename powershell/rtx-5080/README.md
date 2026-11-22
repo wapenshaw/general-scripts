@@ -3,7 +3,7 @@
 Scripts for TITAN's RTX 5080 (Gigabyte, VBIOS `98.03.3b.40.11`) and
 [mVolt+](https://github.com/b00nz/mVolt). The card's details, tuning history
 and before/after measurements are in
-[`devices/titan-rtx-5080.md`](../../devices/titan-rtx-5080.md).
+[`devices/titan/rtx-5080/README.md`](../../devices/titan/rtx-5080/README.md).
 
 | Script | Does | Elevation |
 | --- | --- | --- |

@@ -31,7 +31,7 @@
     PS> .\Set-GpuXbar.ps1 -Reset     # back to daily (XBAR 0)
 
 .NOTES
-    Requires an elevated session. Record: devices/titan-rtx-5080.md.
+    Requires an elevated session. Record: devices/titan/rtx-5080/README.md.
 #>
 #requires -RunAsAdministrator
 [CmdletBinding(SupportsShouldProcess, DefaultParameterSetName = 'Set')]

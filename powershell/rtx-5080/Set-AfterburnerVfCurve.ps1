@@ -60,7 +60,7 @@
 .NOTES
     Writes under Program Files: run elevated. Backs up the .cfg once per run next to
     itself (*.cfg.bak-<stamp>). Decode with Get-AfterburnerVfCurve.ps1.
-    Record: devices/titan-rtx-5080.md.
+    Record: devices/titan/rtx-5080/README.md.
 #>
 #requires -RunAsAdministrator
 [CmdletBinding(SupportsShouldProcess)]

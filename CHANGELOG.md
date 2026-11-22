@@ -2,6 +2,22 @@
 
 Notable changes to this personal workstation toolbox. Newest first.
 
+## 2026-11-22
+
+### Added
+
+- **ThinkPad P15v login, keyring and sleep record** (`devices/thinkpad-p15v-gen-1/`):
+  GDM autologin with the oo7 keyring unlocked from a TPM-sealed systemd credential (keyring-only
+  password, not the login password, because `--user` blobs decrypt for any same-UID process);
+  `sudo` moved to `password-auth` so only the login and lock screens ask for a fingerprint; no
+  sleep on AC at the greeter, in the session and on lid close, suspend on battery; why SSH cannot
+  wake a suspended laptop and the Wake-on-LAN options.
+- **`devices/` is one folder per device, split by topic.** `devices/<device>/README.md` holds the
+  device facts and a table of contents; battery, login/keyring, fingerprint, sleep, BIOS runs,
+  change logs, backup recovery and the like are separate files. TITAN's CPU, RTX 5080, HDR
+  playback and search-indexer records live under `devices/titan/`; the RTX 5080 data files moved
+  to `devices/titan/rtx-5080/data/`. The text was moved verbatim, not rewritten.
+
 ## 2026-11-19
 
 ### Added
@@ -26,7 +42,7 @@ Notable changes to this personal workstation toolbox. Newest first.
   `git.exe` ahead of the `Git\cmd` launcher in the Machine PATH and adds Defender process
   exclusions for git, rg, Git Bash and claude. Measured on TITAN: `git --version` 52.6 ms ->
   30.4 ms. Step 6 of `docs/FRESH-INSTALL.md`.
-- **Device records**: TITAN i7-13700K undervolt and power limits (`devices/titan-cpu.md`);
+- **Device records**: TITAN i7-13700K undervolt and power limits (`devices/titan/cpu/`);
   iQOO 12 standby-drain cause corrected to Phone Link's keepalive to Link to Windows.
 
 ### Changed
@@ -78,9 +94,9 @@ Notable changes to this personal workstation toolbox. Newest first.
   capped under the engine's own threshold; `0` turns it off.
 - **`powershell/rtx-5080/`**: TITAN RTX 5080 tuning helpers (mVolt+ undervolt, XBAR,
   Afterburner V/F curve, tuning sweep, `nvidia-smi` load logging). Record in
-  `devices/titan-rtx-5080.md`.
+  `devices/titan/rtx-5080/README.md`.
 - **Device records**: iQOO 12, and MPC-HC HDR playback on TITAN
-  (`devices/titan-hdr-playback.md`: DirectVobSub as subtitle renderer forced 8-bit NV12 and
+  (`devices/titan/hdr-playback.md`: DirectVobSub as subtitle renderer forced 8-bit NV12 and
   dropped HDR/Dolby Vision metadata).
 
 ### Changed

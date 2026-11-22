@@ -33,7 +33,7 @@
 
 .NOTES
     Requires nvidia-smi on PATH (installed with the NVIDIA driver). No elevation needed.
-    Record: devices/titan-rtx-5080.md.
+    Record: devices/titan/rtx-5080/README.md.
 #>
 [CmdletBinding()]
 param(

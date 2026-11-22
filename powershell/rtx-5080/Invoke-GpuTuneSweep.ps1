@@ -40,7 +40,7 @@
     Requires an elevated session, mVolt+ (C:\Software\mVolt+.exe) and PresentMon CLI
     (C:\Software\PresentMon\PresentMon-*-x64.exe, from github.com/GameTechDev/PresentMon).
     Quit MSI Afterburner first. Short steps don't prove stability: soak-test the
-    winner. Record: devices/titan-rtx-5080.md.
+    winner. Record: devices/titan/rtx-5080/README.md.
 #>
 #requires -RunAsAdministrator
 [CmdletBinding()]

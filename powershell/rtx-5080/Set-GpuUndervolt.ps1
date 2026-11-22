@@ -9,7 +9,7 @@
                                     voltage point that reaches <MaxClock>
     plus --mem, --power and --xbar-offset in the same write.
 
-    Defaults are the tune found on 2026-11-04 (devices/titan-rtx-5080.md):
+    Defaults are the tune found on 2026-11-04 (devices/titan/rtx-5080/README.md):
       core +450, cap 3090 MHz, memory +3000, power 111 %, XBAR +400
       -> about 97 FPS vs 84 stock in a Steel Nomad loop, core about 3045 MHz at about 945 mV.
     XBAR +500 measured about 1 % faster, but +600 gave no gain and +700 crashed the
@@ -67,7 +67,7 @@
 .NOTES
     Requires an elevated session (mVolt+ tuning writes need admin). Settings last until
     reboot or driver reset. Never enables the mVolt+ BIOS override. Record:
-    devices/titan-rtx-5080.md.
+    devices/titan/rtx-5080/README.md.
 #>
 #requires -RunAsAdministrator
 [CmdletBinding(SupportsShouldProcess, DefaultParameterSetName = 'Apply')]

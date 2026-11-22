@@ -29,7 +29,7 @@
     PS> .\Get-AfterburnerVfCurve.ps1 -Section Profile1 -All
 
 .NOTES
-    Read-only. Record: devices/titan-rtx-5080.md.
+    Read-only. Record: devices/titan/rtx-5080/README.md.
 #>
 [CmdletBinding()]
 param(
