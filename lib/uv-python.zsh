@@ -15,7 +15,7 @@ typeset -g UV_PYTHON_VENV_SCAN_DIRS="${UV_PYTHON_VENV_SCAN_DIRS:-$HOME/Code}"
 # pinned to an exact patch records that patch's directory in pyvenv.cfg and
 # breaks if it is removed, so such patches are kept and reported.
 uv_python_prune_patches() {
-	local python_dir tool_dir dir name group patch root
+	local python_dir tool_dir dir name group patch root found
 	local -A newest
 	local -a installs stale roots venv_configs users
 
@@ -45,20 +45,38 @@ uv_python_prune_patches() {
 		return 0
 	fi
 
-	tool_dir="$(uv tool dir 2>/dev/null || true)"
-	roots=(${tool_dir:+$tool_dir} ${=UV_PYTHON_VENV_SCAN_DIRS})
+	# Fail closed: a venv the scan could not see must not lose its interpreter,
+	# so any error here keeps every superseded patch.
+	if ! tool_dir="$(uv tool dir 2>/dev/null)" || [[ -z "$tool_dir" ]]; then
+		warning "Could not resolve uv's tool directory; keeping superseded patches"
+		return 0
+	fi
+	roots=("$tool_dir" ${=UV_PYTHON_VENV_SCAN_DIRS})
 
 	for root in "${roots[@]}"; do
 		[[ -d "$root" ]] || continue
-		venv_configs+=(${(f)"$(find "$root" -maxdepth 6 \
+		if ! found="$(find "$root" \
 			\( -name node_modules -o -name .git \) -prune -o \
-			-name pyvenv.cfg -type f -print 2>/dev/null)"})
+			-name pyvenv.cfg -type f -print 2>/dev/null)"; then
+			warning "Could not scan all of $root for venvs; keeping superseded patches"
+			print "  Check with: find ${(q)root} -name pyvenv.cfg >/dev/null"
+			return 0
+		fi
+		venv_configs+=(${(f)found})
 	done
 
 	for name in "${stale[@]}"; do
 		users=()
 		if (( ${#venv_configs[@]} > 0 )); then
-			users=(${(f)"$(grep -lF -- "/$name/" "${venv_configs[@]}" 2>/dev/null)"})
+			found="$(grep -lF -- "/$name/" "${venv_configs[@]}" 2>/dev/null)"
+			case $? in
+			0) users=(${(f)found}) ;;
+			1) ;;
+			*)
+				warning "Could not read every pyvenv.cfg; keeping $name"
+				continue
+				;;
+			esac
 		fi
 
 		if (( ${#users[@]} > 0 )); then
