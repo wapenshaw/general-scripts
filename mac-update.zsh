@@ -650,9 +650,11 @@ if command_exists uv; then
 
 	print
 
+	# Plain `install 3.14` is satisfied by any installed 3.14 patch; --upgrade
+	# moves the default to the newest patch this uv release knows about.
 	run_step \
-		"Install or update Python $UV_DEFAULT_PYTHON_VERSION" \
-		uv python install "$UV_DEFAULT_PYTHON_VERSION" --default
+		"Install or upgrade Python $UV_DEFAULT_PYTHON_VERSION as the default" \
+		uv python install "$UV_DEFAULT_PYTHON_VERSION" --default --upgrade
 
 	print
 	info "Checking Python discovered by uv from the home directory"
