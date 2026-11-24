@@ -265,9 +265,9 @@ Routine behavior:
   - Installs omp (oh-my-pi) with its official installer when missing, otherwise
     runs omp update.
   - Updates rustup and the installed Rust toolchain when rustup is present.
-  - Upgrades uv-managed Python installations and removes superseded Python
-    patches unless a venv under UV_PYTHON_VENV_SCAN_DIRS (default ~/Code) or a
-    uv tool still uses them.
+  - Upgrades uv-managed Python installations, then removes superseded Python
+    patches after repointing venvs pinned to them (uv tool and cache envs, plus
+    UV_PYTHON_VENV_SCAN_DIRS, default ~/Code) at the same minor.
   - Upgrades Python CLI applications managed by uv.
   - Runs Homebrew, rustup, uv, Python, and environment health checks.
 
