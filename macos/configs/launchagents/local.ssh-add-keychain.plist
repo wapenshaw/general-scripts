@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  Loads SSH keys whose passphrases are in the login keychain into launchd's
+  ssh-agent at login. UseKeychain in ~/.ssh/config only fires when ssh itself
+  runs, so SSH commit signing (ssh-keygen -Y sign) otherwise finds an empty
+  agent after every login. Installed by macos/stages/01-environment.zsh.
+-->
+<plist version="1.0">
+<dict>
+	<key>Label</key>
+	<string>local.ssh-add-keychain</string>
+	<key>ProgramArguments</key>
+	<array>
+		<string>/usr/bin/ssh-add</string>
+		<string>--apple-load-keychain</string>
+	</array>
+	<key>RunAtLoad</key>
+	<true/>
+	<key>StandardErrorPath</key>
+	<string>/tmp/local.ssh-add-keychain.log</string>
+</dict>
+</plist>

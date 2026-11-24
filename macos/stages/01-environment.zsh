@@ -137,4 +137,22 @@ else
     success "macOS developer defaults applied"
 fi
 
+# 7. Load keychain SSH keys into ssh-agent at every login (commit signing)
+info "Installing the ssh-add keychain LaunchAgent..."
+SSH_AGENT_PLIST_SRC="$REPO/macos/configs/launchagents/local.ssh-add-keychain.plist"
+SSH_AGENT_PLIST_DEST="$HOME/Library/LaunchAgents/local.ssh-add-keychain.plist"
+if [[ "${DRY_RUN:-false}" == true ]]; then
+    print_dry "cp $SSH_AGENT_PLIST_SRC $SSH_AGENT_PLIST_DEST && launchctl bootstrap gui/$UID $SSH_AGENT_PLIST_DEST"
+else
+    mkdir -p "${SSH_AGENT_PLIST_DEST:h}"
+    if ! cmp -s "$SSH_AGENT_PLIST_SRC" "$SSH_AGENT_PLIST_DEST"; then
+        launchctl bootout "gui/$UID/local.ssh-add-keychain" >/dev/null 2>&1 || true
+        cp "$SSH_AGENT_PLIST_SRC" "$SSH_AGENT_PLIST_DEST"
+    fi
+    if ! launchctl print "gui/$UID/local.ssh-add-keychain" >/dev/null 2>&1; then
+        launchctl bootstrap "gui/$UID" "$SSH_AGENT_PLIST_DEST"
+    fi
+    success "ssh-agent loads keychain SSH keys at login"
+fi
+
 success "Stage 1: Base Environment & Core Shell complete"
