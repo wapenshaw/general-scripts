@@ -17,7 +17,5 @@
 	</array>
 	<key>RunAtLoad</key>
 	<true/>
-	<key>StandardErrorPath</key>
-	<string>/tmp/local.ssh-add-keychain.log</string>
 </dict>
 </plist>
