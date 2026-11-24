@@ -1,11 +1,11 @@
 {
-  "editor.fontFamily": "JetBrains Mono, FiraCode Nerd Font, Cascadia Code, Menlo, Monaco, 'Courier New', monospace",
-  "editor.fontSize": 16,
-  "editor.fontLigatures": true,
-  "editor.codeLensFontFamily": "FiraCode Nerd Font",
-  "terminal.integrated.fontFamily": "FiraCode Nerd Font",
-  "powershell.codeFolding.enable": true,
-  "powershell.codeFormatting.whitespaceInsideBrace": true,
+  // "editor.fontFamily": "JetBrains Mono, FiraCode Nerd Font, Cascadia Code, Menlo, Monaco, 'Courier New', monospace",
+  
+  // "editor.fontLigatures": true,
+  // "editor.codeLensFontFamily": "FiraCode Nerd Font",
+  // "terminal.integrated.fontFamily": "FiraCode Nerd Font",
+  // "powershell.codeFolding.enable": true,
+  // "powershell.codeFormatting.whitespaceInsideBrace": true,
   "[powershell]": {
     "debug.saveBeforeStart": "nonUntitledEditorsInActiveGroup",
     "editor.semanticHighlighting.enabled": false,
