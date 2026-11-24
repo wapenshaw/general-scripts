@@ -997,7 +997,8 @@ if command_exists uv; then
 	# moves the default to the newest patch this uv release knows about.
 	run_step \
 		"Install or upgrade Python $UV_DEFAULT_PYTHON_VERSION as the default" \
-		uv python install "$UV_DEFAULT_PYTHON_VERSION" --default --upgrade
+		uv python install "$UV_DEFAULT_PYTHON_VERSION" --default --upgrade \
+			--preview-features python-install-default
 
 	print
 	info "Removing superseded uv Python patch installs"
@@ -1129,7 +1130,8 @@ if [[ "$BOOTSTRAP_TOOLS" == true ]]; then
 	if command_exists uv; then
 		run_step \
 			"Install Python $UV_DEFAULT_PYTHON_VERSION as the uv default" \
-			uv python install "$UV_DEFAULT_PYTHON_VERSION" --default
+			uv python install "$UV_DEFAULT_PYTHON_VERSION" --default \
+				--preview-features python-install-default
 
 		run_step \
 			"Set global uv Python to $UV_DEFAULT_PYTHON_VERSION" \
