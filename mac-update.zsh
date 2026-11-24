@@ -265,7 +265,9 @@ Routine behavior:
   - Installs omp (oh-my-pi) with its official installer when missing, otherwise
     runs omp update.
   - Updates rustup and the installed Rust toolchain when rustup is present.
-  - Upgrades uv-managed Python installations.
+  - Upgrades uv-managed Python installations and removes superseded Python
+    patches unless a venv under UV_PYTHON_VENV_SCAN_DIRS (default ~/Code) or a
+    uv tool still uses them.
   - Upgrades Python CLI applications managed by uv.
   - Runs Homebrew, rustup, uv, Python, and environment health checks.
 
@@ -655,6 +657,11 @@ if command_exists uv; then
 	run_step \
 		"Install or upgrade Python $UV_DEFAULT_PYTHON_VERSION as the default" \
 		uv python install "$UV_DEFAULT_PYTHON_VERSION" --default --upgrade
+
+	print
+	info "Removing superseded uv Python patch installs"
+	source "${0:A:h}/lib/uv-python.zsh"
+	uv_python_prune_patches
 
 	print
 	info "Checking Python discovered by uv from the home directory"
