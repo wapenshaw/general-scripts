@@ -1,0 +1,39 @@
+#!/bin/sh
+set -eu
+
+msg_file=${1:?missing commit message file}
+
+# Leave the message byte-for-byte untouched unless a co-author line is present.
+grep -qi '^[[:space:]]*co-authored-by[[:space:]]*:' "$msg_file" || exit 0
+tmp_file=$(mktemp)
+
+awk '
+  tolower($0) ~ /^[[:space:]]*co-authored-by[[:space:]]*:/ {
+    dropped = 1
+    next
+  }
+
+  {
+    blank = ($0 ~ /^[[:space:]]*$/)
+    if (blank && dropped && n > 0 && lines[n] ~ /^[[:space:]]*$/) {
+      next
+    }
+    if (!blank) {
+      dropped = 0
+    }
+    lines[++n] = $0
+  }
+
+  END {
+    while (n > 0 && lines[n] ~ /^[[:space:]]*$/) {
+      n--
+    }
+
+    for (i = 1; i <= n; i++) {
+      print lines[i]
+    }
+  }
+' "$msg_file" > "$tmp_file"
+
+cat "$tmp_file" > "$msg_file"
+rm -f "$tmp_file"

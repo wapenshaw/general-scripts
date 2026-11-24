@@ -1,0 +1,2 @@
+# The commit-msg hook is a /bin/sh script; CRLF breaks it (core.autocrlf=true on Windows).
+git-hooks/commit-msg text eol=lf
