@@ -8,13 +8,34 @@
 # patch install. uv's tool and cache environments are always searched.
 typeset -g UV_PYTHON_VENV_SCAN_DIRS="${UV_PYTHON_VENV_SCAN_DIRS:-$HOME/Code}"
 
+# Succeeds (0) when a venv still names a patch install in pyvenv.cfg or in any
+# bin/ symlink (resolved, so python3 -> python -> … counts), 1 when it does
+# not, 2 when pyvenv.cfg cannot be read.
+uv_python_venv_names() {
+	local venv="$1" needle="/$2/" link
+
+	grep -qF -- "$needle" "$venv/pyvenv.cfg" 2>/dev/null
+	case $? in
+	0) return 0 ;;
+	1) ;;
+	*) return 2 ;;
+	esac
+
+	for link in "$venv"/bin/*(N@); do
+		[[ "${link:A}/" == *"$needle"* ]] && return 0
+	done
+	return 1
+}
+
 # Points one venv from a patch install (cpython-3.13.17-…) at a newer install of
 # the same minor. Only pyvenv.cfg's home and the bin/ interpreter symlinks name
 # the interpreter; patches of one minor share an ABI, so site-packages stay
-# valid. Rolls back and fails when the venv's python no longer starts.
+# valid. Any write or relink failure, a link left on the old patch, a python
+# that does not resolve into the new install, or one that does not start rolls
+# everything back and fails.
 uv_python_repoint_venv() {
-	local cfg="$1" old="/$2/" new="/$3/"
-	local venv="${cfg:h}" content link target python
+	local cfg="$1" old_name="$2" old="/$2/" new="/$3/" new_dir="$4"
+	local venv="${cfg:h}" content link target python ok=1
 	local -A saved
 
 	content="$(<"$cfg")" || return 1
@@ -24,16 +45,26 @@ uv_python_repoint_venv() {
 		[[ "$target" == *"$old"* ]] && saved[$link]="$target"
 	done
 
-	print -r -- "${content//"$old"/$new}" >"$cfg" || return 1
-	for link target in "${(@kv)saved}"; do
-		ln -sfn "${target//"$old"/$new}" "$link" || break
-	done
+	print -r -- "${content//"$old"/$new}" >"$cfg" || ok=0
+	if (( ok )); then
+		for link target in "${(@kv)saved}"; do
+			ln -sfn "${target//"$old"/$new}" "$link" || { ok=0; break; }
+		done
+	fi
 
-	for python in "$venv/bin/python" "$venv/bin/python3"; do
-		[[ -x "$python" ]] || continue
-		"$python" -c 'import sys' >/dev/null 2>&1 && return 0
-		break
-	done
+	if (( ok )); then
+		uv_python_venv_names "$venv" "$old_name"
+		(( $? == 1 )) || ok=0
+	fi
+
+	if (( ok )); then
+		python="$venv/bin/python"
+		[[ -e "$python" ]] || python="$venv/bin/python3"
+		# -I -S: start the bare interpreter only; the venv's .pth files and
+		# sitecustomize are project code and must not run here.
+		[[ -e "$python" && "${python:A}" == "${new_dir:A}/"* ]] &&
+			"$python" -I -S -c '' >/dev/null 2>&1 && return 0
+	fi
 
 	print -r -- "$content" >"$cfg"
 	for link target in "${(@kv)saved}"; do
@@ -114,30 +145,34 @@ uv_python_prune_patches() {
 		fi
 
 		users=()
-		if (( ${#venv_configs[@]} > 0 )); then
-			found="$(grep -lF -- "/$name/" "${venv_configs[@]}" 2>/dev/null)"
+		for cfg in "${venv_configs[@]}"; do
+			uv_python_venv_names "${cfg:h}" "$name"
 			case $? in
-			0) users=(${(f)found}) ;;
+			0) users+=("$cfg") ;;
 			1) ;;
 			*)
-				warning "Could not read every pyvenv.cfg; keeping $name"
-				continue
+				warning "Could not read $cfg; keeping $name"
+				continue 2
 				;;
 			esac
-		fi
+		done
 
 		for cfg in "${users[@]}"; do
 			run_step "Point venv ${cfg:h} at $target" \
-				uv_python_repoint_venv "$cfg" "$name" "$target"
+				uv_python_repoint_venv "$cfg" "$name" "$target" "$python_dir/$target"
 		done
 
-		# A repoint that failed (and was rolled back) still names the patch; an
-		# unreadable pyvenv.cfg is treated the same way.
+		# Re-check every venv, cfg and bin/ links alike: a failed (rolled back)
+		# repoint or an unreadable pyvenv.cfg keeps the patch.
 		if (( ${#users[@]} > 0 )) && [[ "${DRY_RUN:-false}" != true ]]; then
-			found="$(grep -lF -- "/$name/" "${users[@]}" 2>/dev/null)"
-			if (( $? != 1 )); then
+			found=""
+			for cfg in "${users[@]}"; do
+				uv_python_venv_names "${cfg:h}" "$name"
+				(( $? == 1 )) || found+="  ${cfg:h}"$'\n'
+			done
+			if [[ -n "$found" ]]; then
 				warning "Keeping superseded Python $name; these venvs could not be repointed:"
-				print -l -- "  ${^users[@]:h}"
+				print -rn -- "$found"
 				continue
 			fi
 		fi
