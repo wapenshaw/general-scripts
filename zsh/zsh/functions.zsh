@@ -183,3 +183,29 @@ up() {
 
 # sedi — cross-platform sed -i (GNU and BSD/macOS compatible)
 sedi() { if sed --version &>/dev/null; then sed -i -- "$@"; else sed -i "" "$@"; fi; }
+
+# =========================================================
+# Keeper Commander
+# =========================================================
+
+# keeper_field UID JQ_FILTER — print one field of a Keeper record.
+# Fails (non-zero, nothing on stdout) on an unknown UID, a missing or empty
+# field, or an expired login. Pass a record UID, never a title: `keeper get`
+# falls back to substring title matching and can return a different record.
+#   pw=$(keeper_field <RECORD_UID> '.fields[] | select(.type=="password").value[0]')
+#   key=$(keeper_field <RECORD_UID> '.custom[] | select(.label=="API Secret Key").value[0]')
+keeper_field() {
+  emulate -L zsh
+  setopt pipefail
+  if (( $# != 2 )); then
+    print -u2 'usage: keeper_field RECORD_UID JQ_FILTER'
+    return 2
+  fi
+  if (( ! $+commands[keeper] || ! $+commands[jq] )); then
+    print -u2 'keeper_field: needs keeper (uv tool install keepercommander) and jq'
+    return 127
+  fi
+  # </dev/null: an expired login fails instead of waiting for a password.
+  keeper get "$1" --format json </dev/null |
+    jq -er "$2 | select(type == \"string\" and length > 0)"
+}
