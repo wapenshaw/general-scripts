@@ -191,7 +191,8 @@ sedi() { if sed --version &>/dev/null; then sed -i -- "$@"; else sed -i "" "$@";
 # keeper_field UID JQ_FILTER — print one field of a Keeper record.
 # Fails (non-zero, nothing on stdout) on an unknown UID, a missing or empty
 # field, or an expired login. Pass a record UID, never a title: `keeper get`
-# falls back to substring title matching and can return a different record.
+# falls back to substring title matching, so the returned record_uid must
+# equal the argument exactly.
 #   pw=$(keeper_field <RECORD_UID> '.fields[] | select(.type=="password").value[0]')
 #   key=$(keeper_field <RECORD_UID> '.custom[] | select(.label=="API Secret Key").value[0]')
 keeper_field() {
@@ -207,5 +208,6 @@ keeper_field() {
   fi
   # </dev/null: an expired login fails instead of waiting for a password.
   keeper get "$1" --format json </dev/null |
-    jq -er "$2 | select(type == \"string\" and length > 0)"
+    jq -er --arg uid "$1" \
+      "select(.record_uid == \$uid) | ($2) | select(type == \"string\" and length > 0)"
 }
