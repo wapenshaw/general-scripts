@@ -100,6 +100,11 @@ foreach ($property in $config.variables.PSObject.Properties) {
     }
     Set-ManagedVariable $property.Name $path
 }
+# Plain values (not paths under the root): uv trusts the OS certificate store, so
+# TLS-inspecting proxies work without --system-certs on every call.
+foreach ($property in $config.settings.PSObject.Properties) {
+    Set-ManagedVariable $property.Name ([string]$property.Value)
+}
 $maven = Join-Path $Root $config.mavenRepository
 if (-not (Test-Path -LiteralPath $maven) -and $PSCmdlet.ShouldProcess($maven, 'Create Maven repository')) {
     New-Item -ItemType Directory -Path $maven -Force | Out-Null

@@ -19,6 +19,9 @@ NuGet, Bun and TorchInductor storage. Runtime directories and installed packages
 are persistent data; use each manager's cache command to clear disposable data.
 Vendor-managed IDEs and system SDKs retain their supported installation locations.
 
+`settings` holds plain User variables that are not paths, such as `UV_SYSTEM_CERTS=1` (uv trusts the
+OS certificate store, so TLS-inspecting proxies work without `--system-certs`).
+
 `-CleanPath` removes legacy pyenv/mise and persisted Visual Studio developer-shell
 PATH additions. `-RemoveMachineDuplicates` requires elevation and removes only
 matching or empty managed Machine variables and missing nvm paths. Other machine

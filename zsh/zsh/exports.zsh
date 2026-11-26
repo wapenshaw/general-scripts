@@ -29,6 +29,7 @@ export UV_LINK_MODE=clone
 export UV_PYTHON=3.14
 export UV_PYTHON_PREFERENCE=managed
 export UV_CACHE_DIR="$HOME/.cache/uv"
+export UV_SYSTEM_CERTS=1  # trust the OS certificate store (corporate TLS inspection)
 
 # GPG (interactive shells only — tty is defined here)
 if [[ -t 0 || -t 1 ]]; then

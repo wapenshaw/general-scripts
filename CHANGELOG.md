@@ -2,6 +2,16 @@
 
 Notable changes to this personal workstation toolbox. Newest first.
 
+## 2026-11-26
+
+### Added
+
+- **uv trusts the OS certificate store by default.** Behind TLS inspection (Zscaler) uv failed with
+  `invalid peer certificate: UnknownIssuer` unless `--system-certs` was passed every time.
+  `config/env/development.json` has a new `settings` section for plain User variables (not paths under
+  `root`); `Set-DevPackagePaths.ps1` applies `UV_SYSTEM_CERTS=1` from it, and `zsh/zsh/exports.zsh`
+  exports it for Linux and macOS.
+
 ## 2026-11-22
 
 ### Added

@@ -27,6 +27,9 @@
     "UV_TOOL_BIN_DIR": "uv_tool_bin",
     "YARN_CACHE_FOLDER": "yarn_cache"
   },
+  "settings": {
+    "UV_SYSTEM_CERTS": "1"
+  },
   "pnpm": {
     "cacheDir": "pnpm/cache",
     "globalBinDir": "pnpm/bin",
