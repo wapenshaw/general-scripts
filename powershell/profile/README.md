@@ -55,6 +55,25 @@ the installer does not infer the intended JDK from PATH.
   `-Assurant` is an alias for `-Work`, matching the workstation bootstraps. Work
   mode sets `PS_WORK` and `PS_ASSURANT`.
 - Existing Starship config is retained unless `-StarshipTheme` is specified.
+- Startup caches live in `%LOCALAPPDATA%\PowerShellSetup\cache` and are rebuilt
+  automatically (delete the folder to force it): `starship-init.ps1` holds starship's
+  full init script, keyed by `starship.exe` path/size/time, and `function-exports.json`
+  holds each `functions/*.ps1` file's exports, keyed by size/time. Tool probes in the
+  modules scan `PATH` directly, because `Get-Command` costs ~90 ms per missing tool.
+- Starship's `git_branch`/`git_status` modules spawn git on every prompt (~60-70 ms
+  each here, so ~220-300 ms in a repository). The prompt module instead exports the
+  branch, read from `.git/HEAD`, as `STARSHIP_GIT_BRANCH`. To use it, remove
+  `$git_branch$git_status` from `format` in `~/.config/starship.toml` and add
+  `${env_var.STARSHIP_GIT_BRANCH}` plus:
+  ```toml
+  [env_var.STARSHIP_GIT_BRANCH]
+  variable = "STARSHIP_GIT_BRANCH"
+  symbol = " "
+  style = "bold purple"
+  format = "[$symbol$env_value]($style) "
+  ```
+  Dirty/ahead-behind indicators are not shown; use `git status`. The repo's shared
+  themes keep the stock git modules because the zsh installer uses them too.
 - Command/script invocations skip interactive startup. Opt in with `PS_PROFILE_IN_SCRIPTS=1`.
   Interactive `-NoExit -Command` launches (including VS Code shell integration) and
   the PowerShell extension's VS Code host load the shared profile normally.

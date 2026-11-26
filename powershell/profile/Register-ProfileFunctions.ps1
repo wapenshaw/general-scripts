@@ -9,6 +9,10 @@
     Import-Module -Global). Aliases are registered immediately so short names
     like `rsb` resolve before the target file has ever been loaded.
 
+    Exports (functions and aliases) are cached per file in
+    %LOCALAPPDATA%\PowerShellSetup\cache\function-exports.json, keyed by size and
+    last-write time, so unchanged files are not re-parsed on every startup.
+
     Files with no top-level functions (side-effect scripts such as
     Register-AzCompleter.ps1) are eager-dot-sourced at registration time.
 
@@ -174,9 +178,34 @@ function Register-ProfileFunctions {
 "@))
     }
 
-    foreach ($file in Get-ChildItem -LiteralPath $FunctionsDir -Filter '*.ps1' -File) {
+    # Per-file export cache: parsing every file's AST costs ~50 ms per startup.
+    $cachePath = Join-Path ([Environment]::GetFolderPath('LocalApplicationData')) 'PowerShellSetup/cache/function-exports.json'
+    $cache = $null
+    try {
+        if ([System.IO.File]::Exists($cachePath)) {
+            $cache = [System.IO.File]::ReadAllText($cachePath) | ConvertFrom-Json -AsHashtable
+        }
+    }
+    catch { $cache = $null }
+    if ($cache -isnot [hashtable]) { $cache = @{} }
+    $cacheDirty = $false
+    $liveFiles = [System.Collections.Generic.HashSet[string]]::new()
+
+    foreach ($file in [System.IO.DirectoryInfo]::new($FunctionsDir).EnumerateFiles('*.ps1')) {
         $path = $file.FullName
-        $exports = Get-ProfileFileExports -LiteralPath $path
+        [void]$liveFiles.Add($path)
+        $stamp = "$($file.Length)|$($file.LastWriteTimeUtc.Ticks)"
+        $entry = $cache[$path]
+        if ($entry -is [hashtable] -and $entry.stamp -ceq $stamp) {
+            $exports = [pscustomobject]@{ Functions = @($entry.functions); Aliases = $entry.aliases }
+        }
+        else {
+            $exports = Get-ProfileFileExports -LiteralPath $path
+            if ($null -ne $exports) {
+                $cache[$path] = @{ stamp = $stamp; functions = @($exports.Functions); aliases = $exports.Aliases }
+                $cacheDirty = $true
+            }
+        }
 
         if ($null -eq $exports) {
             Write-Warning "Profile function file parse failed, skipping: $($file.Name)"
@@ -209,6 +238,23 @@ function Register-ProfileFunctions {
         foreach ($aliasName in $exports.Aliases.Keys) {
             $target = $exports.Aliases[$aliasName]
             Set-Alias -Name $aliasName -Value $target -Scope Global -Force -ErrorAction SilentlyContinue
+        }
+    }
+
+    foreach ($stalePath in @($cache.Keys | Where-Object { -not $liveFiles.Contains($_) })) {
+        $cache.Remove($stalePath)
+        $cacheDirty = $true
+    }
+    if ($cacheDirty) {
+        $tmp = "$cachePath.$PID.tmp"
+        try {
+            [void][System.IO.Directory]::CreateDirectory([System.IO.Path]::GetDirectoryName($cachePath))
+            [System.IO.File]::WriteAllText($tmp, ($cache | ConvertTo-Json -Depth 4 -Compress))
+            [System.IO.File]::Move($tmp, $cachePath, $true)
+        }
+        catch {
+            # The cache is an optimisation only.
+            Remove-Item -LiteralPath $tmp -Force -ErrorAction Ignore
         }
     }
 }
