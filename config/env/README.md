@@ -20,7 +20,9 @@ are persistent data; use each manager's cache command to clear disposable data.
 Vendor-managed IDEs and system SDKs retain their supported installation locations.
 
 `settings` holds plain User variables that are not paths, such as `UV_SYSTEM_CERTS=1` (uv trusts the
-OS certificate store, so TLS-inspecting proxies work without `--system-certs`).
+OS certificate store, so TLS-inspecting proxies work without `--system-certs`). uv ignores it when
+`SSL_CERT_FILE` or `SSL_CERT_DIR` is non-empty; the Assurant work profile sets `SSL_CERT_FILE`, so
+work shells use that CA bundle instead.
 
 `-CleanPath` removes legacy pyenv/mise and persisted Visual Studio developer-shell
 PATH additions. `-RemoveMachineDuplicates` requires elevation and removes only

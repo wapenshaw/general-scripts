@@ -29,7 +29,9 @@ export UV_LINK_MODE=clone
 export UV_PYTHON=3.14
 export UV_PYTHON_PREFERENCE=managed
 export UV_CACHE_DIR="$HOME/.cache/uv"
-export UV_SYSTEM_CERTS=1  # trust the OS certificate store (corporate TLS inspection)
+# Trust the OS certificate store. A non-empty SSL_CERT_FILE/SSL_CERT_DIR overrides this in uv
+# (work/exports.zsh sets SSL_CERT_FILE), so in Assurant shells uv uses that bundle instead.
+export UV_SYSTEM_CERTS=1
 
 # GPG (interactive shells only — tty is defined here)
 if [[ -t 0 || -t 1 ]]; then

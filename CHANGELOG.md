@@ -10,7 +10,9 @@ Notable changes to this personal workstation toolbox. Newest first.
   `invalid peer certificate: UnknownIssuer` unless `--system-certs` was passed every time.
   `config/env/development.json` has a new `settings` section for plain User variables (not paths under
   `root`); `Set-DevPackagePaths.ps1` applies `UV_SYSTEM_CERTS=1` from it, and `zsh/zsh/exports.zsh`
-  exports it for Linux and macOS.
+  exports it for Linux and macOS. Exception: uv gives a non-empty `SSL_CERT_FILE`/`SSL_CERT_DIR`
+  precedence over `UV_SYSTEM_CERTS`, so in Assurant shells (`work/exports.zsh` and
+  `modules/work/01-exports.ps1` set `SSL_CERT_FILE`) uv trusts that CA bundle, not the native store.
 
 ## 2026-11-22
 
