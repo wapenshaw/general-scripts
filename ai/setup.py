@@ -176,6 +176,33 @@ def omp_settings_path(agent_dir):
     return legacy if not canonical.exists() and legacy.exists() else canonical
 
 
+MANAGED_BEGIN = "<!-- BEGIN ai-config: {name} -->"
+MANAGED_END = "<!-- END ai-config: {name} -->"
+
+
+def merge_managed_block(current, block, name):
+    """Return `current` with the repo-owned `block` installed between marker comments.
+
+    Everything outside the markers is local and left untouched; edits inside them
+    are overwritten. An unmarked file whose whole content already equals the block
+    (a hand-copied earlier install) is adopted in place rather than duplicated.
+    Otherwise the block is appended after the existing content.
+    """
+    begin, end = MANAGED_BEGIN.format(name=name), MANAGED_END.format(name=name)
+    body = block.strip("\n")
+    managed = f"{begin}\n{body}\n{end}\n"
+    start = current.find(begin)
+    if start != -1:
+        stop = current.find(end, start)
+        if stop == -1 or current.find(begin, start + 1) != -1:
+            raise ValueError(f"unbalanced managed block markers for {name}")
+        line_end = current.find("\n", stop)
+        return current[:start] + managed + current[len(current) if line_end == -1 else line_end + 1:]
+    if not current.strip() or current.strip("\n") == body:
+        return managed
+    return current.rstrip("\n") + "\n\n" + managed
+
+
 def find_node():
     found = shutil.which("node")
     if found or os.name != "nt":
@@ -298,6 +325,10 @@ def main():
             # Repo extensions are copied beside the live ones; herdr's managed extension is never touched.
             for source in sorted((ROOT / "config/omp/extensions").glob("*.ts")):
                 planned[client_root / "extensions" / source.name] = source.read_text(encoding="utf-8-sig")
+            # Sticky rules (task subagents receive RULES.md, unlike AGENTS.md): install only a marked block and keep local rules around it.
+            rules = client_root / "RULES.md"
+            local_rules = rules.read_text(encoding="utf-8-sig") if args.install and rules.exists() else ""
+            planned[rules] = merge_managed_block(local_rules, (ROOT / "config/omp/RULES.md").read_text(encoding="utf-8-sig"), "tool-selection")
             continue
         if client == "agy":
             # Antigravity runs the title command per state change. It passes
