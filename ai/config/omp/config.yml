@@ -210,3 +210,5 @@ statusLine:
 browser:
   headless: false
 defaultThinkingLevel: high
+bashInterceptor:
+  enabled: true
