@@ -176,6 +176,7 @@ statusLine:
   transparent: false
   preset: custom
   separator: powerline
+  showHookStatus: false
   segmentOptions:
     model:
       showThinkingLevel: true
@@ -197,11 +198,8 @@ statusLine:
     - git
     - subagents
   rightSegments:
+    - status
     - session_name
-    - token_in
-    - token_out
-    - cache_read
-    - cache_write
     - token_rate
     - cache
     - cost
