@@ -25,6 +25,7 @@ disabledProviders:
   - bifrost
   - cerebras
   - charm-hyper
+  - cline
   - cline-pass
   - cloudflare-ai-gateway
   - commandcode
@@ -32,6 +33,8 @@ disabledProviders:
   - deepseek
   - factory-droid
   - fireworks
+  - gemini
+  - github
   - github-copilot
   - google
   - google-antigravity
@@ -63,6 +66,7 @@ disabledProviders:
   - together
   - vercel-ai-gateway
   - venice
+  - windsurf
   - workers-ai
   - xai
   - xiaomi
