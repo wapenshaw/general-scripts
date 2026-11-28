@@ -23,7 +23,19 @@ function update(ctx: StatusContext): void {
 }
 
 export default function contextTokens(pi: ExtensionAPI): void {
-	for (const event of ["session_start", "session_switch", "turn_end", "message_end", "agent_end"] as const) {
+	// Turns grow the context; compaction, /tree, /branch and /clear shrink it without one.
+	const events = [
+		"session_start",
+		"session_switch",
+		"session_branch",
+		"session_tree",
+		"session_compact",
+		"session_clear",
+		"turn_end",
+		"message_end",
+		"agent_end",
+	] as const;
+	for (const event of events) {
 		pi.on(event, (_event: unknown, ctx: StatusContext) => update(ctx));
 	}
 }
