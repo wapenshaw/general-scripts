@@ -1,8 +1,8 @@
 # Tool selection: do not shell out for what a dedicated tool does
 
-`bash` rejects these commands before they run with `Tool "bash" is blocked by tool policy.`, and each rejected call wastes a turn. Pick the dedicated tool first; do not try the shell form to see whether it is allowed.
+Use the dedicated tool for everything in this table. Most of these forms (`cat`/`head`/`tail`, `grep`/`rg`, `find`/`fd` with name or type filters, in-place `sed`/`perl`/`awk`, `echo`/`cat` redirected into a file, `nohup`, trailing `&`, dev servers and watchers) are rejected before they run with `Tool "bash" is blocked by tool policy.`, and each rejected call wastes a turn. Do not try the shell form to see whether it is allowed.
 
-| Not in `bash`                                                 | Use                                                    |
+| Instead of                                                    | Use                                                    |
 |---------------------------------------------------------------|--------------------------------------------------------|
 | `cat`, `head`, `tail`, `less`, `more`, `bat`                  | `read` (ranges `file:50-80`, last lines `file:-20`)    |
 | `grep`, `rg`, `ag`, `ack`, `findstr`, `Select-String`         | `grep` (`path` takes `;`-separated files, dirs, globs) |
