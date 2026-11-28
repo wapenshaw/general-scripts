@@ -322,13 +322,17 @@ def main():
                 # Linux targets here are headless boxes and WSL: a visible browser has no display to open on.
                 desired.setdefault("browser", {})["headless"] = True
             planned[target] = encode(target, merge(current, desired))
-            # Repo extensions are copied beside the live ones; herdr's managed extension is never touched.
+            # Repo extensions and rules are copied beside the live ones; herdr's managed extension is never touched.
             for source in sorted((ROOT / "config/omp/extensions").glob("*.ts")):
                 planned[client_root / "extensions" / source.name] = source.read_text(encoding="utf-8-sig")
-            # Sticky rules (task subagents receive RULES.md, unlike AGENTS.md): install only a marked block and keep local rules around it.
+            # Sticky rules (task subagents receive RULES.md, unlike AGENTS.md): install only marked blocks and keep local rules around them.
             rules = client_root / "RULES.md"
-            local_rules = rules.read_text(encoding="utf-8-sig") if args.install and rules.exists() else ""
-            planned[rules] = merge_managed_block(local_rules, (ROOT / "config/omp/RULES.md").read_text(encoding="utf-8-sig"), "tool-selection")
+            merged = rules.read_text(encoding="utf-8-sig") if args.install and rules.exists() else ""
+            for name, source in (("personal", "RULES-personal.md"), ("tool-selection", "RULES.md")):
+                merged = merge_managed_block(merged, (ROOT / "config/omp" / source).read_text(encoding="utf-8-sig"), name)
+            planned[rules] = merged
+            for source in sorted((ROOT / "config/omp/rules").glob("*.md")):
+                planned[client_root / "rules" / source.name] = source.read_text(encoding="utf-8-sig")
             continue
         if client == "agy":
             # Antigravity runs the title command per state change. It passes

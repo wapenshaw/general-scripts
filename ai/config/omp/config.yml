@@ -1,3 +1,12 @@
+modelRoles:
+  smol: anthropic/claude-haiku-5-5:high
+  advisor: openai-codex/gpt-6.2-sol:high
+  memory: openai-codex/gpt-6-luna:xhigh
+  web: openai-codex/gpt-6.1-terra:high
+  slow: anthropic/claude-opus-5-5:high
+  default: anthropic/claude-opus-5-5:medium
+  task: openai-codex/gpt-6-luna:xhigh
+  vision: openai-codex/gpt-6.1-terra:medium
 symbolPreset: nerd
 composer:
   shape: box
@@ -7,18 +16,6 @@ theme:
 update:
   auto: true
 setupVersion: 3
-modelRoles:
-  default: openai-codex/gpt-6.2-sol:high
-  smol: anthropic/claude-haiku-5-5:high
-  slow: anthropic/claude-sonnet-5-5:high
-  advisor: openai-codex/gpt-6.2-sol:high
-  memory: openai-codex/gpt-6-luna:xhigh
-  web: openai-codex/gpt-6.1-terra:high
-  vision: openai-codex/gpt-6.1-terra:medium
-  task: openai-codex/gpt-6-luna:xhigh
-hideThinkingBlock: false
-omitThinking: false
-expandThinkingBlocks: true
 disabledProviders:
   - alibaba-coding-plan
   - amazon-bedrock
@@ -140,8 +137,6 @@ modelPresets:
       task: openai-codex/gpt-6-luna:xhigh
     defaultThinkingLevel: high
 extendedContext: true
-browser:
-  headless: false
 advisor:
   enabled: true
   reviewMode: agent-end
@@ -166,6 +161,13 @@ task:
   agentModelOverrides:
     security-reviewer: openai-codex/gpt-6.2-sol:high
   disabledAgents: []
+tui:
+  titleState: true
+title:
+  generator: tiny
+hideThinkingBlock: false
+omitThinking: false
+expandThinkingBlocks: true
 statusLine:
   transparent: false
   preset: custom
@@ -201,3 +203,6 @@ statusLine:
     - cost
     - context_pct
     - context_total
+browser:
+  headless: false
+defaultThinkingLevel: high

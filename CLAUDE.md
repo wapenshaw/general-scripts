@@ -40,5 +40,5 @@ zsh -n ./zsh/zsh/.zshenv ./zsh/zsh/.zprofile ./zsh/zsh/.zshrc ./zsh/zsh/*.zsh ./
 - New reusable functions go in `powershell/functions/*.ps1`; startup configuration goes in ordered `powershell/profile/modules/` files. Both ConsoleHost and VS Code use AllHosts.
 - Registry tweaks: always add matching `dos/` + `undos/` pairs.
 - Zsh module order matters (history/exports/completion/fzf/tools → aliases/functions/bindings/plugins → `fast-syntax-highlighting` last → starship init).
-- No secrets in tracked files. Export/Import-Env strips `*TOKEN*`, `*SECRET*`, `*AUTH*`. Azure creds → gitignored `~/.zsh/work/az.env`.
-- Conventional commits, Angular-style scope (`feat(powershell):`, `fix(zsh):`, `docs:`).
+- Export/Import-Env strips `*TOKEN*`, `*SECRET*`, `*AUTH*`. Azure creds → gitignored `~/.zsh/work/az.env`.
+- Commit scopes: `powershell`, `zsh`, `docs` and similar areas (`feat(powershell):`, `fix(zsh):`, `docs:`).
